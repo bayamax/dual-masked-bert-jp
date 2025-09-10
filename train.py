@@ -2,6 +2,7 @@
 """学習エントリポイント"""
 import argparse
 from pathlib import Path
+import os
 import torch
 from datasets import load_dataset
 from transformers import (
@@ -36,6 +37,8 @@ def parse_args():
 
 def main():
     args = parse_args()
+    # SentencePiece などの内部並列を制限
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
     accelerator = Accelerator()
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=args.use_fast_tokenizer)
