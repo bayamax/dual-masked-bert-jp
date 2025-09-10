@@ -27,6 +27,8 @@ def parse_args():
     parser.add_argument("--num_train_epochs", type=int, default=3)
     parser.add_argument("--max_seq_length", type=int, default=128)
     parser.add_argument("--mlm_probability", type=float, default=0.15)
+    parser.add_argument("--map_batch_size", type=int, default=100, help="dataset.map 時の batch_size。大き過ぎるとメモリ不足や segfault の原因になる")
+    parser.add_argument("--num_proc", type=int, default=1, help="dataset.map 時の並列プロセス数。SentencePiece はスレッドセーフでないため 1 を推奨")
     parser.add_argument("--auto_shutdown", action="store_true", help="学習完了後にマシンを自動シャットダウン")
     return parser.parse_args()
 
@@ -45,7 +47,15 @@ def main():
     def tokenize_fn(examples):
         return tokenizer(examples["text"], truncation=True, max_length=args.max_seq_length)
 
-    tokenized = dataset.map(tokenize_fn, batched=True, remove_columns=dataset.column_names)
+    # batched=True で一定数ずつトークナイズする。バッチサイズとプロセス数を小さくすることで
+    # SentencePiece 由来のセグフォやメモリ不足を回避する。
+    tokenized = dataset.map(
+        tokenize_fn,
+        batched=True,
+        batch_size=args.map_batch_size,
+        num_proc=args.num_proc,
+        remove_columns=dataset.column_names,
+    )
 
     data_collator = DualMaskDataCollator(tokenizer, mlm_probability=args.mlm_probability)
     data_loader = torch.utils.data.DataLoader(
