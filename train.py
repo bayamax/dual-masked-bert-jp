@@ -31,6 +31,7 @@ def parse_args():
     parser.add_argument("--map_batch_size", type=int, default=100, help="dataset.map 時の batch_size。大き過ぎるとメモリ不足や segfault の原因になる")
     parser.add_argument("--num_proc", type=int, default=1, help="dataset.map 時の並列プロセス数。SentencePiece はスレッドセーフでないため 1 を推奨")
     parser.add_argument("--use_fast_tokenizer", action="store_true", help="Fast tokenizer (rust-tokenizers) を使うか。デフォルト False で Python 実装を使用し segfault を回避")
+    parser.add_argument("--tokenize_on_the_fly", action="store_true", help="dataset.map を使わず DataLoader 内でトークナイズして Segfault を完全回避")
     parser.add_argument("--auto_shutdown", action="store_true", help="学習完了後にマシンを自動シャットダウン")
     return parser.parse_args()
 
@@ -49,24 +50,41 @@ def main():
 
     # データセット読み込み
     dataset = load_dataset(args.dataset_name, args.dataset_config_name, split="train")
+    if args.tokenize_on_the_fly:
+        # DataLoader 内でトークナイズ
+        def collate_raw(examples):
+            texts = [e["text"] for e in examples]
+            tokenized_batch = tokenizer(texts, truncation=True, max_length=args.max_seq_length, padding=True, return_tensors="pt")
+            batch_inputs = [{"input_ids": ids} for ids in tokenized_batch["input_ids"]]
+            # 既存の DualMaskDataCollator を再利用
+            return DualMaskDataCollator(tokenizer, args.mlm_probability)(batch_inputs)
 
-    def tokenize_fn(examples):
-        return tokenizer(examples["text"], truncation=True, max_length=args.max_seq_length)
+        data_loader = torch.utils.data.DataLoader(
+            dataset.shuffle(),
+            batch_size=args.per_device_train_batch_size,
+            collate_fn=collate_raw,
+            drop_last=True,
+        )
+    else:
+        def tokenize_fn(examples):
+            return tokenizer(examples["text"], truncation=True, max_length=args.max_seq_length)
 
-    # batched=True で一定数ずつトークナイズする。バッチサイズとプロセス数を小さくすることで
-    # SentencePiece 由来のセグフォやメモリ不足を回避する。
-    tokenized = dataset.map(
-        tokenize_fn,
-        batched=True,
-        batch_size=args.map_batch_size,
-        num_proc=args.num_proc,
-        remove_columns=dataset.column_names,
-    )
+        tokenized = dataset.map(
+            tokenize_fn,
+            batched=True,
+            batch_size=args.map_batch_size,
+            num_proc=args.num_proc,
+            remove_columns=dataset.column_names,
+        )
 
-    data_collator = DualMaskDataCollator(tokenizer, mlm_probability=args.mlm_probability)
-    data_loader = torch.utils.data.DataLoader(
-        tokenized, shuffle=True, batch_size=args.per_device_train_batch_size, collate_fn=data_collator, drop_last=True
-    )
+        data_collator = DualMaskDataCollator(tokenizer, mlm_probability=args.mlm_probability)
+        data_loader = torch.utils.data.DataLoader(
+            tokenized,
+            shuffle=True,
+            batch_size=args.per_device_train_batch_size,
+            collate_fn=data_collator,
+            drop_last=True,
+        )
 
     config = BertConfig.from_pretrained(args.model_name_or_path)
     model = DualMaskedBertForPreTraining(config)
