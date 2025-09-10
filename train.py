@@ -29,6 +29,7 @@ def parse_args():
     parser.add_argument("--mlm_probability", type=float, default=0.15)
     parser.add_argument("--map_batch_size", type=int, default=100, help="dataset.map 時の batch_size。大き過ぎるとメモリ不足や segfault の原因になる")
     parser.add_argument("--num_proc", type=int, default=1, help="dataset.map 時の並列プロセス数。SentencePiece はスレッドセーフでないため 1 を推奨")
+    parser.add_argument("--use_fast_tokenizer", action="store_true", help="Fast tokenizer (rust-tokenizers) を使うか。デフォルト False で Python 実装を使用し segfault を回避")
     parser.add_argument("--auto_shutdown", action="store_true", help="学習完了後にマシンを自動シャットダウン")
     return parser.parse_args()
 
@@ -37,7 +38,10 @@ def main():
     args = parse_args()
     accelerator = Accelerator()
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=args.use_fast_tokenizer)
+    # Fast tokenizer のスレッド並列を明示的に無効化（環境変数で設定できない場合の保険）
+    import os
+    os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     if tokenizer.mask_token is None:
         tokenizer.add_special_tokens({"mask_token": "[MASK]"})
 
