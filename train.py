@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument("--num_train_epochs", type=int, default=3)
     parser.add_argument("--max_seq_length", type=int, default=128)
     parser.add_argument("--mlm_probability", type=float, default=0.15)
+    parser.add_argument("--auto_shutdown", action="store_true", help="学習完了後にマシンを自動シャットダウン")
     return parser.parse_args()
 
 
@@ -115,6 +116,15 @@ def main():
         accelerator.wait_for_everyone()
         accelerator.unwrap_model(model).save_pretrained(output_dir / "final")
         tokenizer.save_pretrained(output_dir / "final")
+
+    # ---- optional auto shutdown ----
+    if args.auto_shutdown and accelerator.is_main_process:
+        print("Training complete. Shutting down machine in 1 minute...")
+        # 実行ユーザに電源オフ権限があれば停止できる。
+        # バックグラウンドで sleep を挟んでから poweroff
+        import subprocess, shlex
+        cmd = "sleep 60 && poweroff"
+        subprocess.Popen(cmd, shell=True)
 
 
 if __name__ == "__main__":
