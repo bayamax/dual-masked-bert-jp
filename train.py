@@ -43,7 +43,6 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=args.use_fast_tokenizer)
     # Fast tokenizer のスレッド並列を明示的に無効化（環境変数で設定できない場合の保険）
-    import os
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     if tokenizer.mask_token is None:
         tokenizer.add_special_tokens({"mask_token": "[MASK]"})
