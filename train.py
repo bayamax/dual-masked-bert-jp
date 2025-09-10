@@ -18,9 +18,9 @@ from src.data import DualMaskDataCollator
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name_or_path", type=str, default="cl-tohoku/bert-base-japanese")
-    parser.add_argument("--dataset_name", type=str, default="wikipedia")
-    parser.add_argument("--dataset_config_name", type=str, default="20230501.ja")
+    parser.add_argument("--model_name_or_path", type=str, default="cl-tohoku/bert-base-japanese-v2", help="Pretrained model (v2 uses SentencePiece and avoids MeCab dependencies)")
+    parser.add_argument("--dataset_name", type=str, default="wiki40b", help="HuggingFace dataset name (default: wiki40b)")
+    parser.add_argument("--dataset_config_name", type=str, default="ja", help="Dataset config name (default: ja for wiki40b)")
     parser.add_argument("--output_dir", type=str, default="outputs")
     parser.add_argument("--per_device_train_batch_size", type=int, default=16)
     parser.add_argument("--learning_rate", type=float, default=5e-5)
