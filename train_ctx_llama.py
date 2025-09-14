@@ -89,6 +89,7 @@ def main():
     ap.add_argument("--val", required=True)
     ap.add_argument("--model", default="meta-llama/Meta-Llama-3-8B-Instruct")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--vec_prefix", default=None, help="Prefix of precomputed vec shards. If set, skips Llama inference.")
     ap.add_argument("--epochs", type=int, default=1)
     ap.add_argument("--bsz", type=int, default=2)
     args = ap.parse_args()
@@ -126,21 +127,45 @@ def main():
     # combine parameters
     model = nn.ModuleDict({"llama": base, "pred": predictor})
 
-    train_ds = JsonlDocDS(args.train)
-    val_ds   = JsonlDocDS(args.val)
+    if args.vec_prefix:
+        import glob
+
+        class VecShardDataset(torch.utils.data.IterableDataset):
+            def __init__(self, pattern):
+                self.files = sorted(glob.glob(pattern))
+            def __iter__(self):
+                for fp in self.files:
+                    vecs = torch.load(fp, mmap=True)  # (N,K,d) bf16
+                    for v in vecs:
+                        yield v
+
+        def collate_vec(batch, mask_rate=0.15):
+            # batch: list of (K,d) tensors bf16 (cpu)
+            device = args.device if torch.cuda.is_available() else "cpu"
+            tensor = torch.stack(batch).to(device)
+            B,K,d = tensor.shape
+            mask = (torch.rand(B,K, device=device) < mask_rate)
+            labels = tensor.clone()
+            tensor[mask]=0.0
+            return Batch(tensor, labels, mask.float(), None)
+
+        train_ds = VecShardDataset(f"{args.vec_prefix}_*.pt")
+        val_ds   = VecShardDataset(f"{args.vec_prefix.replace('train','val')}_*.pt")
+
+        def make_loader(ds, shuffle):
+            return DataLoader(ds, batch_size=args.bsz, shuffle=shuffle, collate_fn=collate_vec)
+
+    else:
+        train_ds = JsonlDocDS(args.train)
+        val_ds   = JsonlDocDS(args.val)
+
+        def make_loader(ds, shuffle):
+            return DataLoader(ds, batch_size=args.bsz, shuffle=shuffle,
+                              collate_fn=lambda b: collate(b, tokenizer, base_model))
+
     base_model = model["llama"]  # Has .config.hidden_size
-    train_ld = DataLoader(
-        train_ds,
-        batch_size=args.bsz,
-        shuffle=True,
-        collate_fn=lambda b: collate(b, tokenizer, base_model),
-    )
-    val_ld = DataLoader(
-        val_ds,
-        batch_size=args.bsz,
-        shuffle=False,
-        collate_fn=lambda b: collate(b, tokenizer, base_model),
-    )
+    train_ld = make_loader(train_ds, shuffle=True)
+    val_ld   = make_loader(val_ds, shuffle=False)
 
     opt = torch.optim.AdamW(model.parameters(), lr=2e-4)
     model.train()
