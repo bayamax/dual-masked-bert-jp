@@ -128,8 +128,19 @@ def main():
 
     train_ds = JsonlDocDS(args.train)
     val_ds   = JsonlDocDS(args.val)
-    train_ld = DataLoader(train_ds, batch_size=args.bsz, shuffle=True, collate_fn=lambda b: collate(b,tokenizer,model))
-    val_ld   = DataLoader(val_ds,   batch_size=args.bsz, shuffle=False, collate_fn=lambda b: collate(b,tokenizer,model))
+    base_model = model["llama"]  # Has .config.hidden_size
+    train_ld = DataLoader(
+        train_ds,
+        batch_size=args.bsz,
+        shuffle=True,
+        collate_fn=lambda b: collate(b, tokenizer, base_model),
+    )
+    val_ld = DataLoader(
+        val_ds,
+        batch_size=args.bsz,
+        shuffle=False,
+        collate_fn=lambda b: collate(b, tokenizer, base_model),
+    )
 
     opt = torch.optim.AdamW(model.parameters(), lr=2e-4)
     model.train()
