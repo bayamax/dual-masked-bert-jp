@@ -116,7 +116,7 @@ def main():
             B,K,d = x.shape
             return self.mlp(x.view(B*K,d)).view(B,K,d)
 
-    predictor = VecPredictor(base.config.hidden_size).to(args.device)
+    predictor = VecPredictor(base.config.hidden_size).to(args.device, dtype=base.dtype)
 
     # LoRA to predictor layers & base model (optional for memory)
     lora_cfg = LoraConfig(r=16, lora_alpha=32, lora_dropout=0.05, bias="none", target_modules=["q_proj","v_proj","linear"])
