@@ -46,6 +46,7 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output_dir", default="data")
     parser.add_argument("--append", action="store_true", help="append to existing JSONL instead of overwrite")
+    parser.add_argument("--chunk_size", type=int, default=10000, help="flush to disk every N docs to save RAM")
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -63,11 +64,26 @@ def main():
     doc_iter = iter_documents(ds, args.min_sent)
     total = args.max_docs if args.max_docs > 0 else None
 
+    buf_train, buf_val = [], []
+    def flush():
+        nonlocal buf_train, buf_val
+        if buf_train:
+            train_f.writelines(buf_train); buf_train=[]
+        if buf_val:
+            val_f.writelines(buf_val); buf_val=[]
+
     for idx, (doc_id, sents) in enumerate(tqdm(itertools.islice(doc_iter, total), total=total, desc="docs")):
         rec = {"id": doc_id, "sentences": sents}
-        f = train_f if random.random() < args.train_ratio else val_f
-        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        line = json.dumps(rec, ensure_ascii=False) + "\n"
+        if random.random() < args.train_ratio:
+            buf_train.append(line)
+        else:
+            buf_val.append(line)
 
+        if (idx+1) % args.chunk_size == 0:
+            flush()
+
+    flush()
     train_f.close(); val_f.close()
     print("Saved:", train_path, val_path)
 
