@@ -45,6 +45,7 @@ def main():
     parser.add_argument("--train_ratio", type=float, default=0.99, help="Train split ratio; remainder is val")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output_dir", default="data")
+    parser.add_argument("--append", action="store_true", help="append to existing JSONL instead of overwrite")
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -55,8 +56,9 @@ def main():
     train_path = Path(args.output_dir) / "train.jsonl"
     val_path = Path(args.output_dir) / "val.jsonl"
 
-    train_f = train_path.open("w", encoding="utf-8")
-    val_f = val_path.open("w", encoding="utf-8")
+    mode = "a" if args.append else "w"
+    train_f = train_path.open(mode, encoding="utf-8")
+    val_f = val_path.open(mode, encoding="utf-8")
 
     doc_iter = iter_documents(ds, args.min_sent)
     total = args.max_docs if args.max_docs > 0 else None
