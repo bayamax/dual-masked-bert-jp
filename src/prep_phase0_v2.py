@@ -8,6 +8,7 @@ from tqdm import tqdm
 from hippocampus_v2 import HippocampusV2
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 class RandomProjector(nn.Module):
     def __init__(self, in_dim=4096, out_dim=512):
