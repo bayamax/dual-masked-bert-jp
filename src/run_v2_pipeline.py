@@ -30,7 +30,11 @@ def main():
         max_docs = -1 # All
         max_steps = -1 # All epochs
         chunk_size = 128
-        batch_size = 64 # Optimized for RTX 4090
+    else:
+        max_docs = -1 # All
+        max_steps = -1 # All epochs
+        chunk_size = 128
+        batch_size = 32 # Reduced from 64 to safe 32
         
     # Step 1: Data Generation
     if not args.skip_data_gen:
