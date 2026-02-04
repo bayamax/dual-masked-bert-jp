@@ -155,7 +155,10 @@ def main():
                         
                 except torch.cuda.OutOfMemoryError:
                     print(f"OOM at doc {line_idx}, skipping")
-                    del tokens, outputs, hiddens, attn_map
+                    if 'tokens' in locals(): del tokens
+                    if 'outputs' in locals(): del outputs
+                    if 'hiddens' in locals(): del hiddens
+                    if 'attn_map' in locals(): del attn_map
                     torch.cuda.empty_cache()
                     pbar.update(1)
                     continue
