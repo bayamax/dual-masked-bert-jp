@@ -81,9 +81,16 @@ def main():
         # 40k docs -> 100k chunks? 50MB. Safe to load all.
         if hasattr(hippo, 'z_bank'):
             hippo.z_vectors = [z.cpu().to(torch.int8) for z in hippo.z_bank]
-            # text_offsets already loaded.
-            # text_file opened as 'r'. Close it and reopen 'a+'.
-            hippo.text_file.close()
+            # Fix Text Offsets (Numpy -> List)
+            if isinstance(hippo.text_offsets, np.ndarray) or hasattr(hippo.text_offsets, '__len__'):
+                 # Safest conversion
+                 try:
+                     hippo.text_offsets = list(hippo.text_offsets)
+                 except:
+                     pass
+                     
+            if hasattr(hippo, 'text_file') and hippo.text_file:
+                hippo.text_file.close()
             hippo.text_file = open(hippo.text_path, 'a+') # Append mode
             print(f"Loaded {len(hippo.z_vectors)} existing vectors.")
             
