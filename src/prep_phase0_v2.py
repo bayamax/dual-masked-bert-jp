@@ -6,6 +6,7 @@ import json
 from tqdm import tqdm
 from hippocampus_v2 import HippocampusV2
 import torch.nn as nn
+import torch.nn.functional as F
 
 class RandomProjector(nn.Module):
     def __init__(self, in_dim=4096, out_dim=512):
@@ -63,11 +64,7 @@ def main():
     with open(args.data_path, 'r') as f:
         lines = f.readlines()
         
-        # Limit for demo/testing if overly large, but Phase 0 implies full pass.
-        # We will process linearly.
-        
         doc_count = 0 
-        total_chunks = 0
         
         for line in tqdm(lines):
             item = json.loads(line)
@@ -88,23 +85,10 @@ def main():
             if len(chunks) < 2: continue
             
             # --- Encoding & Z-Generation ---
-            # We need to process sequential chunks to get hidden states AND attention
-            # Ideally, process entire sequence at once?
-            # Llama-3-8B might OOM on 20k context if not careful.
-            # But "wiki_long" usually fits in 8k or 4k.
-            # Let's try full sequence forward pass (with no grad).
-            
             try:
                 with torch.no_grad():
                     outputs = model(tokens)
-                    # Last Hidden State for Z
-                    # [1, Seq, Dim]
                     hiddens = outputs.hidden_states[-1]
-                    
-                    # Attention: tuple of [1, Heads, Seq, Seq]
-                    # We usually look at last layer or average of last few.
-                    # Llama3 has 32 layers. Let's look at Layer 30.
-                    # outputs.attentions is a tuple.
                     attn_map = outputs.attentions[-1].mean(dim=1).squeeze(0) # [Seq, Seq]
                     
             except torch.cuda.OutOfMemoryError:
@@ -115,27 +99,16 @@ def main():
             doc_chunk_indices = []
             
             for i, chunk in enumerate(chunks):
-                # 1. Extract Representative Hidden State for this chunk
-                # (e.g., Mean or Last Token)
-                # Let's use Mean of the chunk's hidden states
                 start = i * args.chunk_size
                 end = start + args.chunk_size
                 
                 chunk_h = hiddens[:, start:end, :].mean(dim=1) # [1, Dim]
                 z_vec = projector(chunk_h).squeeze(0) # [512]
                 
-                # 2. Add to Bank (Everything gets an ID)
-                # Note: We store the TOKEN IDS for reconstruction
                 bank_idx = hippo.add(z_vec, chunk.squeeze(0))
                 doc_chunk_indices.append(bank_idx)
                 
-                # 3. Labeling (If i > 0)
-                # Check attention from Current (i) to Past (j < i)
                 if i > 0:
-                    # Current Query Range: start:end
-                    # Max attention to which past block?
-                    
-                    # Only look at past, excluding self
                     best_j = -1
                     max_score = 0.0
                     
@@ -143,26 +116,16 @@ def main():
                         past_s = j * args.chunk_size
                         past_e = past_s + args.chunk_size
                         
-                        # Sum attention from [start:end] to [past_s:past_e]
-                        # Submatrix: Rows (Queries) = Current, Cols (Keys) = Past
                         sub_attn = attn_map[start:end, past_s:past_e]
-                        
-                        # Total attention mass
                         score = sub_attn.sum().item()
-                        # Normalize by chunk size? 
-                        # Or simple sum. If strong link, sum is high.
                         
                         if score > max_score:
                             max_score = score
                             best_j = j
                             
-                    # Threshold Check
-                    # Normalize score? Theoretical max is chunk_size (if all attention goes there).
-                    # Threshold 0.05 means 5% of attention mass goes to that block.
                     norm_score = max_score / args.chunk_size
                     
                     if norm_score > args.threshold and best_j != -1:
-                        # Found a significant link!
                         target_bank_id = doc_chunk_indices[best_j]
                         hippo.add_label(bank_idx, target_bank_id)
                         

@@ -45,11 +45,9 @@ def main():
         print("Step 2: Phase 0 (Index & Label Generation)...")
         # Ensure clean demo dir if demo?
         hippo_dir = f"hippocampus_v2_{args.mode}"
-        cmd = f"python3 src/prep_phase0_v2.py --data_path wiki_long_50k.jsonl --save_dir {hippo_dir} --max_docs {max_docs} --chunk_size {chunk_size}"
-        # Use TinyLlama for demo speed?
-        # if args.mode == "demo": cmd += " --use_tiny"
-        # User requested 15GB diet using Teacher. Let's use 8B if possible even for demo to verify it works.
-        # But for speed, maybe Tiny. Let's stick to default (8B) but limit docs.
+        cmd = f"python3 src/prep_phase0_v2.py --data_path wiki_long_50k.jsonl --save_dir {hippo_dir} --max_docs {max_docs} --chunk_size {chunk_size} --use_tiny"
+        # Force TinyLlama for Phase 0 to ensure tokenizer consistency with Phase 1 (Student = TinyLlama)
+        # unless we implement complex cross-tokenizer mapping.
         run_command(cmd)
     else:
         hippo_dir = f"hippocampus_v2_{args.mode}"
