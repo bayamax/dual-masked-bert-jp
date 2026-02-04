@@ -13,7 +13,7 @@ def run_command(cmd):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", type=str, choices=["demo", "full"], default="demo")
+    parser.add_argument("--mode", type=str, choices=["demo", "full", "large"], default="demo")
     parser.add_argument("--skip_data_gen", action="store_true")
     parser.add_argument("--skip_phase0", action="store_true")
     parser.add_argument("--skip_phase1", action="store_true")
@@ -27,26 +27,37 @@ def main():
         max_steps = 20
         chunk_size = 128
         batch_size = 2
-    else:
+        data_script = "src/prepare_wikitext_remote.py"
+        data_file = "wiki_long_50k.jsonl"
+    elif args.mode == "full":
         max_docs = -1 # All
         max_steps = -1 # All epochs
         chunk_size = 128
         batch_size = 32 # Safe for RTX 4090
+        data_script = "src/prepare_wikitext_remote.py"
+        data_file = "wiki_long_50k.jsonl"
+    elif args.mode == "large":
+        max_docs = -1 # All 500k
+        max_steps = -1 
+        chunk_size = 128
+        batch_size = 32
+        data_script = "src/prepare_fineweb_remote.py"
+        data_file = "fineweb_edu_500k.jsonl"
         
     # Step 1: Data Generation
     if not args.skip_data_gen:
-        if os.path.exists("wiki_long_50k.jsonl"):
-            print("Wiki data already exists. Skipping generation.")
+        if os.path.exists(data_file):
+            print(f"{data_file} already exists. Skipping generation.")
         else:
-            print("Step 1: Generating Wiki Data...")
-            run_command("python3 src/prepare_wikitext_remote.py")
+            print(f"Step 1: Generating Data ({data_file})...")
+            run_command(f"python3 {data_script}")
     
     # Step 2: Phase 0 (Teacher Processing)
     if not args.skip_phase0:
         print("Step 2: Phase 0 (Index & Label Generation)...")
         # Ensure clean demo dir if demo?
         hippo_dir = f"hippocampus_v2_{args.mode}"
-        cmd = f"python3 src/prep_phase0_v2.py --data_path wiki_long_50k.jsonl --save_dir {hippo_dir} --max_docs {max_docs} --chunk_size {chunk_size} --use_tiny"
+        cmd = f"python3 src/prep_phase0_v2.py --data_path {data_file} --save_dir {hippo_dir} --max_docs {max_docs} --chunk_size {chunk_size} --use_tiny"
         # Force TinyLlama for Phase 0 to ensure tokenizer consistency with Phase 1 (Student = TinyLlama)
         run_command(cmd)
     else:

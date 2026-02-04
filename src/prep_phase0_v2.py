@@ -125,7 +125,10 @@ def main():
             try:
                 item = json.loads(line)
                 text = item["text"]
-                tokens = tokenizer.encode(text, add_special_tokens=False, return_tensors="pt").to(device)
+                # Safety Truncation: 4096 tokens (TinyLlama context limit is 2048, but RoPE might handle more?)
+                # Actually TinyLlama 1.1B is 2048. If we exceed, positional embeddings fail.
+                # So we MUST truncate to 2048.
+                tokens = tokenizer.encode(text, add_special_tokens=False, return_tensors="pt", truncation=True, max_length=2048).to(device)
                 seq_len = tokens.size(1)
                 
                 if seq_len < args.chunk_size * 2:
