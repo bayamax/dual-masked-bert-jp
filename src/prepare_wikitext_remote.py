@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 def main():
     print("Loading Wikitext-103 (Scaling to 50k)...")
-    ds = load_dataset("wikitext", "wikitext-103-v1", split="train", streaming=True)
+    ds = load_dataset("wikitext", "wikitext-103-v1", split="train", streaming=False)
     
     output_file = "wiki_long_50k.jsonl"
     count = 0
