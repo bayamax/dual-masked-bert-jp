@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--skip_data_gen", action="store_true")
     parser.add_argument("--skip_phase0", action="store_true")
     parser.add_argument("--skip_phase1", action="store_true")
+    parser.add_argument("--max_docs_override", type=int, default=-1, help="Override max docs for large mode")
     args = parser.parse_args()
     
     print(f"=== Starting Hippocampal Pipeline V2.0 (Mode: {args.mode}) ===")
@@ -38,6 +39,8 @@ def main():
         data_file = "wiki_long_50k.jsonl"
     elif args.mode == "large":
         max_docs = -1 # All 500k
+        if args.max_docs_override > 0:
+            max_docs = args.max_docs_override
         max_steps = -1 
         chunk_size = 128
         batch_size = 32
