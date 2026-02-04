@@ -200,12 +200,11 @@ def main():
                 if doc_count % 100 == 0:
                     with open(progress_file, 'w') as pf:
                         pf.write(str(line_idx + 1))
-                    if doc_count % 1000 == 0:
-                        # Periodic finalize (save Z) just in case?
-                        # HippocampusV2 finalize writes all.
-                        # We can call finalize multiple times if we reload?
-                        # No, finalize closes file.
-                        pass
+                    
+                    if doc_count % 10000 == 0:
+                        # Periodic checkpoint (incremental)
+                        hippo.save_checkpoint()
+                        print(f"Progress Saved at doc_count {doc_count}. Labeled Items: {len(hippo.labels)}")
                         
                 if args.max_docs > 0 and doc_count >= args.max_docs:
                     break

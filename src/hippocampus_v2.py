@@ -62,38 +62,71 @@ class HippocampusV2:
 
     def finalize(self):
         """Save everything to disk for efficient loading"""
-        if self.text_file:
-            self.text_file.close()
-            
-        # Stack Z and Save
+        self.save_checkpoint(finalize=True)
+        
+    def save_checkpoint(self, finalize=False):
+        """
+        Save current state to disk incrementally.
+        Merges self.z_vectors (new buffer) with self.z_bank (existing).
+        """
+        # 1. Merge Z Vectors
         if self.z_vectors:
-            z_stack = torch.stack(self.z_vectors)
-            torch.save(z_stack, self.z_path)
+            z_new = torch.stack(self.z_vectors)
             
-        # Save Offsets
+            if hasattr(self, 'z_bank') and self.z_bank is not None:
+                # Merge with existing
+                # Move to CPU for concatenation to avoid VRAM spike
+                if self.z_bank.device != z_new.device:
+                    z_bank_cpu = self.z_bank.cpu()
+                    z_new_cpu = z_new.cpu()
+                    self.z_bank = torch.cat([z_bank_cpu, z_new_cpu], dim=0)
+                else:
+                    self.z_bank = torch.cat([self.z_bank, z_new], dim=0)
+            else:
+                self.z_bank = z_new.cpu()
+                
+            # Clear buffer
+            self.z_vectors = []
+            
+        # 2. Save Z Bank
+        if hasattr(self, 'z_bank') and self.z_bank is not None:
+            torch.save(self.z_bank, self.z_path)
+
+        # 3. Save Offsets (Always overwrite full list)
         np.save(self.idx_path, np.array(self.text_offsets, dtype=np.int64))
         
-        # Save Labels
+        # 4. Save Labels
         torch.save(self.labels, self.labels_path)
-        print(f"Hippocampus Saved: {len(self.z_vectors)} items.")
+        
+        # 5. Flush Text File
+        if self.text_file:
+            self.text_file.flush()
+            if finalize:
+                self.text_file.close()
+                self.text_file = None
+                
+        # print(f"Hippocampus Checkpoint Saved. Total Items: {len(self.z_bank) if hasattr(self, 'z_bank') else 0}")
         
     def load(self, device="cpu"):
         """Load Z into RAM/GPU"""
         if os.path.exists(self.z_path):
-            self.z_bank = torch.load(self.z_path, map_location="cpu") # Keep Int8 on CPU mostly? Or GPU?
-            # If GPU VRAM is tight, keep CPU. But for search, we need GPU.
-            # Int8 takes 1/4 of Float32. 50k items * 512 bytes = 25MB. Tiny.
-            # Even 1M items = 500MB.
-            # We can put on GPU.
-            self.z_bank = self.z_bank.to(device)
+            self.z_bank = torch.load(self.z_path, map_location="cpu") 
+            # We keep it on CPU for safety during prep.
+            # If device is cuda, user can move it manually or we move it.
+            # But for appending, CPU is safer.
+            # self.z_bank = self.z_bank.to(device)
             
         if os.path.exists(self.idx_path):
-            self.text_offsets = np.load(self.idx_path)
+            # Load as list to allow appending
+            self.text_offsets = list(np.load(self.idx_path))
             
         if os.path.exists(self.labels_path):
             self.labels = torch.load(self.labels_path)
             
-        self.text_file = open(self.text_path, 'r')
+        # Open text file for appending if not open
+        if self.text_file is None:
+             self.text_file = open(self.text_path, 'a+') # Append mode check
+        
         self.device = device
         
     def get_text(self, idx):
