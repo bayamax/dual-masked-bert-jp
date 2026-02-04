@@ -52,6 +52,8 @@ def main():
     
     # 2. Projector (Z-Gen)
     projector = RandomProjector(hidden_dim, 512).to(device)
+    # Match model dtype (likely bf16)
+    projector.to(dtype=model.dtype)
     
     # 3. Hippocampus
     hippo = HippocampusV2(d_model=512, storage_dir=args.save_dir)
