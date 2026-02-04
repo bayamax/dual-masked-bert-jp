@@ -62,6 +62,7 @@ def main():
     parser.add_argument("--data_dir", type=str, default="hippocampus_v2_data")
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--max_steps", type=int, default=-1, help="Stop after N steps")
     args = parser.parse_args()
     
     os.makedirs(args.save_path, exist_ok=True)
@@ -190,9 +191,16 @@ def main():
             if step % 10 == 0:
                 print(f"Step {step}: Recall={loss_recall.item():.4f}, Gen={loss_gen.item():.4f}")
                 
-        # Save per epoch
-        student.save_pretrained(f"{args.save_path}/student_epoch{epoch}")
-        torch.save(hypernet.state_dict(), f"{args.save_path}/hypernet_epoch{epoch}.pt")
+            if args.max_steps > 0 and step >= args.max_steps:
+                print("Max steps reached. Stopping.")
+                break
+        
+        # Save per epoch (or end)
+        student.save_pretrained(f"{args.save_path}/student_last")
+        torch.save(hypernet.state_dict(), f"{args.save_path}/hypernet_last.pt")
+        
+        if args.max_steps > 0 and step >= args.max_steps:
+            break
 
 if __name__ == "__main__":
     main()

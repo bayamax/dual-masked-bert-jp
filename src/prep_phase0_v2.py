@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--chunk_size", type=int, default=128) # B=128
     parser.add_argument("--threshold", type=float, default=0.05) # Attention Threshold
     parser.add_argument("--use_tiny", action="store_true", help="Fallback to TinyLlama")
+    parser.add_argument("--max_docs", type=int, default=-1, help="Limit number of docs for demo")
     args = parser.parse_args()
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -164,6 +165,9 @@ def main():
                         hippo.add_label(bank_idx, target_bank_id)
                         
             doc_count += 1
+            if args.max_docs > 0 and doc_count >= args.max_docs:
+                break
+                
             if doc_count % 100 == 0:
                 print(f"Processed {doc_count} docs. Bank size: {len(hippo.z_vectors)}")
                 
