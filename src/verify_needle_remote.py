@@ -120,6 +120,8 @@ def main():
     # Temporary finalize to stack Z
     hippo.finalize() # Saves to disk
     hippo.load(device=device) # Loads to z_bank
+    if hasattr(hippo, 'z_bank'):
+        hippo.z_bank = hippo.z_bank.to(device)
     
     scores, indices = hippo.search(z_query, top_k=3)
     
