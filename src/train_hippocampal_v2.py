@@ -150,8 +150,10 @@ def main():
             
             # Run Target through Base Model to get KV
             # We must use position_ids explicitly
+            # Fix: Use actual batch size from input, not args.batch_size
+            curr_batch_size = curr_ids.size(0)
             t_len = targ_ids.size(1)
-            t_pos = torch.arange(0, t_len, device=device).unsqueeze(0).expand(args.batch_size, -1)
+            t_pos = torch.arange(0, t_len, device=device).unsqueeze(0).expand(curr_batch_size, -1)
             
             with torch.no_grad(): # Don't train on Target Processing? Or do we?
                 # "KV cache... regenerated".
@@ -169,7 +171,7 @@ def main():
             # 2. Run Current with Injection
             # Current Positions start after Target
             c_len = curr_ids.size(1)
-            c_pos = torch.arange(t_len, t_len + c_len, device=device).unsqueeze(0).expand(args.batch_size, -1)
+            c_pos = torch.arange(t_len, t_len + c_len, device=device).unsqueeze(0).expand(curr_batch_size, -1)
             
             # Pass 2 Forward
             outputs_2 = student(curr_ids, position_ids=c_pos, past_key_values=past_kv, output_hidden_states=True)
