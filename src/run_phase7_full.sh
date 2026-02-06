@@ -10,8 +10,8 @@ echo "=== Starting Phase 7 Full Execution ==="
 # 1. Pipeline Setup: Clean previous data
 # We remove the old jsonl file to start fresh (or you can keep it if you want to accumulate)
 # For a clean "Large Scale Run", let's start fresh.
-echo "[1/3] Clearing previous data..."
-rm -f phase7_attention_distill.jsonl
+# echo "[1/3] Clearing previous data..."
+# rm -f phase7_attention_distill.jsonl
 
 # 2. Data Generation (Optimized vLLM pipeline)
 # 2. Data Generation (Optimized vLLM pipeline with Auto-Retry)

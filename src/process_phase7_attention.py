@@ -31,13 +31,18 @@ def main():
     
     print(f"Processing data from {INPUT_FILE}...")
     
+    start_idx = 0
     if os.path.exists(OUTPUT_FILE):
-        os.remove(OUTPUT_FILE) # Clear output for fresh run
-        
+        with open(OUTPUT_FILE, 'r') as f_check:
+            start_idx = sum(1 for _ in f_check)
+            
+    print(f"Resuming processing from index {start_idx}...")
+    
     with open(INPUT_FILE, 'r') as f_in, open(OUTPUT_FILE, 'a') as f_out:
         lines = f_in.readlines()
         
-        for line in tqdm(lines):
+        # Slicing lines from start_idx
+        for line in tqdm(lines[start_idx:]):
             try:
                 data = json.loads(line)
             except: continue
