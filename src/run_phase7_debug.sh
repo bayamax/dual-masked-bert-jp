@@ -5,7 +5,7 @@ echo "=== Phase 7: DEBUG Pipeline ==="
 
 # 1. Pipeline Setup
 echo "[1/3] Installing Dependencies..."
-python3 -m pip install vllm datasets accelerate transformers peft bitsandbytes output_attentions protobuf
+python3 -m pip install vllm datasets accelerate transformers peft bitsandbytes protobuf
 
 # 2. Data Generation (Small Scale)
 echo "[2/3] Generating Small Dataset (50 samples)..."
