@@ -28,7 +28,7 @@ def main():
     print(f"Model File: {model.config._name_or_path}")
     
     print("Loading Dataset...")
-    dataset = load_dataset("HuggingFaceFW/fineweb-edu-sample-10BT", split="train", streaming=True)
+    dataset = load_dataset("HuggingFaceFW/fineweb-edu", name="sample-10BT", split="train", streaming=True)
     
     data_buffer = []
     
