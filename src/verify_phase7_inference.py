@@ -56,20 +56,30 @@ def main():
             data = json.loads(line)
             chunks.append(data['top_ref_text']) # We act as if these are the available knowledge
     
-    # Embed Chunks
-    # Ideally we use the recursive logic, but for verification we use the same approximation as training (Direct Compression)
+    # Embed Chunks in batches to avoid OOM
+    embed_batch_size = 100
+    all_embeds = []
+    
     with torch.no_grad():
-        inputs_ref = tokenizer(chunks, return_tensors="pt", padding=True, truncation=True, max_length=CHUNK_SIZE).to(device)
-        bs = len(chunks)
-        z_prev_dummy = torch.zeros(bs, 1, model.config.hidden_size, device=device).bfloat16()
+        for i in range(0, len(chunks), embed_batch_size):
+            batch_chunks = chunks[i:i+embed_batch_size]
+            inputs_ref = tokenizer(batch_chunks, return_tensors="pt", padding=True, truncation=True, max_length=CHUNK_SIZE).to(device)
+            bs = len(batch_chunks)
+            z_prev_dummy = torch.zeros(bs, 1, model.config.hidden_size, device=device).bfloat16()
+            
+            ref_embeds = model.get_base_model().model.embed_tokens(inputs_ref.input_ids)
+            combined_embeds = torch.cat([z_prev_dummy, ref_embeds], dim=1)
+            
+            out_ref = model.get_base_model()(inputs_embeds=combined_embeds, output_hidden_states=True)
+            last_hidden = out_ref.hidden_states[-1][:, -1, :]
+            z_refs = hypernet(last_hidden.float()) # [B, Dim]
+            z_refs = F.normalize(z_refs, p=2, dim=1)
+            all_embeds.append(z_refs.cpu())
+            
+            del out_ref, ref_embeds, combined_embeds, inputs_ref
+            torch.cuda.empty_cache()
         
-        ref_embeds = model.get_base_model().model.embed_tokens(inputs_ref.input_ids)
-        combined_embeds = torch.cat([z_prev_dummy, ref_embeds], dim=1)
-        
-        out_ref = model.get_base_model()(inputs_embeds=combined_embeds, output_hidden_states=True)
-        last_hidden = out_ref.hidden_states[-1][:, -1, :]
-        z_refs = hypernet(last_hidden.float()) # [N, Dim]
-        chunk_embeds = F.normalize(z_refs, p=2, dim=1)
+        chunk_embeds = torch.cat(all_embeds, dim=0).to(device)
 
     # 3. Test Inference
     print("-" * 50)
