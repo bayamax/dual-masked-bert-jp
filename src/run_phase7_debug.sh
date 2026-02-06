@@ -8,13 +8,18 @@ echo "[1/3] Installing Dependencies..."
 python3 -m pip install vllm datasets accelerate transformers peft bitsandbytes protobuf
 
 # 2. Data Generation (Small Scale)
-echo "[2/3] Generating Small Dataset (50 samples)..."
-python3 src/prep_attention_distillation.py --num_samples 50
+echo "[2/3] Generating Small Dataset (6 samples)..."
+python3 src/prep_attention_distillation.py --num_samples 6
+
+# Inspect Data
+echo "=== DATA INSPECTION (First 2 lines) ==="
+head -n 2 phase7_attention_distill.jsonl
+echo "======================================"
 
 # 3. Training (Smoke Test)
 echo "[3/3] Running Training Smoke Test (1 Epoch)..."
 if [ -f "phase7_attention_distill.jsonl" ]; then
-    python3 src/train_phase7_distill.py --data_file phase7_attention_distill.jsonl --epochs 1 --max_steps 10
+    python3 src/train_phase7_distill.py --data_file phase7_attention_distill.jsonl --epochs 1 --max_steps 5
 else
     echo "Error: Data file failure."
     exit 1
