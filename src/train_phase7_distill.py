@@ -172,6 +172,9 @@ if __name__ == "__main__":
     parser.add_argument("--data_file", type=str, default="phase7_attention_distill.jsonl")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--max_steps", type=int, default=-1, help="Stop after N steps per epoch for debugging")
+    parser.add_argument("--batch_size", type=int, default=4, help="Batch size for training")
     args = parser.parse_args()
+    global BATCH_SIZE, EPOCHS
+    BATCH_SIZE = args.batch_size
     EPOCHS = args.epochs
     train(args)
