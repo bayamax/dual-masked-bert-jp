@@ -14,8 +14,8 @@ import json
 
 # Configuration
 BASE_MODEL = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-LORA_PATH = "phase7_unified_lora_epoch2"
-HYPERNET_PATH = "phase7_unified_hypernet_epoch2.pt"
+LORA_PATH = "phase7_unified_lora_epoch0"
+HYPERNET_PATH = "phase7_unified_hypernet_epoch0.pt"
 DATA_FILE = "phase7_raw_cot.jsonl"
 HYPERNET_DIM = 2048
 CHUNK_SIZE = 127
