@@ -29,8 +29,12 @@ class AttentionDistillationDataset(Dataset):
         return len(self.samples)
     
     def __getitem__(self, idx):
-        # We return the dict directly, collation will handle batching
-        return self.samples[idx]
+        # Return only fields used in training to avoid collation errors with variable-length lists
+        item = self.samples[idx]
+        return {
+            "query_text": item["query_text"],
+            "top_ref_text": item["top_ref_text"]
+        }
 
 class HyperNetHead(nn.Module):
     def __init__(self, input_dim, output_dim):
