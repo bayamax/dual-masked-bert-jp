@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Configuration
 NUM_SAMPLES=5000

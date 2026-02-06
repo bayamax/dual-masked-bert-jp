@@ -37,9 +37,20 @@ def main():
         
     print(f"Generating {len(prompts)} samples in batches...")
     
-    # Initialize/Clear the file
-    with open(OUTPUT_FILE, "w") as f:
-        pass
+    # Resume Logic
+    start_index = 0
+    if os.path.exists(OUTPUT_FILE):
+        with open(OUTPUT_FILE, "r") as f:
+            start_index = sum(1 for line in f)
+        print(f"Found existing data. Resuming from sample {start_index}...")
+
+    # Calculate remaining work
+    prompts = prompts[start_index:]
+    questions = questions[start_index:]
+    
+    if len(prompts) == 0:
+        print("All samples already generated!")
+        return
 
     batch_size = 500
     total_prompts = len(prompts)
