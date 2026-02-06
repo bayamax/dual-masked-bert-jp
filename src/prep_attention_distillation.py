@@ -108,8 +108,9 @@ def main():
         ratio_ref = sum_past / total_attn
         ratio_query = sum_recent / total_attn
         
-        # Trigger Condition
-        if sum_past > sum_recent:
+        # Trigger Condition: REMOVED for Smoke Test (Save Everything)
+        # if sum_past > sum_recent:
+        if True:
             # Found a loopback in the CoT!
             
             # Chunking Logic (Same as before)
