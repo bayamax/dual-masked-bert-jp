@@ -9,8 +9,8 @@ from peft import PeftModel
 # Configuration matches training
 STUDENT_MODEL_PATH = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 HYPERNET_DIM = 2048
-LORA_ADAPTER = "phase7_lora_epoch0" # Assumes we run this after at least 1 epoch save
-HYPERNET_WEIGHTS = "phase7_hypernet_epoch0.pt"
+LORA_ADAPTER = "phase7_lora_epoch2" 
+HYPERNET_WEIGHTS = "phase7_hypernet_epoch2.pt"
 DATA_FILE = "phase7_attention_distill.jsonl"
 CHUNK_SIZE = 127 # must match training
 
