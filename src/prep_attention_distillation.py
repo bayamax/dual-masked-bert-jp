@@ -9,7 +9,7 @@ from tqdm import tqdm
 # Configuration
 MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
 DATA_OUTPUT = "phase7_attention_distill.jsonl"
-MAX_LENGTH = 4096
+MAX_LENGTH = 2048
 RECENT_WINDOW = 256 # Considered as "Query/Prompt" area
 CHUNK_SIZE = 127 # set to 127 to allow 1 token for 'z' (Recursive Structure: 127 text + 1 z = 128)
 NUM_SAMPLES = 5000
@@ -37,8 +37,8 @@ def main():
         if len(data_buffer) >= NUM_SAMPLES: break
         
         text = sample['text']
-        # Truncate input to 4096 to prevent OOM
-        tokens = tokenizer(text, return_tensors="pt", truncation=True, max_length=4096).input_ids[0].to(model.device)
+        # Truncate input to 2048 to prevent OOM
+        tokens = tokenizer(text, return_tensors="pt", truncation=True, max_length=2048).input_ids[0].to(model.device)
         
         if len(tokens) < 1000: continue
         
@@ -142,6 +142,10 @@ def main():
             
             if len(data_buffer) % 50 == 0:
                 print(f"Collected {len(data_buffer)} samples...")
+        
+        # Cleanup memory
+        del outputs
+        torch.cuda.empty_cache()
 
     # Save
     print(f"Saving {len(data_buffer)} samples to {DATA_OUTPUT}")
