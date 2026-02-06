@@ -10,8 +10,8 @@ from tqdm import tqdm
 MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
 DATA_OUTPUT = "phase7_attention_distill.jsonl"
 MAX_LENGTH = 2048
-RECENT_WINDOW = 256 # Considered as "Query/Prompt" area
-CHUNK_SIZE = 127 # set to 127 to allow 1 token for 'z' (Recursive Structure: 127 text + 1 z = 128)
+RECENT_WINDOW = 64 # Reduced from 256 for Debug/GSM8K
+CHUNK_SIZE = 32 # Reduced from 127 for Debug/GSM8K
 NUM_SAMPLES = 5000
 
 def main():
