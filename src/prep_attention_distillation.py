@@ -20,6 +20,7 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME, 
         torch_dtype=torch.bfloat16, 
+        load_in_8bit=True,
         device_map="auto", 
         attn_implementation="eager" 
     )
