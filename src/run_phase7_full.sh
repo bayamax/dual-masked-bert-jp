@@ -14,8 +14,20 @@ echo "[1/3] Clearing previous data..."
 rm -f phase7_attention_distill.jsonl
 
 # 2. Data Generation (Optimized vLLM pipeline)
+# 2. Data Generation (Optimized vLLM pipeline with Auto-Retry)
 echo "[2/4] Generating Raw CoT with vLLM ($NUM_SAMPLES samples)..."
-python3 src/gen_phase7_vllm.py --num_samples $NUM_SAMPLES
+MAX_RETRIES=20
+COUNT=0
+until python3 src/gen_phase7_vllm.py --num_samples $NUM_SAMPLES; do
+    EXIT_CODE=$?
+    COUNT=$((COUNT+1))
+    echo "Generation crashed with exit code $EXIT_CODE. Retrying in 10s... ($COUNT/$MAX_RETRIES)"
+    sleep 10
+    if [ $COUNT -ge $MAX_RETRIES ]; then
+        echo "Generation failed after $MAX_RETRIES attempts."
+        exit 1
+    fi
+done
 
 # 3. Attention Processing
 echo "[3/4] Processing Attention Weights..."
