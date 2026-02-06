@@ -172,6 +172,10 @@ def train(args):
             
             if step % 10 == 0:
                 print(f"Epoch {epoch} Step {step} Loss: {loss.item():.4f} (Ret: {loss_retrieval.item():.4f})")
+            
+            if args.max_steps > 0 and step >= args.max_steps:
+                print("Max steps reached (Debug mode). Stopping epoch.")
+                break
 
         # Save
         torch.save(hypernet_head.state_dict(), f"phase7_hypernet_epoch{epoch}.pt")
