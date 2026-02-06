@@ -149,10 +149,14 @@ def main():
                 }
                 data_buffer.append(sample_entry)
                 
-                if len(data_buffer) % 1 == 0:
+                if len(data_buffer) % 10 == 0:
                     print(f"Collected {len(data_buffer)} CoT samples...")
                     # Incremental Save
                     with open(DATA_OUTPUT, "a") as f:
+                        f.write(json.dumps(sample_entry) + "\n")
+                else: 
+                     # Still save every sample!
+                     with open(DATA_OUTPUT, "a") as f:
                         f.write(json.dumps(sample_entry) + "\n")
         torch.cuda.empty_cache()
 
