@@ -181,5 +181,11 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_file", type=str, default="phase7_attention_distill.jsonl")
+    parser.add_argument("--epochs", type=int, default=3)
+    parser.add_argument("--max_steps", type=int, default=-1, help="Stop after N steps per epoch for debugging")
     args = parser.parse_args()
+    EPOCHS = args.epochs
+    # Pass max_steps to train if needed, or handle in train loop. 
+    # For simplicity, we just set the global EPOCHS variable or pass args to train.
+    # Current train function takes args. Let's update train function signature if needed or just rely on args.
     train(args)

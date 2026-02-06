@@ -148,4 +148,9 @@ def main():
             f.write(json.dumps(entry) + "\n")
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num_samples", type=int, default=5000)
+    args = parser.parse_args()
+    NUM_SAMPLES = args.num_samples
     main()
