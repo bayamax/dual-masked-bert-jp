@@ -16,9 +16,8 @@ def main():
     print(f"Loading vLLM Model: {MODEL_NAME}...")
     # Initialize vLLM
     # Note: vLLM usually handles memory management better than HF
-    # We might need to adjust gpu_memory_utilization if OOMs occur, but default 0.9 is usually fine or high
-    # Update: Lowering to 0.6 and enabling eager mode for stability on remote instance
-    llm = LLM(model=MODEL_NAME, tensor_parallel_size=1, dtype="bfloat16", gpu_memory_utilization=0.6, enforce_eager=True) 
+    # We restrict max_model_len to 4096 to save KV cache memory (default is 128k!)
+    llm = LLM(model=MODEL_NAME, tensor_parallel_size=1, dtype="bfloat16", gpu_memory_utilization=0.9, enforce_eager=True, max_model_len=4096) 
     
     print("Loading Dataset (GSM8K)...")
     dataset = load_dataset("gsm8k", "main", split="train")
