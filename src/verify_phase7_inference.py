@@ -83,23 +83,14 @@ def main():
 
     # 3. Test Inference
     print("-" * 50)
-    test_query = "How much money does Betty need?" 
-    # Try to pick a question related to the first sample (Betty wallet) if available, 
-    # or just use one of the query texts from the file to see if it retrieves *itself* (sanity check)
+    # Get actual question from raw data (which has the original GSM8K question)
+    RAW_FILE = "phase7_raw_cot.jsonl"
+    test_query = "How many clips did Natalia sell?"  # Fallback
     
-    with open(DATA_FILE, 'r') as f:
-        first_sample = json.loads(f.readline())
-        # Use a part of the query text to simulate a user question
-        # user query in data is often the CoT, so let's just use the PROMPT of the problem if we can infer it
-        # Actually in 'query_text' we see the CoT. The 'top_ref_text' has "Question: ... Answer:..."
-        # Let's extract the Question from top_ref_text of the first sample
-        ref_text = first_sample['top_ref_text']
-        if "Question:" in ref_text:
-            q_start = ref_text.find("Question:") + 9
-            q_end = ref_text.find("Answer:")
-            test_query = ref_text[q_start:q_end].strip()
-        else:
-            test_query = "Sample Question"
+    if os.path.exists(RAW_FILE):
+        with open(RAW_FILE, 'r') as f:
+            first_raw = json.loads(f.readline())
+            test_query = first_raw.get('question', test_query)
 
     print(f"Test Query: {test_query}")
     
