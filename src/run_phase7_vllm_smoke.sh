@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Configuration
 NUM_SMOKE_SAMPLES=10
