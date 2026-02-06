@@ -20,7 +20,7 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME, 
         torch_dtype=torch.bfloat16, 
-        load_in_8bit=True,
+        load_in_4bit=True,
         device_map="auto", 
         attn_implementation="eager" 
     )
@@ -37,7 +37,8 @@ def main():
         if len(data_buffer) >= NUM_SAMPLES: break
         
         text = sample['text']
-        tokens = tokenizer(text, return_tensors="pt").input_ids[0].to(model.device)
+        # Truncate input to 4096 to prevent OOM
+        tokens = tokenizer(text, return_tensors="pt", truncation=True, max_length=4096).input_ids[0].to(model.device)
         
         if len(tokens) < 1000: continue
         
