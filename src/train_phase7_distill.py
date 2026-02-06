@@ -29,12 +29,31 @@ class AttentionDistillationDataset(Dataset):
         return len(self.samples)
     
     def __getitem__(self, idx):
-        # Return only fields used in training to avoid collation errors with variable-length lists
-        item = self.samples[idx]
-        return {
-            "query_text": item["query_text"],
-            "top_ref_text": item["top_ref_text"]
-        }
+        return self.samples[idx]
+
+def custom_collate_fn(batch):
+    # batch is a list of dicts
+    query_texts = [item['query_text'] for item in batch]
+    top_ref_texts = [item['top_ref_text'] for item in batch]
+    
+    # Handle variable length chunk probs
+    # We need to pad them to the max length in this batch
+    chunk_probs_list = [item['label_chunk_probs'] for item in batch]
+    max_len = max(len(p) for p in chunk_probs_list)
+    
+    # Pad with 0.0 (or -1.0 for ignore)
+    # Since these are probabilities summing to 1, 0.0 is safe for "no mass".
+    # We will create a mask if needed, but for now just padding.
+    padded_probs = torch.zeros(len(batch), max_len)
+    for i, p in enumerate(chunk_probs_list):
+        l = len(p)
+        padded_probs[i, :l] = torch.tensor(p)
+        
+    return {
+        "query_text": query_texts,
+        "top_ref_text": top_ref_texts,
+        "label_chunk_probs": padded_probs
+    }
 
 class HyperNetHead(nn.Module):
     def __init__(self, input_dim, output_dim):
@@ -71,7 +90,8 @@ def train(args):
     ], lr=LEARNING_RATE)
     
     dataset = AttentionDistillationDataset(args.data_file)
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+    # Use custom collate_fn
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
     
     criterion_kl = nn.KLDivLoss(reduction='batchmean')
     criterion_mse = nn.MSELoss()
@@ -86,18 +106,10 @@ def train(args):
         for step, batch in enumerate(dataloader):
             # Batch items
             query_texts = batch['query_text'] # List of strings
-            ref_texts = batch['top_ref_text'] # List of strings (Best chunks)
-            chunk_probs = torch.tensor(batch['label_chunk_probs']).to(device) # [B, N_Chunks]? 
-            # Note: chunk_probs logic depends on having ALL candidates. 
-            # For efficiency in this code, let's assume we train Positive/Negative Contrastive or just match the distribution if fixed candidates.
-            # Wait, `label_chunk_probs` is a distribution over the PAST chunks of that specific sample.
-            # To train this, we need to regenerate the Zs for THOSE past chunks.
+            top_ref_texts = batch['top_ref_text'] # List of strings (Best chunks)
+            chunk_probs = batch['label_chunk_probs'].to(device) # [B, Max_Chunks]
             
-            # Simplified Logic for Phase 7 Prototype:
-            # We will generate Z for the "Best Ref" (Positive) and try to pull the Query Z close to it.
-            # We rely on Implicit negatives (in-batch negatives) or just Positive pull?
-            # User wants "Learn Z Logit".
-            # Let's align Query_Z with Positive_Ref_Z.
+            # ... (Rest of training logic remains similar for now)
             
             # 1. Embed Query
             inputs_q = tokenizer(query_texts, return_tensors="pt", padding=True, truncation=True).to(device)
@@ -107,74 +119,42 @@ def train(args):
             z_query = hypernet_head(last_hidden_q.float()) # [B, Dim]
             
             # 2. Embed Ref (The Target/Key) using Recursive Logic
-            # "z_prev + Chunk" -> but we don't have z_prev history in this batch.
-            # APPROXIMATION: Initialize with Zero Z or Dummy Z for the chunk compression?
-            # OR: Just compress the Chunk text 127 tokens.
-            # Ideally we run the recursive chain.
-            # Let's assume for this training step, we compress the [Ref Text] as if it's the sequence.
-            # Input: [Dummy_Z, Ref_Tokens_127]
-            
-            inputs_ref = tokenizer(ref_texts, return_tensors="pt", padding=True, truncation=True, max_length=CHUNK_SIZE).to(device)
-            # Create Dummy Z_prev (Zeros)
-            bs = len(ref_texts)
+            # Note: For strict distillation, we SHOULD embed ALL chunks and compare logits vs chunk_probs.
+            # However, sticking to the Phase 7 prototype plan:
+            # "First, Retrieval Training (Contrastive)"
+            inputs_ref = tokenizer(top_ref_texts, return_tensors="pt", padding=True, truncation=True, max_length=CHUNK_SIZE).to(device)
+            bs = len(top_ref_texts)
             z_prev_dummy = torch.zeros(bs, 1, model.config.hidden_size, device=device).bfloat16()
             
-            # Get Ref Embeddings
             ref_embeds = model.get_base_model().model.embed_tokens(inputs_ref.input_ids) # [B, 127, H]
-            
-            # Concat [Z_dummy, Ref] -> [B, 128, H]
-            # Note: In real recursive, Z_prev is from history. Here we learn the "Compression Function" locally.
             combined_embeds = torch.cat([z_prev_dummy, ref_embeds], dim=1)
             
-            # Run Base Model to get hidden states for Compression
-            # We need to pass `inputs_embeds`
             out_ref = model.get_base_model()(inputs_embeds=combined_embeds, output_hidden_states=True)
             last_hidden_ref = out_ref.hidden_states[-1][:, -1, :] # [B, H]
             z_ref = hypernet_head(last_hidden_ref.float()) # [B, Dim]
             
-            # 3. Retrieval Loss (Cosine Similarity)
+            # 3. Retrieval Loss (Contrastive/InfoNCE)
+            # Align Query Z with the "Best Chunk" Z
             z_q_norm = F.normalize(z_query, p=2, dim=1)
             z_ref_norm = F.normalize(z_ref, p=2, dim=1)
             
-            # In-batch Contrastive Loss (InfoNCE)
-            # We want diag elements to be high.
             logits = torch.mm(z_q_norm, z_ref_norm.t()) / TEMPERATURE
             labels = torch.arange(bs, device=device)
-            loss_retrieval = criterion_kl(F.log_softmax(logits, dim=1), F.one_hot(labels, num_classes=bs).float())
-            # Or just CrossEntropy
             loss_retrieval = F.cross_entropy(logits, labels)
             
-            # 4. Attention Balance Loss (Student Training)
-            # We need to measure Student's attention ratio.
-            # We have `outputs_q` (Query pass). We can inspect attentions if we enabled `output_attentions`.
-            # But the Query pass was just on [Query].
-            # To measure "Query vs Ref" balance, we must inject the Ref and see!
-            
-            # Construct Full Context: [Ref] [Query]
-            # We use the text directly.
-            full_texts = [f"{r}\n{q}" for r, q in zip(ref_texts, query_texts)]
+            # 4. Attention Balance Loss
+            full_texts = [f"{r}\n{q}" for r, q in zip(top_ref_texts, query_texts)]
             inputs_full = tokenizer(full_texts, return_tensors="pt", padding=True).to(device)
-            
             outputs_full = model(inputs_full.input_ids, attention_mask=inputs_full.attention_mask, output_attentions=True)
+            loss_gen = outputs_full.loss
             
-            # Calculate Ratios from Last Layer, Last Token
-            # (Simplified logic similar to Prep Script)
-            attentions = outputs_full.attentions[-1] # [B, Heads, Seq, Seq]
-            avg_attn = attentions.mean(dim=1)[:, -1, :] # [B, Seq]
-            
-            # Split regions (Need token lengths to split exactly)
-            # Approx: Use ratio of lengths?
-            # Or simpler: Just update the model to Generate correctly given the Ref.
-            loss_gen = outputs_full.loss # Causal LM Loss
-            
-            # Total Loss
             loss = loss_retrieval + loss_gen
             
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             
-            if step % 10 == 0:
+            if step % 1 == 0:
                 print(f"Epoch {epoch} Step {step} Loss: {loss.item():.4f} (Ret: {loss_retrieval.item():.4f})")
             
             if args.max_steps > 0 and step >= args.max_steps:
@@ -193,7 +173,4 @@ if __name__ == "__main__":
     parser.add_argument("--max_steps", type=int, default=-1, help="Stop after N steps per epoch for debugging")
     args = parser.parse_args()
     EPOCHS = args.epochs
-    # Pass max_steps to train if needed, or handle in train loop. 
-    # For simplicity, we just set the global EPOCHS variable or pass args to train.
-    # Current train function takes args. Let's update train function signature if needed or just rely on args.
     train(args)
