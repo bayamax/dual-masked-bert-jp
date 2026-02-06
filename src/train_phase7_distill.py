@@ -174,7 +174,6 @@ if __name__ == "__main__":
     parser.add_argument("--max_steps", type=int, default=-1, help="Stop after N steps per epoch for debugging")
     parser.add_argument("--batch_size", type=int, default=16, help="Batch size for training")
     args = parser.parse_args()
-    global BATCH_SIZE, EPOCHS
     BATCH_SIZE = args.batch_size
     EPOCHS = args.epochs
     train(args)
