@@ -35,28 +35,45 @@ def main():
         questions.append(sample['question'])
         count += 1
         
-    print(f"Generating {len(prompts)} samples...")
+    print(f"Generating {len(prompts)} samples in batches...")
+    
+    # Initialize/Clear the file
+    with open(OUTPUT_FILE, "w") as f:
+        pass
+
+    batch_size = 500
+    total_prompts = len(prompts)
     
     sampling_params = SamplingParams(
         temperature=0.6,
         top_p=0.9,
         max_tokens=1024,
-        stop=["Question:", "User:"] # Optional stop tokens
+        stop=["Question:", "User:"] 
     )
+
+    for i in range(0, total_prompts, batch_size):
+        batch_prompts = prompts[i : i + batch_size]
+        batch_questions = questions[i : i + batch_size]
+        
+        print(f"Processing batch {i} to {i+batch_size}...")
+        outputs = llm.generate(batch_prompts, sampling_params)
+        
+        # Append batch results
+        with open(OUTPUT_FILE, "a") as f:
+            for j, output in enumerate(outputs):
+                generated_text = output.outputs[0].text
+                entry = {
+                    "question": batch_questions[j],
+                    "prompt": batch_prompts[j], 
+                    "generated_cot": generated_text
+                }
+                f.write(json.dumps(entry) + "\n")
+                f.flush()
+        
+        # Optional: Force garbage collection if vLLM leaks memory heavily (usually not needed but safe)
+        # import gc; gc.collect()
     
-    outputs = llm.generate(prompts, sampling_params)
-    
-    # Save Results
-    print(f"Saving to {OUTPUT_FILE}...")
-    with open(OUTPUT_FILE, "w") as f:
-        for i, output in enumerate(outputs):
-            generated_text = output.outputs[0].text
-            entry = {
-                "question": questions[i],
-                "prompt": prompts[i], # Good to save the prompt context
-                "generated_cot": generated_text
-            }
-            f.write(json.dumps(entry) + "\n")
+    print(f"Generation Complete. Saved to {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     main()
