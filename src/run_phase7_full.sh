@@ -12,12 +12,16 @@ echo "=== Starting Phase 7 Full Execution ==="
 echo "[1/3] Clearing previous data..."
 rm -f phase7_attention_distill.jsonl
 
-# 2. Data Generation
-echo "[2/3] Generating Dataset ($NUM_SAMPLES samples)..."
-python3 src/prep_attention_distillation.py --num_samples $NUM_SAMPLES
+# 2. Data Generation (Optimized vLLM pipeline)
+echo "[2/4] Generating Raw CoT with vLLM ($NUM_SAMPLES samples)..."
+python3 src/gen_phase7_vllm.py --num_samples $NUM_SAMPLES
 
-# 3. Training
-echo "[3/3] Running Full Training ($EPOCHS Epochs)..."
+# 3. Attention Processing
+echo "[3/4] Processing Attention Weights..."
+python3 src/process_phase7_attention.py
+
+# 4. Training
+echo "[4/4] Running Full Training ($EPOCHS Epochs)..."
 # We do NOT set --max_steps here, allowing full training
 python3 src/train_phase7_distill.py --data_file phase7_attention_distill.jsonl --epochs $EPOCHS
 
