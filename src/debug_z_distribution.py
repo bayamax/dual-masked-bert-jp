@@ -1,7 +1,6 @@
 
 import torch
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
 import numpy as np
 
 DATA_FILE = "phase7_cot_chunks.pt"
