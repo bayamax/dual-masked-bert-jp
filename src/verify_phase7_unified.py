@@ -81,8 +81,8 @@ def main():
     index_meta = []
     
     count = 0
-    # Limit samples for speed
-    limit_samples = 50
+    # Limit samples for speed but large enough for meaningful retrieval
+    limit_samples = 200
     
     for i, sample in enumerate(samples):
         if i >= limit_samples: break
@@ -114,7 +114,7 @@ def main():
     print("VERIFICATION: Retrieval & Generation")
     print("="*60)
     
-    test_samples = samples[:5]
+    test_samples = samples[:10]
     
     for i, sample in enumerate(test_samples):
         q = sample['question']
