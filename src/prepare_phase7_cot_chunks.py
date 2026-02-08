@@ -22,8 +22,8 @@ from tqdm import tqdm
 
 # Configuration
 BASE_MODEL = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-LORA_PATH = "phase7_unified_lora_epoch0"
-HYPERNET_PATH = "phase7_unified_hypernet_epoch0.pt"
+LORA_PATH = "phase7_retrieval_fix_epoch0/lora_epoch0"
+HYPERNET_PATH = "phase7_retrieval_fix_epoch0/hypernet_epoch0.pt"
 CHUNK_SIZE = 127
 HYPERNET_DIM = 2048
 BATCH_SIZE = 32 # Adjust based on VRAM
