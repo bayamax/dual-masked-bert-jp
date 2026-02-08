@@ -162,40 +162,40 @@ def main():
         # We need to find the index of this sample's Chunk 0 in index_meta.
         # Note: sample is in index_samples.
         
-        # Find matches
+        # Find matches by string equality
         found_rank = -1
-        
-        # Optimization: We know where we put it if we tracked strictly, but linear search is safe
-        # Ideally we search by string match of question?
-        
-        for rank, idx in enumerate(top_k.indices.tolist()):
+        top_indices = top_k.indices.tolist()
+        for rank, idx in enumerate(top_indices):
             meta = index_meta[idx]
-            if meta['orig_question'] == q and meta['chunk_idx'] == 0:
-                found_rank = rank + 1
-                break
+            if meta['orig_question'] == q: # Check chunk 0 implicitly or explicitly? Any chunk from same Q is arguably "relevant" context?
+                # But we trained on Q->C0. C1, C2 might be different.
+                # However, for verification, finding the correct SOURCE question is the key.
+                if meta['chunk_idx'] == 0:
+                     found_rank = rank + 1
+                     break
         
         if found_rank == 1: correct_count += 1
         if found_rank != -1: top5_count += 1
         
         total_eval += 1
         
-        if i < 10: # Print details for first 10
-            # Get score of the correct chunk
-            # Correct chunk index in 'index_tensor' is needed.
-            # We iterate to find it.
+        if i < 10: 
+            # Debug Scores
             correct_idx = -1
             for idx, meta in enumerate(index_meta):
                 if meta['orig_question'] == q and meta['chunk_idx'] == 0:
                     correct_idx = idx
                     break
             
-            correct_score = scores[correct_idx].item()
+            correct_score = scores[correct_idx].item() if correct_idx != -1 else 0.0
             top1_score = top_k.values[0].item()
-            top1_text = index_meta[top_k.indices[0].item()]['orig_question'][:30]
+            top1_meta = index_meta[top_indices[0]]
             
-            print(f"Query {i}: {q[:30]}... | Rank: {found_rank if found_rank!=-1 else '>5'}")
-            print(f"  Correct Score: {correct_score:.4f}")
-            print(f"  Top-1 Score:   {top1_score:.4f} (Q: {top1_text}...)")
+            print(f"Query {i}: {q[:50]}...")
+            print(f"  Rank: {found_rank if found_rank!=-1 else '>5'}")
+            print(f"  Target Score: {correct_score:.4f}")
+            print(f"  Top-1  Score: {top1_score:.4f}")
+            print(f"  Top-1  Text:  {top1_meta['orig_question'][:50]}... (same? {top1_meta['orig_question'] == q})")
             
     print("-" * 30)
     print(f"Final Results on {total_eval} Validation Samples:")
