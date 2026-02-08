@@ -100,8 +100,8 @@ def main():
             for j, output in enumerate(outputs):
                 generated_text = output.outputs[0].text
                 
-                # Check if <think> exists
-                has_think = "<think>" in generated_text
+                # Check if <think> content exists (DeepSeek R1 sometimes omits opening tag)
+                has_think = "<think>" in generated_text or "</think>" in generated_text
                 
                 entry = {
                     "instruction": batch_raw[j]['instruction'],
