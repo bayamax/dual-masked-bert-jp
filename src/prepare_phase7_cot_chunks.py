@@ -155,7 +155,7 @@ def main():
     
     # 3. Batch Processing
     dataset = ChunkDataset(flat_chunks, tokenizer)
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
     
     # We will store z-vectors in a list aligned with flat_chunks
     # Since shuffle=False, outputs will be in order.
