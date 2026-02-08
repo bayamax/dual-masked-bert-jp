@@ -16,8 +16,8 @@ import json
 
 # Configuration
 BASE_MODEL = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-LORA_PATH = "phase7_retrieval_fix_epoch0" # Updated
-HYPERNET_PATH = "phase7_retrieval_fix_epoch0/hypernet_epoch0.pt" # Updated (Note: script saved it as hypernet_epoch0.pt inside the dir or separate? Let me check run script)
+LORA_PATH = "phase7_retrieval_fix_epoch0/lora_epoch0" # Updated
+HYPERNET_PATH = "phase7_retrieval_fix_epoch0/hypernet_epoch0.pt" # Updated
 DATA_FILE = "phase7_raw_cot.jsonl"
 HYPERNET_DIM = 2048
 CHUNK_SIZE = 127
