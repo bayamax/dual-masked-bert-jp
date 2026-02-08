@@ -133,6 +133,8 @@ def main():
     
     correct_count = 0
     top5_count = 0
+    soft_correct_count = 0
+    soft_top5_count = 0
     total_eval = 0
     
     # Check first 50 val samples
@@ -158,24 +160,32 @@ def main():
         top_k = torch.topk(scores, k=5)
         
         # Verify
-        # Correct answer is this sample's Chunk 0.
         # We need to find the index of this sample's Chunk 0 in index_meta.
         # Note: sample is in index_samples.
         
         # Find matches by string equality
         found_rank = -1
+        soft_found_rank = -1
+        
         top_indices = top_k.indices.tolist()
+        
         for rank, idx in enumerate(top_indices):
             meta = index_meta[idx]
-            if meta['orig_question'] == q: # Check chunk 0 implicitly or explicitly? Any chunk from same Q is arguably "relevant" context?
-                # But we trained on Q->C0. C1, C2 might be different.
-                # However, for verification, finding the correct SOURCE question is the key.
+            if meta['orig_question'] == q:
+                # Soft Match (Any chunk from same valid Q)
+                if soft_found_rank == -1:
+                    soft_found_rank = rank + 1
+                
+                # Hard Match (Strictly Chunk 0)
                 if meta['chunk_idx'] == 0:
                      found_rank = rank + 1
                      break
         
         if found_rank == 1: correct_count += 1
         if found_rank != -1: top5_count += 1
+        
+        if soft_found_rank == 1: soft_correct_count += 1
+        if soft_found_rank != -1: soft_top5_count += 1
         
         total_eval += 1
         
@@ -192,15 +202,20 @@ def main():
             top1_meta = index_meta[top_indices[0]]
             
             print(f"Query {i}: {q[:50]}...")
-            print(f"  Rank: {found_rank if found_rank!=-1 else '>5'}")
+            print(f"  Strict Rank: {found_rank if found_rank!=-1 else '>5'}")
+            print(f"  Soft Rank:   {soft_found_rank if soft_found_rank!=-1 else '>5'}")
             print(f"  Target Score: {correct_score:.4f}")
             print(f"  Top-1  Score: {top1_score:.4f}")
+            print(f"  Top-1  ChunkIdx: {top1_meta['chunk_idx']}")
             print(f"  Top-1  Text:  {top1_meta['orig_question'][:50]}... (same? {top1_meta['orig_question'] == q})")
             
     print("-" * 30)
     print(f"Final Results on {total_eval} Validation Samples:")
-    print(f"Top-1 Accuracy: {correct_count/total_eval:.2%} ({correct_count}/{total_eval})")
-    print(f"Top-5 Accuracy: {top5_count/total_eval:.2%} ({top5_count}/{total_eval})")
+    print(f"Strict Top-1 Accuracy: {correct_count/total_eval:.2%} ({correct_count}/{total_eval})")
+    print(f"Strict Top-5 Accuracy: {top5_count/total_eval:.2%} ({top5_count}/{total_eval})")
+    print("-" * 10)
+    print(f"Soft Top-1 Accuracy:   {soft_correct_count/total_eval:.2%} ({soft_correct_count}/{total_eval})")
+    print(f"Soft Top-5 Accuracy:   {soft_top5_count/total_eval:.2%} ({soft_top5_count}/{total_eval})")
 
 if __name__ == "__main__":
     main()
