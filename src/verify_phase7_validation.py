@@ -179,8 +179,23 @@ def main():
         
         total_eval += 1
         
-        if i < 5: # Print details for first 5
-            print(f"Query {i}: {q[:40]}... | Rank: {found_rank if found_rank!=-1 else '>5'}")
+        if i < 10: # Print details for first 10
+            # Get score of the correct chunk
+            # Correct chunk index in 'index_tensor' is needed.
+            # We iterate to find it.
+            correct_idx = -1
+            for idx, meta in enumerate(index_meta):
+                if meta['orig_question'] == q and meta['chunk_idx'] == 0:
+                    correct_idx = idx
+                    break
+            
+            correct_score = scores[correct_idx].item()
+            top1_score = top_k.values[0].item()
+            top1_text = index_meta[top_k.indices[0].item()]['orig_question'][:30]
+            
+            print(f"Query {i}: {q[:30]}... | Rank: {found_rank if found_rank!=-1 else '>5'}")
+            print(f"  Correct Score: {correct_score:.4f}")
+            print(f"  Top-1 Score:   {top1_score:.4f} (Q: {top1_text}...)")
             
     print("-" * 30)
     print(f"Final Results on {total_eval} Validation Samples:")
