@@ -64,13 +64,26 @@ def main():
     )
     
     # Load LoRA if exists
+    is_peft = False
     if os.path.exists(LORA_PATH):
         print(f"Loading LoRA from {LORA_PATH}...")
         model = PeftModel.from_pretrained(base_model, LORA_PATH)
+        is_peft = True
     else:
         print("No LoRA found, using base model")
         model = base_model
     model.eval()
+    
+    # Helper to get embedding layer
+    def get_embed_tokens():
+        if is_peft:
+            return model.get_base_model().model.embed_tokens
+        return model.model.embed_tokens
+    
+    def get_model_for_forward():
+        if is_peft:
+            return model.get_base_model()
+        return model
     
     # Load HyperNet if exists
     hypernet = HyperNetHead(model.config.hidden_size, HYPERNET_DIM).to(device).float()
@@ -118,14 +131,14 @@ def main():
                         input_ids = torch.tensor([padded_ids], device=device)
                         
                         # Get embeddings
-                        embeds = model.get_base_model().model.embed_tokens(input_ids)
+                        embeds = get_embed_tokens()(input_ids)
                         
                         # Add z_prev as prefix
                         z_prev_embed = torch.zeros(1, 1, model.config.hidden_size, device=device).bfloat16()
                         combined = torch.cat([z_prev_embed, embeds], dim=1)
                         
                         # Forward pass
-                        outputs = model.get_base_model()(inputs_embeds=combined, output_hidden_states=True)
+                        outputs = get_model_for_forward()(inputs_embeds=combined, output_hidden_states=True)
                         last_hidden = outputs.hidden_states[-1][:, -1, :]
                         
                         # Compute z
