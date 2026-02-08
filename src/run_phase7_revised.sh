@@ -8,11 +8,11 @@ echo "[1/2] Preparing CoT chunks (10000 samples)..."
 python3 src/prepare_phase7_cot_chunks.py --max_samples 10000
 
 # 2. Train (Resume from Epoch 0, Train 5 Epochs with Validation)
-echo "[2/2] Training CoT continuation model (Validation + Best Save)..."
+echo "[2/2] Training CoT continuation model (Validation + Best Save + Batch 64)..."
 python3 src/train_phase7_cot_continuation.py \
     --epochs 5 \
-    --resume_lora phase7_revised_lora_epoch0 \
-    --resume_hypernet phase7_revised_hypernet_epoch0.pt \
+    --resume_lora phase7_accuracy_boost_best/lora \
+    --resume_hypernet phase7_accuracy_boost_best/hypernet.pt \
     --output_dir phase7_accuracy_boost
 
 echo "=== Pipeline Complete ==="

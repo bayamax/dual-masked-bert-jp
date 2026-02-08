@@ -27,7 +27,7 @@ import json
 BASE_MODEL = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 CHUNK_SIZE = 127
 HYPERNET_DIM = 2048
-BATCH_SIZE = 8
+BATCH_SIZE = 64
 LEARNING_RATE = 2e-4
 TEMPERATURE = 0.07
 
@@ -257,6 +257,8 @@ def train(args):
     
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_fn)
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_fn)
+    
+    model.gradient_checkpointing_enable()
     
     optimizer = torch.optim.AdamW([
         {'params': model.parameters()},
