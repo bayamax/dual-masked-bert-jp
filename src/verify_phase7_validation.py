@@ -141,10 +141,14 @@ def main():
     for i, sample in enumerate(eval_target_samples):
         q = sample['question']
         
-        # Encode Q
-        q_inputs = tokenizer(q, return_tensors="pt", padding=True, truncation=True, max_length=CHUNK_SIZE).to(device)
+        # Encode Q (Match Training Logic: Pad to CHUNK_SIZE)
+        q_ids = tokenizer.encode(q, add_special_tokens=False)
+        q_ids = q_ids[:CHUNK_SIZE]
+        q_ids += [tokenizer.pad_token_id] * (CHUNK_SIZE - len(q_ids))
+        q_input_ids = torch.tensor([q_ids], device=device)
+        
         with torch.no_grad():
-            out = model.get_base_model()(q_inputs.input_ids, output_hidden_states=True)
+            out = model.get_base_model()(input_ids=q_input_ids, output_hidden_states=True)
             last = out.hidden_states[-1][:, -1, :]
             z_q = hypernet(last.float())
             z_q = F.normalize(z_q, p=2, dim=1)
