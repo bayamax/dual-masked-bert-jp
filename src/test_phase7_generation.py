@@ -48,7 +48,12 @@ def main():
     distractor_samples = all_samples[:1000]
     index_samples = val_samples + distractor_samples
     
-    # 2. Build Index (Reuse validation logic)
+    # 2. Build Index
+    # We need tokenizer first to decode text if 'text' key is missing
+    print("Loading Model & Tokenizer...")
+    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+    if tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token
+    
     print("Building Index...")
     index_z = []
     index_meta = []
@@ -57,20 +62,21 @@ def main():
         for j, chunk in enumerate(sample['chunks']):
             z = chunk['z_vector'].float()
             index_z.append(z)
+            
+            # Decode text from token_ids if 'text' not in chunk
+            text = chunk.get('text', tokenizer.decode(chunk['token_ids'], skip_special_tokens=True))
+            
             index_meta.append({
                 'orig_question': sample['question'],
                 'chunk_idx': j,
-                'text': chunk['text'], # We need text for generation context
-                'full_cot': sample['full_cot']
+                'text': text, 
+                'full_cot': sample.get('full_cot', '')
             })
             
     index_tensor = torch.stack(index_z).to(device)
     index_tensor = F.normalize(index_tensor, p=2, dim=1)
     
     # 3. Load Model
-    print("Loading Model...")
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
-    if tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token
     
     base_model = AutoModelForCausalLM.from_pretrained(
         BASE_MODEL, torch_dtype=torch.bfloat16, device_map="auto", attn_implementation="eager"
