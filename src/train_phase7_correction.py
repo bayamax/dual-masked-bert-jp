@@ -51,41 +51,26 @@ class CorrectionDataset(Dataset):
         return len(self.samples)
     
     def __getitem__(self, idx):
-        sample = self.samples[idx]
-        chunks = sample['chunks']
+        sample = self.samples[idx] # This is now a "Hard Negative Pair" object
+        
         question = sample['question']
         
-        # We want to train: Q + Wrong_Chunk -> Correct_Chunk (Z)
-        # Most critical case: Finding Start Chunk (C0) 
+        # Hard Negative Mining has already selected the best "Wrong Chunk"
+        distractor_chunk = sample['hard_negative_chunk']
+        distractor_tokens = distractor_chunk['token_ids']
         
-        target_chunk = chunks[0] # Correct Answer
+        target_chunk = sample['target_chunk']
         target_tokens = target_chunk['token_ids']
         target_z = target_chunk['z_vector']
         
-        # Pick a "Wrong" chunk as a distractor
-        # Priority: A chunk from the SAME document that is NOT C0 (e.g., C3)
-        # This simulates "Model retrieved a relevant chunk but it's too far ahead"
-        
-        distractor_candidates = [c for c in chunks if c['chunk_index'] != 0]
-        
-        if not distractor_candidates:
-             # Fallback: Just use Q -> C0 (Standard Retrieval) if no distractors (e.g., only 1 chunk)
-             # But we filtered for num_chunks >= 2, so this shouldn't happen unless logic fails
-             distractor_chunk = chunks[0] # Should not happen often
-        else:
-             distractor_chunk = random.choice(distractor_candidates)
-             
-        distractor_tokens = distractor_chunk['token_ids']
+        # Determine correction type for logging/analysis (optional)
+        # correction_type = "Context Misalignment" if distractor_chunk.get('from_same_sample', False) else "Hard Distractor"
         
         # Construction:
         # <user>Question</user><model><think><ref>WRONG_CHUNK</ref>
         # The model should output Z that matches target_z (C0)
         
         context_text = f"{USER_TAG}{question}{USER_END}{MODEL_TAG}\n{THINK_TAG}{REF_TAG}"
-        
-        # We perform standard SFT on generation as well?
-        # User said: "top1で間違いがあった時に、そのチャンクの生トークンを参照に入れた状態で、正しいzを選ぶように学習して欲しい"
-        # Implies we assume the model *has read* the wrong chunk.
         
         return {
             'question': question,
@@ -355,7 +340,7 @@ def train(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_file", type=str, default="phase7_cot_chunks.pt")
+    parser.add_argument("--data_file", type=str, default="phase7_hard_negatives.pt")
     parser.add_argument("--resume_lora", type=str, default="phase7_accuracy_boost_best/lora")
     parser.add_argument("--resume_hypernet", type=str, default="phase7_accuracy_boost_best/hypernet.pt")
     parser.add_argument("--output_dir", type=str, default="phase7_correction_output")
