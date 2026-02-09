@@ -20,8 +20,8 @@ OUTPUT_DIR = "phase8_combined_model_debug"
 MAX_LENGTH = 2048
 
 # Hyperparameters
-BATCH_SIZE = 4
-ACCUM_STEPS = 8
+BATCH_SIZE = 2 # Reduced from 4
+ACCUM_STEPS = 16 # Increased from 8 to maintain effective batch size 32
 LEARNING_RATE = 1e-4
 EPOCHS = 1
 ALPHA_RET = 0.5
@@ -102,6 +102,10 @@ def train(args):
     model = PeftModel.from_pretrained(base, INIT_LORA_PATH, is_trainable=True)
     model.print_trainable_parameters()
     
+    # Enable Gradient Checkpointing
+    base.gradient_checkpointing_enable()
+    model.enable_input_require_grads() 
+    
     hypernet = HyperNetHead().to(device)
     hypernet.load_state_dict(torch.load(INIT_HYPERNET_PATH, map_location=device))
     hypernet.train()
@@ -113,6 +117,8 @@ def train(args):
     
     print(f"Start Training...")
     global_step = 0
+    
+    torch.cuda.empty_cache()
     
     for epoch in range(EPOCHS):
         model.train()
