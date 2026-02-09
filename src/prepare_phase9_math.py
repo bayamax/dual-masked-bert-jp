@@ -136,8 +136,11 @@ def main():
             # Let's use the first 128 tokens of the answer as the target Z.
             
             target_text_for_z = answer_part[:500] # Approximate char limit for 128 tok
+            
+            # Store the index relative to current_batch_data, NOT the original batch
+            valid_idx = len(current_batch_data)
             texts_to_embed.append(target_text_for_z)
-            map_text_to_sample.append(b_i)
+            map_text_to_sample.append(valid_idx)
             
             current_batch_data.append({
                 'prompt_ids': prompt_ids,
