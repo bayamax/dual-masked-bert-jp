@@ -1,10 +1,13 @@
 """
-Phase 7.6: Retrieval Correction SFT (Iterative Retrieval Training)
+Phase 7.6: Online Retrieval Correction SFT (Dynamic Hard Negative Mining)
 
-Trains the model to correct its retrieval when given a "Wrong" chunk.
-The goal is to teach the model: "If the retrieved context is helpful but not the *start* (or correct next step), use it to find the *actual* correct step."
+Trains the model to correct its retrieval errors "On-the-Fly".
+1. For each batch of questions, the model performs a retrieval search against the full index.
+2. If it retrieves the WRONG chunk (Top-1 Mistake), that specific wrong chunk is used as input context.
+3. The model is then trained to output the CORRECT Z-vector given this "Correction Context".
 
-This addresses the "Context Misalignment" issue where the model retrieves a later chunk (e.g., C3) instead of the start (C0).
+Input: Question + [Top-1 Mistake]
+Target: [Correct Z-Vector]
 """
 
 import torch
@@ -17,6 +20,7 @@ import argparse
 import random
 import os
 import json
+import time
 
 # Configuration
 BASE_MODEL = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
@@ -42,169 +46,14 @@ class HyperNetHead(nn.Module):
     def forward(self, x):
         return self.proj(x)
 
-class CorrectionDataset(Dataset):
-    def __init__(self, samples, tokenizer):
-        self.samples = samples
-        self.tokenizer = tokenizer
-        
-    def __len__(self):
-        return len(self.samples)
-    
-    def __getitem__(self, idx):
-        sample = self.samples[idx] # This is now a "Hard Negative Pair" object
-        
-        question = sample['question']
-        
-        # Hard Negative Mining has already selected the best "Wrong Chunk"
-        distractor_chunk = sample['hard_negative_chunk']
-        distractor_tokens = distractor_chunk['token_ids']
-        
-        target_chunk = sample['target_chunk']
-        target_tokens = target_chunk['token_ids']
-        target_z = target_chunk['z_vector']
-        
-        # Determine correction type for logging/analysis (optional)
-        # correction_type = "Context Misalignment" if distractor_chunk.get('from_same_sample', False) else "Hard Distractor"
-        
-        # Construction:
-        # <user>Question</user><model><think><ref>WRONG_CHUNK</ref>
-        # The model should output Z that matches target_z (C0)
-        
-        context_text = f"{USER_TAG}{question}{USER_END}{MODEL_TAG}\n{THINK_TAG}{REF_TAG}"
-        
-        return {
-            'question': question,
-            'context_prefix': context_text,
-            'distractor_tokens': distractor_tokens,
-            'target_tokens': target_tokens,
-            'target_z': target_z
-        }
-
-def collate_fn(batch):
-    return batch
-
-def evaluate(model, hypernet, val_loader, device):
-    model.eval()
-    hypernet.eval()
-    
-    total_samples = 0
-    correct_retrievals = 0
-    total_loss = 0
-    
-    with torch.no_grad():
-        for batch in val_loader:
-            all_input_ids = []
-            all_labels = []
-            
-            query_embeds_list = [] 
-            target_z_list = []     
-            
-            for item in batch:
-                # Construct Input: Prefix + Distractor + Suffix
-                # We want the model to see the distractor in the context
-                
-                prefix_ids = model.tokenizer.encode(item['context_prefix'], add_special_tokens=False)
-                suffix_ids = model.tokenizer.encode(REF_END, add_special_tokens=False)
-                
-                # Context = Prefix + Distractor + Suffix
-                # We need to ensure the query embedding is computed from this *entire context* or just Q?
-                # User's logic: "Reference the raw token of the wrong chunk... choose correct Z"
-                # So the query should be (Last Token of Distractor Context).
-                
-                context_ids = prefix_ids + item['distractor_tokens'] + suffix_ids
-                
-                target_ids = item['target_tokens'] + [model.tokenizer.eos_token_id]
-                
-                input_ids = context_ids + target_ids
-                labels = [-100] * len(context_ids) + target_ids
-                
-                pad_len = CHUNK_SIZE * 3 - len(input_ids) # Larger buffer for Context+Distractor
-                if pad_len > 0:
-                    input_ids = input_ids + [model.tokenizer.pad_token_id] * pad_len
-                    labels = labels + [-100] * pad_len
-                else:
-                    input_ids = input_ids[:CHUNK_SIZE*3]
-                    labels = labels[:CHUNK_SIZE*3]
-                
-                all_input_ids.append(input_ids)
-                all_labels.append(labels)
-                
-                # For Retrieval Loss, we use the embedding of the last token of 'context_ids'
-                # But our HyperNet takes hidden states. So we need to compute full forward.
-                # We mark this for the loop below.
-                query_embeds_list.append(torch.tensor(context_ids, device=device)) 
-                target_z_list.append(item['target_z'])
-                
-            input_ids = torch.stack([torch.tensor(ids, device=device) for ids in all_input_ids]) # Stack properly
-            labels = torch.stack([torch.tensor(lbls, device=device) for lbls in all_labels])
-            
-            # Forward for Generation Loss
-            if input_ids.size(1) > 2048: # Safety truncation
-                 input_ids = input_ids[:, -2048:]
-                 labels = labels[:, -2048:]
-
-            outputs = model(input_ids=input_ids, labels=labels, output_hidden_states=True)
-            loss_gen = outputs.loss
-            
-            # Forward for Retrieval Loss
-            loss_ret = torch.tensor(0.0, device=device)
-            if len(query_embeds_list) > 0:
-                 # Extract the hidden state at the END of the context (before generation starts)
-                 # We need to find the index of the last token of context.
-                 # Since we padded, we can use the original lengths.
-                 
-                 # Optimization: Utilizing the 'outputs' from generation?
-                 # outputs.hidden_states is a tuple of (L, B, S, H). We want last layer.
-                 last_hidden_states = outputs.hidden_states[-1] # [B, S, H]
-                 
-                 # We need Z from the position corresponding to REF_END
-                 # In 'input_ids', this is right before 'target_ids' start.
-                 # Let's find the effective sequence length of context for each item.
-                 
-                 z_preds = []
-                 for i in range(len(batch)):
-                      # Calculate length of context (prefix + distractor + suffix)
-                      ctx_len = len(model.tokenizer.encode(batch[i]['context_prefix'], add_special_tokens=False)) + \
-                                len(batch[i]['distractor_tokens']) + \
-                                len(model.tokenizer.encode(REF_END, add_special_tokens=False))
-                      
-                      # The Z should come from hidden state at (ctx_len - 1)
-                      # Check bounds
-                      if ctx_len >= last_hidden_states.size(1): ctx_len = last_hidden_states.size(1) - 1
-                      h = last_hidden_states[i, ctx_len-1, :]
-                      z_preds.append(hypernet(h.float()))
-                 
-                 z_q = torch.stack(z_preds)
-                 z_q_norm = F.normalize(z_q, p=2, dim=1)
-                 
-                 z_targets = torch.stack([z.to(device) for z in target_z_list])
-                 z_targets_norm = F.normalize(z_targets.float(), p=2, dim=1)
-                 
-                 logits = torch.mm(z_q_norm, z_targets_norm.t()) # [B, B]
-                 labels_ret = torch.arange(len(batch), device=device)
-                 
-                 preds = torch.argmax(logits, dim=1)
-                 correct_retrievals += (preds == labels_ret).sum().item()
-                 total_samples += len(batch)
-                 
-                 loss_ret = F.cross_entropy(logits / TEMPERATURE, labels_ret)
-            
-            loss = loss_gen + 0.5 * loss_ret
-            total_loss += loss.item()
-
-    avg_loss = total_loss / len(val_loader)
-    acc = correct_retrievals / total_samples if total_samples > 0 else 0
-    return avg_loss, acc
-
 def train(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
     
-    # Load tokenizer
+    # 1. Load Tokenizer & Model
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
     if tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token
     
-    # Load Model (Resume from Phase 7.5 Best)
     print(f"Loading base model & LoRA from {args.resume_lora}")
     base_model = AutoModelForCausalLM.from_pretrained(
         BASE_MODEL,
@@ -215,32 +64,9 @@ def train(args):
     model = PeftModel.from_pretrained(base_model, args.resume_lora, is_trainable=True)
     model.tokenizer = tokenizer
     
-    # HyperNet
     hypernet = HyperNetHead(model.config.hidden_size, HYPERNET_DIM).to(device).float()
     print(f"Loading HyperNet from {args.resume_hypernet}")
     hypernet.load_state_dict(torch.load(args.resume_hypernet, map_location=device))
-    
-    # Dataset
-    print(f"Loading Data: {args.data_file}")
-    all_samples = torch.load(args.data_file)
-    all_samples = [s for s in all_samples if s['num_chunks'] >= 2]
-    
-    # Split
-    total_len = len(all_samples)
-    val_len = int(total_len * 0.1)
-    train_len = total_len - val_len
-    
-    random.seed(42)
-    random.shuffle(all_samples)
-    
-    train_samples = all_samples[:train_len]
-    val_samples = all_samples[train_len:]
-    
-    train_dataset = CorrectionDataset(train_samples, tokenizer)
-    val_dataset = CorrectionDataset(val_samples, tokenizer)
-    
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_fn)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_fn)
     
     model.gradient_checkpointing_enable()
     
@@ -249,101 +75,220 @@ def train(args):
         {'params': hypernet.parameters()}
     ], lr=LEARNING_RATE)
     
-    print("Starting Correction Training...")
-    best_val_acc = 0.0
+    # 2. Load Data & Build Index
+    print(f"Loading Data: {args.data_file}")
+    all_samples = torch.load(args.data_file)
+    # Use only samples with multiple chunks
+    all_samples = [s for s in all_samples if s['num_chunks'] >= 2]
+    
+    # Build In-Memory Index for Fast Retrieval
+    print("Building Index...")
+    all_chunks_meta = [] # Flat list of all chunks
+    all_z_list = []
+    
+    # Map sample_idx to its correct start chunk index in all_chunks_meta
+    sample_to_start_chunk_idx = {}
+    
+    for s_idx, sample in enumerate(all_samples):
+        # We process Q -> C0 (Start Chunk) primarily
+        # So we need to enable searching against ALL chunks 
+        
+        for c in sample['chunks']:
+            global_idx = len(all_chunks_meta)
+            all_chunks_meta.append({
+                'token_ids': c['token_ids'],
+                'chunk_index': c['chunk_index'],
+                'sample_idx': s_idx,
+                'question_text': sample['question'] # Store for fallback
+            })
+            all_z_list.append(c['z_vector']) # CPU tensor
+            
+            if c['chunk_index'] == 0:
+                sample_to_start_chunk_idx[s_idx] = global_idx
+
+    all_z_matrix = torch.stack(all_z_list).to(device).float()
+    all_z_matrix = F.normalize(all_z_matrix, p=2, dim=1)
+    
+    print(f"Indexed {len(all_chunks_meta)} chunks.")
+    
+    # 3. Training Loop (Manual Batching)
+    print("Starting Online Correction Training...")
+    
+    model.train()
+    hypernet.train()
+    
+    # Indices of samples to train on
+    sample_indices = list(range(len(all_samples)))
     
     for epoch in range(args.epochs):
-        model.train()
-        hypernet.train()
-        train_loss = 0
+        random.shuffle(sample_indices)
+        total_loss = 0
+        correct_retrievals = 0 # How often did it get it right *initially*?
+        corrected_retrievals = 0 # How often did it get right *after* correction?
         
-        for step, batch in enumerate(train_loader):
-            # ... (Copied training logic matches evaluate but with backward) ...
+        # Determine Batch Size
+        num_batches = len(sample_indices) // BATCH_SIZE
+        
+        for step in range(num_batches):
+            start_idx = step * BATCH_SIZE
+            batch_idxs = sample_indices[start_idx : start_idx + BATCH_SIZE]
             
-            # Construction (Same as Evaluate)
-            all_input_ids = []
-            all_labels = []
-            target_z_list = []
-            last_hidden_indices = []
+            # --- PHASE 1: RETRIEVAL (No Grad) ---
+            # Run model on Questions to find what it retrieves
             
-            for item in batch:
-                prefix_ids = tokenizer.encode(item['context_prefix'], add_special_tokens=False)
-                suffix_ids = tokenizer.encode(REF_END, add_special_tokens=False)
-                context_ids = prefix_ids + item['distractor_tokens'] + suffix_ids
-                target_ids = item['target_tokens'] + [tokenizer.eos_token_id]
+            questions = [all_samples[i]['question'] for i in batch_idxs]
+            inputs = tokenizer(questions, return_tensors="pt", padding=True, truncation=True, max_length=CHUNK_SIZE)
+            input_ids = inputs.input_ids.to(device)
+            
+            with torch.no_grad():
+                outputs = model.get_base_model()(input_ids=input_ids, output_hidden_states=True)
+                last = outputs.hidden_states[-1][:, -1, :] 
+                z_q = hypernet(last.float())
+                z_q_norm = F.normalize(z_q, p=2, dim=1)
                 
-                input_ids = context_ids + target_ids
+                # Search against database
+                # [B, TotalChunks]
+                sim_scores = torch.mm(z_q_norm, all_z_matrix.t())
+                top_scores, top_indices = torch.topk(sim_scores, k=1, dim=1)
+                top_indices = top_indices.cpu().numpy().flatten()
+            
+            # --- PHASE 2: CONSTRUCT CORRECTION BATCH ---
+            # Identify mistakes and build training batch
+            
+            train_input_ids = []
+            train_labels = []
+            train_target_z = []
+            train_last_token_indices = []
+            
+            for b_i, s_global_idx in enumerate(batch_idxs):
+                s_idx = s_global_idx # Local index into all_samples
+                retrieved_idx = top_indices[b_i]
+                
+                correct_idx = sample_to_start_chunk_idx[s_idx]
+                
+                # Check if correct (Top-1 == Correct)
+                if retrieved_idx == correct_idx:
+                    # It got it right! Good job.
+                    # We can skip correction training for this sample, OR
+                    # randomly inject a "same-doc distractor" to reinforce robustness (optional)
+                    correct_retrievals += 1
+                    
+                    # Optional: 10% chance to force train on a random distractor anyway
+                    if random.random() > 0.1:
+                         continue
+                         
+                    # Pick random distractor from same doc
+                    sample_chunks = all_samples[s_idx]['chunks']
+                    distractor_c = random.choice([c for c in sample_chunks if c['chunk_index'] != 0])
+                    distractor_tokens = distractor_c['token_ids']
+                    
+                else:
+                    # MISTAKE! Use this retrieved chunk as the distractor context
+                    distractor_tokens = all_chunks_meta[retrieved_idx]['token_ids']
+                
+                # Build Training Input
+                # Context: Q + <think><ref>WRONG_CHUNK</ref>
+                # Target: Correct Z (all_z_matrix[correct_idx])
+                
+                q_text = all_samples[s_idx]['question']
+                prefix_text = f"{USER_TAG}{q_text}{USER_END}{MODEL_TAG}\n{THINK_TAG}{REF_TAG}"
+                
+                prefix_ids = tokenizer.encode(prefix_text, add_special_tokens=False)
+                suffix_ids = tokenizer.encode(REF_END, add_special_tokens=False)
+                context_ids = prefix_ids + distractor_tokens + suffix_ids
+                
+                # Append Correct Generation Target (Start Chunk)
+                target_chunk = all_samples[s_idx]['chunks'][0]
+                target_ids = target_chunk['token_ids'] + [tokenizer.eos_token_id]
+                
+                full_input = context_ids + target_ids
                 labels = [-100] * len(context_ids) + target_ids
                 
-                pad_len = CHUNK_SIZE * 3 - len(input_ids)
-                if pad_len > 0:
-                    input_ids = input_ids + [tokenizer.pad_token_id] * pad_len
-                    labels = labels + [-100] * pad_len
+                train_input_ids.append(full_input)
+                train_labels.append(labels)
+                train_target_z.append(all_z_matrix[correct_idx]) # Reuse GPU tensor
+                train_last_token_indices.append(len(context_ids) - 1)
+            
+            if not train_input_ids:
+                continue # Batch was perfect?
+                
+            # --- PHASE 3: TRAINING STEP ---
+            
+            # Pad Batch
+            max_len = max(len(ids) for ids in train_input_ids)
+            # Cap at 2048
+            if max_len > 2048: max_len = 2048
+            
+            padded_inputs = []
+            padded_labels = []
+            
+            for ids, lbls in zip(train_input_ids, train_labels):
+                pad_len = max_len - len(ids)
+                if pad_len >= 0:
+                    padded_inputs.append(ids + [tokenizer.pad_token_id] * pad_len)
+                    padded_labels.append(lbls + [-100] * pad_len)
                 else:
-                    input_ids = input_ids[:CHUNK_SIZE*3]
-                    labels = labels[:CHUNK_SIZE*3]
-                
-                all_input_ids.append(input_ids)
-                all_labels.append(labels)
-                target_z_list.append(item['target_z'])
-                
-                # Index for Z extraction (end of context)
-                ctx_len = len(context_ids)
-                last_hidden_indices.append(ctx_len - 1)
+                    padded_inputs.append(ids[-max_len:])
+                    padded_labels.append(lbls[-max_len:])
             
-            input_ids = torch.stack([torch.tensor(ids, device=device) for ids in all_input_ids])
-            labels = torch.stack([torch.tensor(lbls, device=device) for lbls in all_labels])
+            input_tensor = torch.tensor(padded_inputs, device=device)
+            label_tensor = torch.tensor(padded_labels, device=device)
             
-            if input_ids.size(1) > 2048:
-                 input_ids = input_ids[:, -2048:]
-                 labels = labels[:, -2048:]
-
-            outputs = model(input_ids=input_ids, labels=labels, output_hidden_states=True)
+            # Forward
+            outputs = model(input_ids=input_tensor, labels=label_tensor, output_hidden_states=True)
             loss_gen = outputs.loss
             
             # Retrieval Loss
             last_hidden_states = outputs.hidden_states[-1]
             z_preds = []
-            for i, idx in enumerate(last_hidden_indices):
+            
+            # Extract Z at REF_END
+            for i, idx in enumerate(train_last_token_indices):
                 if idx >= last_hidden_states.size(1): idx = last_hidden_states.size(1) - 1
                 h = last_hidden_states[i, idx, :]
                 z_preds.append(hypernet(h.float()))
             
-            z_q = torch.stack(z_preds)
-            z_q_norm = F.normalize(z_q, p=2, dim=1)
-            z_targets = torch.stack([z.to(device) for z in target_z_list])
-            z_targets_norm = F.normalize(z_targets.float(), p=2, dim=1)
+            z_q_batch = torch.stack(z_preds)
+            z_q_norm = F.normalize(z_q_batch, p=2, dim=1)
+            z_target_batch = torch.stack(train_target_z).to(device) # Should be GPU already?
             
-            logits = torch.mm(z_q_norm, z_targets_norm.t()) / TEMPERATURE
-            labels_ret = torch.arange(len(batch), device=device)
-            loss_ret = F.cross_entropy(logits, labels_ret)
+            # Batch Contrastive Loss
+            # Positive similarity
+            pos_sim = torch.sum(z_q_norm * z_target_batch, dim=1)
+            logits = pos_sim / TEMPERATURE
+            
+            # Simple loss: Maximize positive similarity (Since we don't construct explicit batch negatives here efficiently)
+            # Or use InfoNCE if we treat other batch items as negatives
+            # Let's use InfoNCE against other items in batch
+            
+            all_target_batch = torch.stack(train_target_z)
+            batch_logits = torch.mm(z_q_norm, all_target_batch.t()) / TEMPERATURE
+            batch_labels = torch.arange(len(z_q_batch), device=device)
+            loss_ret = F.cross_entropy(batch_logits, batch_labels)
             
             loss = loss_gen + 0.5 * loss_ret
             
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            train_loss += loss.item()
             
-            if step % 50 == 0:
-                 print(f"Epoch {epoch} Step {step} | Loss: {loss.item():.4f}")
-                 
-        val_loss, val_acc = evaluate(model, hypernet, val_loader, device)
-        print(f"Epoch {epoch} | Train Loss: {train_loss/len(train_loader):.4f} | Val Loss: {val_loss:.4f} | Correction Acc: {val_acc:.4f}")
+            total_loss += loss.item()
+            
+            if step % 10 == 0:
+                print(f"Epoch {epoch} Step {step} | Loss: {loss.item():.4f} | Initial Acc: {correct_retrievals / ((step+1)*BATCH_SIZE):.2%}")
         
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
-            print(f"New Best Accuracy! Saving to {args.output_dir}_best...")
-            if not os.path.exists(f"{args.output_dir}_best"): os.makedirs(f"{args.output_dir}_best")
-            model.save_pretrained(f"{args.output_dir}_best/lora")
-            torch.save(hypernet.state_dict(), f"{args.output_dir}_best/hypernet.pt")
+        print(f"Epoch {epoch} Done. Model Saved.")
+        model.save_pretrained(f"{args.output_dir}_epoch{epoch}")
+        torch.save(hypernet.state_dict(), f"{args.output_dir}_epoch{epoch}/hypernet.pt")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_file", type=str, default="phase7_hard_negatives.pt")
+    # Default to Phase 7 CoT Chunks for Online Mining
+    parser.add_argument("--data_file", type=str, default="phase7_cot_chunks.pt")
     parser.add_argument("--resume_lora", type=str, default="phase7_accuracy_boost_best/lora")
     parser.add_argument("--resume_hypernet", type=str, default="phase7_accuracy_boost_best/hypernet.pt")
-    parser.add_argument("--output_dir", type=str, default="phase7_correction_output")
+    parser.add_argument("--output_dir", type=str, default="phase7_online_correction")
     parser.add_argument("--epochs", type=int, default=3)
     args = parser.parse_args()
+    if not os.path.exists(args.output_dir): os.makedirs(args.output_dir)
     train(args)
