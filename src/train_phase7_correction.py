@@ -26,7 +26,8 @@ import time
 BASE_MODEL = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 CHUNK_SIZE = 127
 HYPERNET_DIM = 2048
-BATCH_SIZE = 64
+BATCH_SIZE = 16
+ACCUM_STEPS = 4
 LEARNING_RATE = 2e-4
 TEMPERATURE = 0.07
 
@@ -116,6 +117,7 @@ def train(args):
     
     model.train()
     hypernet.train()
+    optimizer.zero_grad()
     
     # Indices of samples to train on
     sample_indices = list(range(len(all_samples)))
@@ -267,15 +269,23 @@ def train(args):
             loss_ret = F.cross_entropy(batch_logits, batch_labels)
             
             loss = loss_gen + 0.5 * loss_ret
+            loss = loss / ACCUM_STEPS
             
-            optimizer.zero_grad()
             loss.backward()
-            optimizer.step()
             
-            total_loss += loss.item()
+            if (step + 1) % ACCUM_STEPS == 0:
+                optimizer.step()
+                optimizer.zero_grad()
             
-            if step % 10 == 0:
-                print(f"Epoch {epoch} Step {step} | Loss: {loss.item():.4f} | Initial Acc: {correct_retrievals / ((step+1)*BATCH_SIZE):.2%}")
+            total_loss += loss.item() * ACCUM_STEPS
+            
+            if step % (10 * ACCUM_STEPS) == 0:
+                print(f"Epoch {epoch} Step {step} | Loss: {loss.item() * ACCUM_STEPS:.4f} | Initial Acc: {correct_retrievals / ((step+1)*BATCH_SIZE):.2%}")
+            
+            # Explicit Cleanup
+            del outputs, loss, loss_gen, loss_ret, z_q_batch, z_target_batch, full_input
+            del input_tensor, label_tensor
+            torch.cuda.empty_cache()
         
         print(f"Epoch {epoch} Done. Model Saved.")
         model.save_pretrained(f"{args.output_dir}_epoch{epoch}")
