@@ -180,49 +180,64 @@ def main():
                         processed_batch[b_i]['z_vectors'][c_i] = z.cpu()
                         
         # 3. Construct Training Sequences (Augmentation)
-        # We need a pool of "Wrong Zs". We can use Zs from other samples in the batch.
-        
-        all_z_in_batch = []
-        for p in processed_batch:
-            all_z_in_batch.extend([z for z in p['z_vectors'] if z is not None])
+        # We pick wrong chunks from the current batch processed_batch structure
             
         for p in processed_batch:
             prompt_ids = p['prompt_ids']
             chunks = p['chunk_ids_list']
             zs = p['z_vectors']
             
-            # Format:
-            # [Prompt]
-            # [Ref Z0] [Chunk 0]
-            # [Ref Z1] [Chunk 1] ...
+            final_sequence_segments = []
             
-            # Augmented:
-            # [Prompt]
-            # [Ref Wrong] [Ref Z0] [Chunk 0] ...
-            
-            final_sequence_segments = [] # List of {'type': 'text/z/wrong_z', 'data': ...}
-            
+            # Start with Prompt
             final_sequence_segments.append({'type': 'text', 'ids': prompt_ids})
             
+            # Prepare special token ids
+            ref_start_ids = tokenizer.encode(REF_TAG, add_special_tokens=False)
+            ref_end_ids = tokenizer.encode("</ref>", add_special_tokens=False)
+            
+            # Helper to wrap in ref
+            def wrap_ref(ids):
+                return ref_start_ids + ids + ref_end_ids
+            
             for c_ids, z in zip(chunks, zs):
-                # Augment?
-                if random.random() < AUGMENT_PROB and len(all_z_in_batch) > 1:
-                    # Pick a wrong Z
-                    while True:
-                        wrong_z = random.choice(all_z_in_batch)
-                        # Check cosine sim? If too close, pick another.
-                        # For speed, just assume random choice is likely wrong.
-                        if not torch.equal(wrong_z, z):
-                            break
-                            
-                    final_sequence_segments.append({'type': 'z_input', 'vector': wrong_z, 'is_correct': False})
-                    # After wrong Z, we MUST predict Correct Z.
-                    # The "Correction" action is implicit in the sequence: WrongZ -> CorrectZ.
-                    
-                # Correct Z
-                final_sequence_segments.append({'type': 'z_target', 'vector': z, 'is_correct': True})
+                if z is None: continue # Skip if bad Z
                 
-                # Chunk Tokens
+                # Standard: Predict Z -> Receive Ref -> Generate Text
+                
+                # Augmentation?
+                if random.random() < AUGMENT_PROB and len(processed_batch) > 1: # Need other samples for negatives
+                     # Pick wrong chunk from BATCH (Text + Z)
+                     # picking from `processed_batch` allows getting text
+                     while True:
+                         wrong_sample = random.choice(processed_batch)
+                         if len(wrong_sample['z_vectors']) == 0: continue
+                         wrong_idx = random.randint(0, len(wrong_sample['z_vectors'])-1)
+                         wrong_z = wrong_sample['z_vectors'][wrong_idx]
+                         if wrong_z is None: continue
+                         
+                         # Check strict inequality of Z (or just different sample/index)
+                         if not torch.equal(wrong_z, z):
+                             wrong_chunk_ids = wrong_sample['chunk_ids_list'][wrong_idx]
+                             break
+                     
+                     # Inject Correction Sequence
+                     # 1. "Simulated" Wrong Retrieval (Input)
+                     # Note: We don't train Z on the *failed* step. We assume it happened.
+                     # We provide the Wrong Text.
+                     final_sequence_segments.append({'type': 'text', 'ids': wrap_ref(wrong_chunk_ids)})
+                     
+                     # 2. Retry Z (Target)
+                     final_sequence_segments.append({'type': 'z_target', 'vector': z})
+                     
+                else:
+                     # Normal Z prediction
+                     final_sequence_segments.append({'type': 'z_target', 'vector': z})
+                
+                # 3. Correct Retrieval (Input)
+                final_sequence_segments.append({'type': 'text', 'ids': wrap_ref(c_ids)})
+                
+                # 4. Generation (Target)
                 final_sequence_segments.append({'type': 'text', 'ids': c_ids})
             
             augmented_samples.append(final_sequence_segments)
