@@ -158,6 +158,12 @@ def train(args):
                 
                 if global_step % 10 == 0:
                     print(f"Step {global_step} | Loss: {loss.item()*ACCUM_STEPS:.4f} (Gen: {loss_gen.item():.4f}, Ret: {loss_ret.item():.4f})")
+                
+                if global_step % 100 == 0:
+                    print(f"Saving checkpoint at step {global_step}...")
+                    ckpt_dir = f"{OUTPUT_DIR}_step{global_step}"
+                    model.save_pretrained(ckpt_dir)
+                    torch.save(hypernet.state_dict(), os.path.join(ckpt_dir, "hypernet.pt"))
         
         print(f"Epoch {epoch} Done. Saving...")
         model.save_pretrained(f"{OUTPUT_DIR}_epoch{epoch}")
