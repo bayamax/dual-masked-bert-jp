@@ -99,7 +99,9 @@ def evaluate_model(name, lora_path, hypernet_path, subset, index_tensor, index_m
     hypernet.eval()
     
     correct_base = 0
+    soft_base = 0
     correct_correction = 0
+    soft_correction = 0
     total = 0
     
     for s_i, sample in enumerate(subset):
@@ -125,9 +127,12 @@ def evaluate_model(name, lora_path, hypernet_path, subset, index_tensor, index_m
             r_s_i, r_c_i = index_map[retrieved_global_idx]
             
             is_correct_base = (r_s_i == s_i and r_c_i == 0) # Must find Chunk 0 of correct sample
+            is_soft_base = (r_s_i == s_i) # Any chunk from correct sample
             
             if is_correct_base:
                 correct_base += 1
+            if is_soft_base:
+                soft_base += 1
             
             # 2. Correction Retrieval
             # Scenario: If correct, we test distractor. If incorrect, we use retrieved as distractor.
@@ -189,16 +194,25 @@ def evaluate_model(name, lora_path, hypernet_path, subset, index_tensor, index_m
             retrieved_c_global = top_idx_c.item()
             
             rc_s_i, rc_c_i = index_map[retrieved_c_global]
+            
+            # Correction Metrics
+            # Strict: Same Document AND Chunk 0
             if rc_s_i == s_i and rc_c_i == 0:
                 correct_correction += 1
+            
+            # Soft: Same Document (Any Chunk)
+            if rc_s_i == s_i:
+                soft_correction += 1
                 
         total += 1
         if total % 100 == 0:
             print(f"Processed {total}...")
             
     print(f"\nResults for {name}:")
-    print(f"Base Top-1 Accuracy: {correct_base}/{total} ({correct_base/total:.2%})")
-    print(f"Correction Top-1 Accuracy: {correct_correction}/{total} ({correct_correction/total:.2%})")
+    print(f"Base Strict Top-1: {correct_base}/{total} ({correct_base/total:.2%})")
+    print(f"Base Soft Top-1 (Doc): {soft_base}/{total} ({soft_base/total:.2%})")
+    print(f"Correction Strict Top-1: {correct_correction}/{total} ({correct_correction/total:.2%})")
+    print(f"Correction Soft Top-1: {soft_correction}/{total} ({soft_correction/total:.2%})")
 
 if __name__ == "__main__":
     subset, index_tensor, index_map = load_data()
