@@ -64,7 +64,14 @@ def load_jsonl(path):
                 data.append(json.loads(line))
     return data
 
+import argparse
+
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--limit", type=int, default=0, help="Limit number of samples for smoke test")
+    args = parser.parse_args()
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
     
@@ -85,21 +92,14 @@ def main():
     raw_data = load_jsonl(INPUT_JSONL)
     print(f"Loaded {len(raw_data)} samples.")
     
-    # Also load retrieval corpus to mine "Random Negatives" (or Hard ones?)
-    # For "Re-draw" training, random wrong Z is sufficient to teach "If match is bad, try again".
-    # But Hard Negative is better.
-    # Let's verify compatibility with phase7_cot_chunks.pt (for index).
-    # Ideally we use the SAME index throughout.
-    # But here we just need *some* wrong Z vectors.
-    # We can perform Hard Negative Mining on the fly? No, slow.
-    # We can specific "Random Z" from the batch or random projection.
-    # Let's generate random unit vectors for now? No, model might distinguish "Noise" vs "Real Z".
-    # We must use Real Zs from other samples.
+    if args.limit > 0:
+        print(f"Limiting to {args.limit} samples for smoke test.")
+        raw_data = raw_data[:args.limit]
     
     augmented_samples = []
     
     # We will process in batches to compute Z and build dataset
-    batch_size = 8 
+    batch_size = args.batch_size 
     
     for i in tqdm(range(0, len(raw_data), batch_size)):
         batch = raw_data[i : i+batch_size]
