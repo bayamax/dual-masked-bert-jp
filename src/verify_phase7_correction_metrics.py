@@ -108,36 +108,45 @@ def evaluate_model(name, lora_path, hypernet_path, subset, index_tensor, index_m
     current_index_map = []
     
     chunk_batch_size = 32
-    all_chunk_texts = []
-    all_chunk_meta = [] # (s_i, c_i)
+    all_chunk_tokens = []
     
     for s_i, sample in enumerate(subset):
         for c_i, c in enumerate(sample['chunks']):
-            all_chunk_texts.append(c['text']) 
-            all_chunk_meta.append((s_i, c_i))
+            # Use token_ids directly
+            all_chunk_tokens.append(c['token_ids'])
             
     # Batch Process
+    pad_id = tokenizer.pad_token_id
+    
     with torch.no_grad():
-        for i in range(0, len(all_chunk_texts), chunk_batch_size):
-            texts = all_chunk_texts[i : i+chunk_batch_size]
+        for i in range(0, len(all_chunk_tokens), chunk_batch_size):
+            batch_tokens = all_chunk_tokens[i : i+chunk_batch_size]
             
-            # Tokenize
-            c_inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=CHUNK_SIZE).to(device)
+            # Manual Padding
+            max_len = max(len(t) for t in batch_tokens)
+            if max_len > CHUNK_SIZE: max_len = CHUNK_SIZE # Cap at 127
+            
+            input_ids_list = []
+            attention_mask_list = []
+            
+            for t in batch_tokens:
+                t = t[:max_len] # Truncate
+                pad_len = max_len - len(t)
+                padded = t + [pad_id] * pad_len
+                mask = [1] * len(t) + [0] * pad_len
+                input_ids_list.append(padded)
+                attention_mask_list.append(mask)
+            
+            input_ids = torch.tensor(input_ids_list, device=device)
+            attention_mask = torch.tensor(attention_mask_list, device=device)
             
             # Forward Base
-            out = model.get_base_model()(input_ids=c_inputs.input_ids, output_hidden_states=True)
-            # Last token hidden state
-            # Attention mask handling? 
-            # We want the hidden state of the last *real* token.
-            # But simplistic approach: last index.
-            # Better: gather based on attention mask sum - 1
+            out = model.get_base_model()(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=True)
             
-            seq_lens = c_inputs.attention_mask.sum(dim=1) - 1
+            # Gather Last Real Token
+            seq_lens = attention_mask.sum(dim=1) - 1
             last_hidden_states = out.hidden_states[-1]
-            
-            # Gather
-            # [B, H]
-            batch_h = last_hidden_states[torch.arange(len(texts), device=device), seq_lens, :]
+            batch_h = last_hidden_states[torch.arange(len(batch_tokens), device=device), seq_lens, :]
             
             # HyperNet
             batch_z = hypernet(batch_h.float())
