@@ -98,6 +98,69 @@ def evaluate_model(name, lora_path, hypernet_path, subset, index_tensor, index_m
     hypernet.load_state_dict(hn_state)
     hypernet.eval()
     
+    # --- DYNAMIC RE-EMBEDDING ---
+    print(f"Re-Embedding {len(subset)} samples (x {len([c for s in subset for c in s['chunks']])} chunks) for {name}...")
+    
+    # We need to rebuild index_tensor and index_map for THIS model
+    # Because z-vectors in file might be stale
+    
+    current_index_z = []
+    current_index_map = []
+    
+    chunk_batch_size = 32
+    all_chunk_texts = []
+    all_chunk_meta = [] # (s_i, c_i)
+    
+    for s_i, sample in enumerate(subset):
+        for c_i, c in enumerate(sample['chunks']):
+            all_chunk_texts.append(c['text']) 
+            all_chunk_meta.append((s_i, c_i))
+            
+    # Batch Process
+    with torch.no_grad():
+        for i in range(0, len(all_chunk_texts), chunk_batch_size):
+            texts = all_chunk_texts[i : i+chunk_batch_size]
+            
+            # Tokenize
+            c_inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=CHUNK_SIZE).to(device)
+            
+            # Forward Base
+            out = model.get_base_model()(input_ids=c_inputs.input_ids, output_hidden_states=True)
+            # Last token hidden state
+            # Attention mask handling? 
+            # We want the hidden state of the last *real* token.
+            # But simplistic approach: last index.
+            # Better: gather based on attention mask sum - 1
+            
+            seq_lens = c_inputs.attention_mask.sum(dim=1) - 1
+            last_hidden_states = out.hidden_states[-1]
+            
+            # Gather
+            # [B, H]
+            batch_h = last_hidden_states[torch.arange(len(texts), device=device), seq_lens, :]
+            
+            # HyperNet
+            batch_z = hypernet(batch_h.float())
+            batch_z = F.normalize(batch_z, p=2, dim=1)
+            
+            current_index_z.append(batch_z)
+            
+    # Stacking
+    if current_index_z:
+        index_tensor_dynamic = torch.cat(current_index_z, dim=0)
+    else:
+        index_tensor_dynamic = torch.empty((0, 2048), device=device)
+        
+    print(f"Re-Embedded Index Shape: {index_tensor_dynamic.shape}")
+    
+    # Update map
+    # We need to separate index_map into index_map_dynamic corresponding to all_chunk_meta
+    index_map_dynamic = all_chunk_meta
+    
+    # NOW use index_tensor_dynamic for search
+    index_tensor = index_tensor_dynamic
+    index_map = index_map_dynamic
+    
     correct_base = 0
     soft_base = 0
     correct_correction = 0
