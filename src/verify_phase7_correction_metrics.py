@@ -109,11 +109,13 @@ def evaluate_model(name, lora_path, hypernet_path, subset, index_tensor, index_m
     
     chunk_batch_size = 32
     all_chunk_tokens = []
+    all_chunk_meta = [] # (s_i, c_i)
     
     for s_i, sample in enumerate(subset):
         for c_i, c in enumerate(sample['chunks']):
             # Use token_ids directly
             all_chunk_tokens.append(c['token_ids'])
+            all_chunk_meta.append((s_i, c_i))
             
     # Batch Process
     pad_id = tokenizer.pad_token_id
