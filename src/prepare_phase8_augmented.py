@@ -68,7 +68,7 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--limit", type=int, default=0, help="Limit number of samples for smoke test")
     args = parser.parse_args()
 
@@ -162,7 +162,7 @@ def main():
             # Batch Encode
              with torch.no_grad():
                 # Sub-batching for embedding
-                emb_bs = 256 # Optimized for 4090
+                emb_bs = 64 
                 for j in range(0, len(texts_to_embed), emb_bs):
                     sub_texts = texts_to_embed[j : j+emb_bs]
                     inputs = tokenizer(sub_texts, return_tensors="pt", padding=True, truncation=True, max_length=CHUNK_SIZE).to(device)
