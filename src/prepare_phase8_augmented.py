@@ -115,7 +115,8 @@ def main():
         for b_i, item in enumerate(batch):
             instruction = item.get('instruction', '')
             inp = item.get('input', '')
-            output = item.get('output', '') # Contains <think>...</think> Answer...
+            # use generated_cot if available (contains <think>), else original_output
+            output = item.get('generated_cot', item.get('original_output', ''))
             
             prompt = f"{USER_TAG}{instruction}\n{inp}{USER_END}{MODEL_TAG}\n"
             
