@@ -104,31 +104,11 @@ def main():
         report_to="none"
     )
     
-    # formatting_func to handle different key names if needed
-    def formatting_prompts_func(example):
-        # SFTTrainer passes a dict of lists (batched)
-        output_texts = []
-        # Check available keys
-        keys = example.keys()
-        target_key = "generated_cot" if "generated_cot" in keys else "text"
-        
-        # If "generated_cot" is missing (e.g. math data might have different key?), fallback
-        # But prepare_phase10_data.py mixes them.
-        # Let's inspect what prepare_phase10_data.py actually saved.
-        # It saved whatever gen_phase* saved.
-        # gen_phase8 saved: "instruction", "input", "original_output", "generated_cot", "has_think"
-        # gen_phase9 saved: "question", "ground_truth_answer", "generated_cot"
-        # So "generated_cot" is common!
-        
-        for text in example.get(target_key, []):
-            output_texts.append(text)
-        return output_texts
-
     # Use SFTConfig
     training_args = SFTConfig(
         output_dir=OUTPUT_DIR,
         dataset_text_field="generated_cot", 
-        max_length=MAX_LENGTH, # Found via inspect: it is max_length, not max_seq_length
+        max_length=MAX_LENGTH,
         num_train_epochs=EPOCHS,
         per_device_train_batch_size=BATCH_SIZE,
         gradient_accumulation_steps=GRAD_ACCUM,
@@ -144,7 +124,6 @@ def main():
         model=model,
         train_dataset=dataset,
         peft_config=peft_config,
-        formatting_func=formatting_prompts_func,
         args=training_args
     )
     
