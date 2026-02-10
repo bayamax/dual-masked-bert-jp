@@ -12,7 +12,7 @@ RATIO_MATH = 0.3
 RATIO_RETRIEVAL = 0.2
 
 # File Paths (Assuming standard locations)
-FILE_GENERAL = "phase8_alpaca_reasoning.jsonl"
+FILE_GENERAL = "phase8_reasoning_alpaca.jsonl"
 FILE_MATH = "phase9_reasoning_gsm8k.jsonl"
 FILE_RETRIEVAL = "phase7_correction_data.jsonl" # Or verify_phase7_unified logs if not available
 
