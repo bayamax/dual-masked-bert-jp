@@ -75,7 +75,8 @@ def generate(model, tokenizer, prompt, device):
             attention_mask=attention_mask,
             max_new_tokens=500,
             do_sample=True,
-            temperature=0.6,
+            temperature=0.7,
+            repetition_penalty=1.2,
             pad_token_id=tokenizer.eos_token_id,
             eos_token_id=stop_ids
         )
