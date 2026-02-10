@@ -49,8 +49,6 @@ def main():
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"] # Full target for robust SFT
     )
     
-    model.print_trainable_parameters()
-    
     # HyperNet (Z-Head) - Initialize randomly or load from previous?
     # Ideally, we load from Phase 9 or Phase 8 to keep compatibility?
     # But this is a "Union" model. Let's start fresh and let it learn the Z-space of the composite data.
