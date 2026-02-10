@@ -87,7 +87,7 @@ def generate(model, tokenizer, prompt, device):
             input_ids=input_ids,
             max_new_tokens=500,
             do_sample=True,
-            temperature=0.7,
+            temperature=0.1,
             pad_token_id=tokenizer.eos_token_id,
             eos_token_id=stop_ids
         )
