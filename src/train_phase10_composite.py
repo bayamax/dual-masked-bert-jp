@@ -130,13 +130,7 @@ def main():
     # Use SFTConfig
     training_args = SFTConfig(
         output_dir=OUTPUT_DIR,
-        dataset_text_field="generated_cot", # SFTConfig can take this? Or SFTTrainer? 
-        # In recent TRL, dataset_text_field arg on SFTTrainer is deprecated in favor of SFTConfig, or vice versa?
-        # Actually simplest is to pass it to SFTTrainer but ensure args is SFTConfig.
-        # But the error said SFTTrainer got unexpected keyword 'dataset_text_field'.
-        # This implies we MUST use formatting_func or rename column.
-        # Let's drop dataset_text_field from INIT and use formatting_func.
-        max_seq_length=MAX_LENGTH,
+        dataset_text_field="generated_cot", 
         num_train_epochs=EPOCHS,
         per_device_train_batch_size=BATCH_SIZE,
         gradient_accumulation_steps=GRAD_ACCUM,
@@ -153,6 +147,7 @@ def main():
         train_dataset=dataset,
         peft_config=peft_config,
         formatting_func=formatting_prompts_func,
+        max_seq_length=MAX_LENGTH,
         args=training_args
     )
     
