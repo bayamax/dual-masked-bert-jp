@@ -131,6 +131,7 @@ def main():
     training_args = SFTConfig(
         output_dir=OUTPUT_DIR,
         dataset_text_field="generated_cot", 
+        max_length=MAX_LENGTH, # Found via inspect: it is max_length, not max_seq_length
         num_train_epochs=EPOCHS,
         per_device_train_batch_size=BATCH_SIZE,
         gradient_accumulation_steps=GRAD_ACCUM,
@@ -147,7 +148,6 @@ def main():
         train_dataset=dataset,
         peft_config=peft_config,
         formatting_func=formatting_prompts_func,
-        max_seq_length=MAX_LENGTH,
         args=training_args
     )
     
