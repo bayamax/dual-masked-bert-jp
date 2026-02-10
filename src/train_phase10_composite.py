@@ -107,14 +107,53 @@ def main():
         report_to="none"
     )
     
+    # formatting_func to handle different key names if needed
+    def formatting_prompts_func(example):
+        # SFTTrainer passes a dict of lists (batched)
+        output_texts = []
+        # Check available keys
+        keys = example.keys()
+        target_key = "generated_cot" if "generated_cot" in keys else "text"
+        
+        # If "generated_cot" is missing (e.g. math data might have different key?), fallback
+        # But prepare_phase10_data.py mixes them.
+        # Let's inspect what prepare_phase10_data.py actually saved.
+        # It saved whatever gen_phase* saved.
+        # gen_phase8 saved: "instruction", "input", "original_output", "generated_cot", "has_think"
+        # gen_phase9 saved: "question", "ground_truth_answer", "generated_cot"
+        # So "generated_cot" is common!
+        
+        for text in example.get(target_key, []):
+            output_texts.append(text)
+        return output_texts
+
+    # Use SFTConfig
+    training_args = SFTConfig(
+        output_dir=OUTPUT_DIR,
+        dataset_text_field="generated_cot", # SFTConfig can take this? Or SFTTrainer? 
+        # In recent TRL, dataset_text_field arg on SFTTrainer is deprecated in favor of SFTConfig, or vice versa?
+        # Actually simplest is to pass it to SFTTrainer but ensure args is SFTConfig.
+        # But the error said SFTTrainer got unexpected keyword 'dataset_text_field'.
+        # This implies we MUST use formatting_func or rename column.
+        # Let's drop dataset_text_field from INIT and use formatting_func.
+        max_seq_length=MAX_LENGTH,
+        num_train_epochs=EPOCHS,
+        per_device_train_batch_size=BATCH_SIZE,
+        gradient_accumulation_steps=GRAD_ACCUM,
+        learning_rate=LR,
+        logging_steps=10,
+        save_strategy="epoch",
+        fp16=True,
+        report_to="none",
+        packing=False
+    )
+    
     trainer = SFTTrainer(
         model=model,
         train_dataset=dataset,
         peft_config=peft_config,
-        dataset_text_field="generated_cot", # Checking typical vLLM output key
-        max_seq_length=MAX_LENGTH,
-        args=training_args,
-        packing=False
+        formatting_func=formatting_prompts_func,
+        args=training_args
     )
     
     # Custom Training MLoop for Z-Loss?
