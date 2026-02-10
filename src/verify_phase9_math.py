@@ -43,7 +43,11 @@ def load_model(device, lora_path):
     hypernet.load_state_dict(torch.load(hypernet_path, map_location=device))
     hypernet.eval()
     
-    return model, hypernet, AutoTokenizer.from_pretrained(BASE_MODEL)
+    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        
+    return model, hypernet, tokenizer
 
 from transformers import StoppingCriteria, StoppingCriteriaList
 
@@ -57,37 +61,21 @@ class StopOnTokens(StoppingCriteria):
         return False
 
 def generate(model, tokenizer, prompt, device):
-    input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
+    inputs = tokenizer(prompt, return_tensors="pt")
+    input_ids = inputs.input_ids.to(device)
+    attention_mask = inputs.attention_mask.to(device)
     
-    # Stop tokens: EOS, "USER:", etc.
+    # Stop tokens
     stop_words = ["Question:", "USER:", "\n\nQuestion"]
-    # We can't easily use string stopping without a custom criteria or streamwatcher.
-    # For simplicity in this script, we'll check for EOS token and maybe just rely on the model learning it?
-    # Actually, let's implement a basic stopping criteria for the EOS token at least.
-    # TinyLlama might not emit EOS if not trained to do so?
-    # We trained with pad/eos as separator?
-    # In prepare_phase9: " padded_inputs[padded_inputs == pad_id] = -100 "
-    # We didn't explicitly append EOS to the training data in `prepare`.
-    # Wait, `tokenizer.encode` usually adds special tokens?
-    # `add_special_tokens=False` was used for parts.
-    
-    # We should add a custom stopping criteria for strings if possible, but simpler is just to cut it off.
-    # Let's rely on EOS if the model learned it.
-    # If we didn't train EOS, we *must* use stop strings.
-    
-    # Using transformers' `eos_token_id` is standard. 
-    # Let's add specific token IDs if known. 
-    # "USER" token?
-    
     stop_ids = [tokenizer.eos_token_id]
-    # Add newline?
     
     with torch.no_grad():
         out = model.generate(
             input_ids=input_ids,
+            attention_mask=attention_mask,
             max_new_tokens=500,
             do_sample=True,
-            temperature=0.1,
+            temperature=0.6,
             pad_token_id=tokenizer.eos_token_id,
             eos_token_id=stop_ids
         )
