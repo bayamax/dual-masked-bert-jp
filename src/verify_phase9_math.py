@@ -113,7 +113,7 @@ def main():
     question = "Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?"
     # Answer: 48 + 24 = 72.
     
-    prompt = f"{USER_TAG}{question}{USER_END}{MODEL_TAG}"
+    prompt = f"{USER_TAG}Solve the following math problem step-by-step.\nEnclose your thinking process in <think> tags.\nFinally, provide the answer.\n\nQuestion:\n{question}\n\nAnswer:{USER_END}{MODEL_TAG}"
     
     print(f"Input: {prompt}\n")
     output = generate(model, tokenizer, prompt, device)
