@@ -49,7 +49,6 @@ def main():
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"] # Full target for robust SFT
     )
     
-    model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
     
     # HyperNet (Z-Head) - Initialize randomly or load from previous?
