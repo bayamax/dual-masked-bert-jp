@@ -45,8 +45,42 @@ def load_model(device, lora_path):
     
     return model, hypernet, AutoTokenizer.from_pretrained(BASE_MODEL)
 
+from transformers import StoppingCriteria, StoppingCriteriaList
+
+class StopOnTokens(StoppingCriteria):
+    def __init__(self, stop_ids):
+        self.stop_ids = stop_ids
+    def __call__(self, input_ids, scores, **kwargs):
+        for stop_id in self.stop_ids:
+            if input_ids[0][-1] == stop_id:
+                return True
+        return False
+
 def generate(model, tokenizer, prompt, device):
     input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
+    
+    # Stop tokens: EOS, "USER:", etc.
+    stop_words = ["Question:", "USER:", "\n\nQuestion"]
+    # We can't easily use string stopping without a custom criteria or streamwatcher.
+    # For simplicity in this script, we'll check for EOS token and maybe just rely on the model learning it?
+    # Actually, let's implement a basic stopping criteria for the EOS token at least.
+    # TinyLlama might not emit EOS if not trained to do so?
+    # We trained with pad/eos as separator?
+    # In prepare_phase9: " padded_inputs[padded_inputs == pad_id] = -100 "
+    # We didn't explicitly append EOS to the training data in `prepare`.
+    # Wait, `tokenizer.encode` usually adds special tokens?
+    # `add_special_tokens=False` was used for parts.
+    
+    # We should add a custom stopping criteria for strings if possible, but simpler is just to cut it off.
+    # Let's rely on EOS if the model learned it.
+    # If we didn't train EOS, we *must* use stop strings.
+    
+    # Using transformers' `eos_token_id` is standard. 
+    # Let's add specific token IDs if known. 
+    # "USER" token?
+    
+    stop_ids = [tokenizer.eos_token_id]
+    # Add newline?
     
     with torch.no_grad():
         out = model.generate(
@@ -54,9 +88,18 @@ def generate(model, tokenizer, prompt, device):
             max_new_tokens=500,
             do_sample=True,
             temperature=0.7,
-            pad_token_id=tokenizer.eos_token_id
+            pad_token_id=tokenizer.eos_token_id,
+            eos_token_id=stop_ids
         )
-    return tokenizer.decode(out[0], skip_special_tokens=True)
+    generated = tokenizer.decode(out[0], skip_special_tokens=True)
+    
+    # Manual Truncation for clean look (Post-processing)
+    # This simulates "Stop Strings"
+    for stop in stop_words:
+        if stop in generated[len(prompt):]:
+            generated = generated[:generated.find(stop, len(prompt))]
+            
+    return generated
 
 def main():
     parser = argparse.ArgumentParser()
@@ -70,7 +113,7 @@ def main():
     question = "Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?"
     # Answer: 48 + 24 = 72.
     
-    prompt = f"{USER_TAG}Solve the following math problem step-by-step.\nEnclose your thinking process in <think> tags.\nFinally, provide the answer.\n\nQuestion:\n{question}\n\nAnswer:{USER_END}{MODEL_TAG}"
+    prompt = f"{USER_TAG}{question}{USER_END}{MODEL_TAG}"
     
     print(f"Input: {prompt}\n")
     output = generate(model, tokenizer, prompt, device)
