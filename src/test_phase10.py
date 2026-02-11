@@ -36,7 +36,7 @@ def generate(model, tokenizer, prompt):
             **inputs,
             max_new_tokens=300,
             do_sample=True,
-            temperature=0.6,
+            temperature=temp,
             top_p=0.9,
             repetition_penalty=1.2,
             pad_token_id=tokenizer.eos_token_id,
@@ -44,8 +44,8 @@ def generate(model, tokenizer, prompt):
         )
     return tokenizer.decode(out[0], skip_special_tokens=True)
 
-def run_test(model, tokenizer, prompt, task_type):
-    print(f"\n--- Test: {task_type} ---")
+def run_test(model, tokenizer, prompt, task_type, temp=0.6):
+    print(f"\n--- Test: {task_type} (Temp={temp}) ---")
     print(f"In: {prompt}")
     
     # Format
@@ -54,21 +54,24 @@ def run_test(model, tokenizer, prompt, task_type):
     else:
         full_prompt = f"{USER_TAG}{prompt}{USER_END}{MODEL_TAG}"
         
-    output = generate(model, tokenizer, full_prompt)
+    output = generate(model, tokenizer, full_prompt, temp)
     response = output[len(full_prompt):].strip()
     print(f"Out:\n{response}\n")
 
 def main():
     model, tokenizer = load_model()
     
-    # 1. Math Reasoning (Should see <think> or steps)
-    run_test(model, tokenizer, "If I have 7 apples and eat 2, then buy 5 more, how many do I have?", "math")
+    # 1. Math Reasoning - Test Strictness
+    prompt = "If I have 7 apples and eat 2, then buy 5 more, how many do I have?"
     
-    # 2. General Chat (Should be direct and polite)
-    run_test(model, tokenizer, "Write a short poem about the moon.", "general")
+    # Default (0.6)
+    run_test(model, tokenizer, prompt, "math", temp=0.6)
     
-    # 3. Logic/Reasoning (Alpaca style)
-    run_test(model, tokenizer, "Identify the odd one out: Apple, Banana, Car, Grape.", "general")
+    # Strict (0.2) - Expected to be less creative/hallucinatory
+    run_test(model, tokenizer, prompt, "math", temp=0.2)
+    
+    # Very Strict (0.1)
+    run_test(model, tokenizer, prompt, "math", temp=0.1)
 
 if __name__ == "__main__":
     main()
