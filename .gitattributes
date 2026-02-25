@@ -9,3 +9,4 @@ models/phase7_unified_lora_epoch0/*.safetensors filter=lfs diff=lfs merge=lfs -t
 phase8_combined_model_debug_epoch0/* filter=lfs diff=lfs merge=lfs -text
 phase9_math_model_epoch2/** filter=lfs diff=lfs merge=lfs -text
 phase8_combined_model_debug_epoch0/** filter=lfs diff=lfs merge=lfs -text
+model_backups/phase19/step_4200/model.safetensors.part_* filter=lfs diff=lfs merge=lfs -text
