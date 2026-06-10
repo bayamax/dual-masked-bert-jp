@@ -19,7 +19,7 @@ import memory_core as mc
 from app_session_torch import AppSession
 from decode_policy import DecodePolicy
 
-results, vol_stats = [], []
+results, vol_stats, ANSWERS = [], [], {}
 
 # multi-part problems: long natural CoT, several DISTINCT sub-answers (so the convergence
 # trigger doesn't cut the turn short), one checkable final value each.
@@ -50,6 +50,7 @@ def run(sess, msg, store, name, want=None, custom=None, volume=False, cap=None):
         checks["custom"] = custom(ans)
     ok = all(checks.values()) if checks else True
     results.append((name, ok, checks))
+    ANSWERS[name] = ans
     if volume:
         body = sess.tok.decode(sess.gen[n0:])
         closed = "</think>" in body
@@ -79,6 +80,11 @@ def main():
     ap.add_argument("--cap", type=int, default=1600)
     a = ap.parse_args()
     torch.set_num_threads(os.cpu_count())
+    import app_session_torch
+    app_session_torch.ANSCAP = 4000   # the app's 600-char UX cap truncates part (c) of a
+    # multi-part answer BEFORE the gold check sees it (P1: the 3-year value fell past the
+    # cap). Benchmarks raise it (cf. gsm8k_eval raising T.ANSCAP); so does this battery.
+    # App-side recommendation: make ANSCAP adaptive for multi-part questions.
     import joblib
     from transformers import AutoModelForCausalLM, AutoTokenizer
     from rag import BGERetriever
@@ -125,6 +131,7 @@ def main():
     npass = sum(1 for _, ok, _ in results if ok)
     print(f"\nCOMPOSITE5: {npass}/{len(results)} PASS")
     json.dump({"results": [{"name": n, "ok": o} for n, o, _ in results],
+               "answers": ANSWERS,
                "stream": len(s.gen), "evictions": s.evictions,
                "vol": [{"name": n, "tok": t, "sec": d} for n, t, d, _, _ in vol_stats]},
               open("composite5_results.json", "w"), indent=1)
