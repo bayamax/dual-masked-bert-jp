@@ -234,7 +234,10 @@ class TieredMemory:
         match ('hotel room number' for 'what is my employee ID?') ride along with the
         strong prior-session hit — the union ranking applies min_sim/top_delta across
         BOTH stores so off-topic near-misses are dropped (composite battery S2.recall-L2)."""
-        pool = self.session + [c for c in self.persistent if c not in self.session]
+        pool = [c for c in self.persistent if c not in self.session] + self.session
+        # chronological pool order matters: the sim tie-break prefers LATER list positions
+        # as "more recent", and L2 facts are by definition OLDER than this session's — with
+        # session first, a stale persisted fact would beat its own fresh correction.
         hits = _match(query, pool, self.bge)
         if hits:
             tiers = [("L1·same-session" if c in self.session else "L2·prior-session") for c in hits]

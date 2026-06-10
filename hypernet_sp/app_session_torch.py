@@ -172,6 +172,15 @@ class AppSession:
             return "Got it — saved.", None, []
         intent = self.intent_of(user_msg)
         compute_like = intent in ("math", "command")
+        # store-request phrased as a QUESTION ("Can you remember that my locker code is
+        # 8042?"): interrogative shape routes it to recall, whose empty-retrieval honest
+        # miss would answer "you haven't told me yet" to the very message telling us.
+        # A persist verb + an assertable value = a save, whatever the punctuation.
+        if mc.wants_persist(user_msg) and mc._FACTLIKE.search(user_msg) \
+                and self.specific_spans(user_msg):
+            self.mem.persist(user_msg)
+            self.mem.pin(user_msg)
+            return "Got it — saved.", None, []
         if intent not in ("recall", "lookup") and self.specific_spans(user_msg):
             self.mem.pin(user_msg)
         if intent == "fact":
