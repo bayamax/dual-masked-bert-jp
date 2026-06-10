@@ -173,6 +173,44 @@ class AppSession:
             ans = f"\\boxed{{{box[-1].strip()}}}" if box and box[-1].strip() else ans
         return ans[:ANSCAP]
 
+    @torch.no_grad()
+    def _verify_contains(self, chunks, question):
+        """Micro entailment pass for the uncertain retrieval band: does the Context state
+        the answer? A trailing 'reply NOT ON RECORD if absent' clause inside the quote
+        prompt gets steamrolled by the 'reply with ONLY that value' instruction (v4 t35
+        retest: still quoted the badge code as a blood type). A separate yes/no turn makes
+        verification the PRIMARY task. Isolated context, tiny budgets — cheap, and only
+        runs when retrieval confidence < 0.65."""
+        tok, llm = self.tok, self.llm
+        cache = DynamicCache()
+        aug = (f"Context: {' ; '.join(chunks)}\nQuestion: {question}\n"
+               f"Does the Context state the answer to this exact question? Reply yes or no.")
+        ids = tok.encode(f"<｜User｜>{aug}<｜Assistant｜>", add_special_tokens=True) \
+            + list(self.THINK_OPEN)
+        last = llm(inputs_embeds=self._emb(ids), past_key_values=cache,
+                   use_cache=True).logits[:, -1, :].float()
+        out = []
+        for _ in range(60):                          # short think
+            t = int(torch.multinomial(F.softmax(last[0] / 0.1, -1), 1))
+            if t == self.eos:
+                break
+            out.append(t)
+            last = llm(inputs_embeds=self._emb([t]), past_key_values=cache,
+                       use_cache=True).logits[:, -1, :].float()
+        for t in tok.encode("\n</think>\n\nAnswer: ", add_special_tokens=False):
+            out.append(t)
+            last = llm(inputs_embeds=self._emb([t]), past_key_values=cache,
+                       use_cache=True).logits[:, -1, :].float()
+        for _ in range(4):
+            t = int(last[0].argmax())
+            if t == self.eos:
+                break
+            out.append(t)
+            last = llm(inputs_embeds=self._emb([t]), past_key_values=cache,
+                       use_cache=True).logits[:, -1, :].float()
+        tail = tok.decode(out).split("</think>")[-1].lower()
+        return "yes" in tail
+
     def _web_retrieve(self, query):
         if self.web is None:
             return None, []
@@ -266,15 +304,14 @@ class AppSession:
             # VB-7731' out of a badge-code chunk (v4 t35).
             qv = self.bge._encode([user_msg], is_query=True)[0]
             conf = float(max(self.bge._encode(list(chunks), is_query=False) @ qv))
-            hatch = ("" if conf >= 0.65 else
-                     " If the Context does not actually state the answer to this question, "
-                     "reply exactly: NOT ON RECORD.")
+            if conf < 0.65 and not self._verify_contains(chunks, user_msg):
+                return ("I don't have that saved — you haven't told me yet.", None, [])
             aug = (f"Context (retrieved from {src}): {' ; '.join(chunks)}\n\n"
-                   f"Question: {user_msg}\nThe answer should be stated in the Context above. Do NOT "
+                   f"Question: {user_msg}\nThe answer is stated EXPLICITLY in the Context above. Do NOT "
                    f"calculate, reason about, or transform it, and ignore anything earlier in the "
                    f"conversation — just read the matching value from the Context and reply with ONLY that "
                    f"value, verbatim (keep letter prefixes/punctuation, e.g. 'EMP-1234' not '1234'; use the "
-                   f"most recent value if it was corrected).{hatch}")
+                   f"most recent value if it was corrected).")
         else:
             aug = user_msg
         quote_recall = bool(chunks) and not compute_like
@@ -282,13 +319,9 @@ class AppSession:
         if quote_recall:
             answer = self._clean_quote(aug)
             for _ in range(retries):
-                if "NOT ON RECORD" in answer.upper():   # the escape hatch fired: an honest
-                    return ("I don't have that saved — you haven't told me yet.", None, [])
                 if mc._answer_ok(answer, check_chunks, user_msg):
                     break
                 answer = self._clean_quote(aug)
-            if "NOT ON RECORD" in answer.upper():
-                return ("I don't have that saved — you haven't told me yet.", None, [])
         else:
             snap = (list(self.gen), list(self.kept), self.absorbed)
             answer = self._gen_once(aug)
