@@ -25,11 +25,22 @@ Integration (tiered_rag_mlx._gen_once inner loop):
 import re
 
 _BOXED = re.compile(r"\\boxed\{([^}]*)\}")
-# a concluding value: number (with optional $/%/units glued on) on a line that asserts a
-# result. We deliberately key on assertion verbs so intermediate operands don't count.
+# a concluding value: number (with optional $/%/units glued on) after an assertion verb.
+# The verb list must cover ANSWER-shaped phrasings broadly: the composite battery showed a
+# change-making chain where "she gets $26 back" went UNCOUNTED while "total is 24" was
+# counted 3x — the detector then converged on the intermediate 24. Operand mentions
+# (bare "50 - 24") still don't count.
 _ASSERT_NUM = re.compile(
     r"(?:answer is|answer:|equals|=|total (?:is|of)|result is|gives us|so it'?s|"
-    r"that(?:'s| is)|therefore,?)\s*\$?(-?\d[\d,]*(?:\.\d+)?)", re.I)
+    r"that(?:'s| is)|therefore,?|change (?:is|of|would be)|receives?|left with|"
+    r"expecting)\s*\$?(-?\d[\d,]*(?:\.\d+)?)"
+    r"|(?:gets?|got|give[sn]?|hand(?:ed)?)\s+\$?(-?\d[\d,]*(?:\.\d+)?)\s+(?:back|in change)",
+    re.I)
+
+
+def _assert_values(text):
+    """Canonical values of all answer-shaped assertions, in order."""
+    return [canon_num(m.group(1) or m.group(2)) for m in _ASSERT_NUM.finditer(text)]
 
 
 def canon_num(s):
@@ -78,14 +89,24 @@ class DecodePolicy:
         stream is stuck in an n-gram loop -> caller force-closes think."""
         if self.fired or len(think_text) < self.min_think_chars:
             return False
+        vals = _assert_values(think_text) + [canon_num(m.group(1))
+                                             for m in _BOXED.finditer(think_text)]
         self.counts = {}
-        for m in _ASSERT_NUM.finditer(think_text):
-            c = canon_num(m.group(1))
+        for c in vals:
             self.counts[c] = self.counts.get(c, 0) + 1
-        for m in _BOXED.finditer(think_text):
-            c = canon_num(m.group(1))
-            self.counts[c] = self.counts.get(c, 0) + 1
-        if (self.counts and max(self.counts.values()) >= self.k) or self._think_loop(think_text):
+        if self.counts:
+            mode, n_mode = max(self.counts.items(), key=lambda kv: kv[1])
+            runner_up = max((v for c, v in self.counts.items() if c != mode), default=0)
+            asserted = _assert_values(think_text)
+            last = asserted[-1] if asserted else None
+            # converged = the mode is asserted k+ times, is ALSO the latest assertion, and
+            # has no live competitor (a value asserted 2+ times means the chain is still
+            # weighing two candidates — forcing now would pick a side arbitrarily; the
+            # composite battery's change-making chain is exactly this shape).
+            if n_mode >= self.k and last == mode and runner_up < 2:
+                self.fired = True
+                return True
+        if self._think_loop(think_text):
             self.fired = True
             return True
         return False

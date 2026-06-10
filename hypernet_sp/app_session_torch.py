@@ -238,4 +238,15 @@ class AppSession:
             self.mem.persist(user_msg)
         elif store == "session" and intent == "fact":
             self.mem.remember_session(user_msg)
+        if compute_like and mc._answer_ok(answer, [], user_msg):
+            # self-log the RESULT of a compute turn. The follow-up battery showed why: the
+            # log carries the previous QUESTION but not its answer, so "I pay with $50,
+            # how much change?" forced a full re-derivation of the $24 — and the model
+            # tangled the two questions. With "... — result: 24" in the log, the follow-up
+            # reads the prior result instead of re-deriving it.
+            box = re.findall(r"\\boxed\{([^}]*)\}", answer)
+            nums = re.findall(r"\$?\d[\d,]*(?:\.\d+)?", answer)
+            val = box[-1].strip() if box else (nums[-1] if nums else None)
+            if val:
+                self.mem.remember_session(f"{user_msg} — result: {val}")
         return answer, src, chunks

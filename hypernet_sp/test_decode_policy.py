@@ -37,6 +37,20 @@ def main():
     p = DecodePolicy(k=3)
     r.append(check("short preamble can't fire", not p.note_text("the answer is 4. is 4. is 4.")))
 
+    print("== competing-candidate guard (composite S2.math-followup regression) ==")
+    p = DecodePolicy(k=3)
+    muffin = (PAD + "the total is 24. expecting $26 in change. total is $24. "
+              "she gets $26 back. 4*6 = 24")
+    r.append(check("live competitor (26 x2) blocks firing on the mode (24 x3)",
+                   not p.note_text(muffin)))
+    p = DecodePolicy(k=3)
+    r.append(check("stale mode blocked when latest assertion differs",
+                   not p.note_text(PAD + "total is 24. total is 24. total is 24. change is 26.")))
+    p = DecodePolicy(k=3)
+    r.append(check("change-making verbs now counted: clean convergence on 26 fires",
+                   p.note_text(PAD + "change is 26. she gets 26 back. so the answer is 26.")
+                   and p.converged_answer() == "26"))
+
     print("== boxed counts toward convergence ==")
     p = DecodePolicy(k=2)
     r.append(check("boxed + assertion", p.note_text(PAD + "the answer is 42... \\boxed{42}")))
