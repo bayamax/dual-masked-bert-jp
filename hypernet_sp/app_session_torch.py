@@ -266,5 +266,10 @@ class AppSession:
                 # into re-answering the embedded QUESTION instead of the new one (composite
                 # transcript: it ignored the $50-change question entirely and re-derived the
                 # muffin total). Interrogative text must never be re-injected as context.
+                # And the result line is WORKING STATE, not history: keeping old results
+                # alongside made the model hedge between them ('if 24 then 26; if 32 then
+                # 18' — composite v2 C3). A recompute supersedes the previous result.
+                self.mem.session = [l for l in self.mem.session
+                                    if not l.startswith("Earlier computed result:")]
                 self.mem.remember_session(f"Earlier computed result: {val}.")
         return answer, src, chunks
