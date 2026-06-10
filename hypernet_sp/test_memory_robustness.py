@@ -108,6 +108,22 @@ def main():
                               ["my car is in bay 12", "Actually, make it 6 shelves instead of 5."])
           == ["my car is in bay 12"])
 
+    print("== retrieve_known: strict personal probe for lookup-routed turns (v3 B3/B4) ==")
+
+    class AnchorBGE:                                # high sim everywhere: only the lexical
+        def _encode(self, texts, is_query=False):   # anchor must do the blocking
+            return np.array([[0.9, 0.0]] if is_query else [[0.8, 0.0]] * len(texts))
+
+    with tempfile.TemporaryDirectory() as d:
+        m = mc.TieredMemory(os.path.join(d, "m.jsonl"), bge=AnchorBGE())
+        m.session.append("I'm planning a trip to Kyoto next month.")
+        check("no shared content word -> world question NOT shadowed (even at sim 0.72)",
+              m.retrieve_known("Who is the current emperor of Japan?") == (None, []))
+        m.session.append("My colleague Daniel lives in Sapporo.")
+        src, ch = m.retrieve_known("Where does Daniel live?")
+        check("entity anchor admits the personal fact",
+              ch == ["My colleague Daniel lives in Sapporo."])
+
     print("\n== FINDINGS (reported, not asserted) ==")
     jp_q, jp_store = "私の部屋番号は何ですか?", ["私の部屋番号は1408です"]
     lex = mc._matches(jp_q, jp_store)

@@ -201,13 +201,18 @@ class AppSession:
                 # truthful answer, and it costs zero tokens.
                 return ("I don't have that saved — you haven't told me yet.", None, [])
         elif intent == "lookup":
-            wm_only = [p for p in self.mem.pins if p not in self.mem.session]
-            mp = mc._sem_matches(user_msg, wm_only, self.bge, min_sim=0.5) if wm_only else None
-            if mp:
-                src, chunks = "WM·pins", mp
-            else:
-                q = expand_web_query(user_msg, self.mem.pins, self.mem.session)
-                src, chunks = self._web_retrieve(q)
+            # known-fact first (strict): a personal question that surface-classifies as a
+            # world lookup ('Where does my sister live?', 'Where does Daniel live?') must
+            # quote what the user told us, not hit the web (composite v3 B3/B4).
+            src, chunks = self.mem.retrieve_known(user_msg)
+            if not chunks:
+                wm_only = [p for p in self.mem.pins if p not in self.mem.session]
+                mp = mc._sem_matches(user_msg, wm_only, self.bge, min_sim=0.5) if wm_only else None
+                if mp:
+                    src, chunks = "WM·pins", mp
+                else:
+                    q = expand_web_query(user_msg, self.mem.pins, self.mem.session)
+                    src, chunks = self._web_retrieve(q)
         elif intent == "command" and (self.mem.session or self.mem.pins):
             log = self.mem.session[-self.mem.LOGCAP:]
             # a pin is redundant when a log line EXTENDS it ('<question> — result: 24'

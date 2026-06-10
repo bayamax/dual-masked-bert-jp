@@ -229,6 +229,22 @@ class TieredMemory:
         with open(self.path, "a") as f:
             f.write(json.dumps({"text": text}) + "\n")
 
+    def retrieve_known(self, query, min_sim=0.6):
+        """STRICT personal-memory probe for LOOKUP-routed turns: 'Where does Daniel live?'
+        classifies as a world question, but if the user already told us, the answer must be
+        quoted from memory, not searched. Two locks keep world questions from being
+        shadowed (the recency-bleed bug class): a raised semantic bar AND a shared content
+        word with the query ('Daniel'/'sister' anchor; 'emperor of Japan' shares nothing
+        with a logged Kyoto trip, so it still goes to the web)."""
+        pool = [c for c in self.persistent if c not in self.session] + self.session
+        hits = _sem_matches(query, pool, self.bge, min_sim=min_sim) or []
+        qw = _words(query)
+        hits = [h for h in hits if _overlap(qw, _words(h)) >= 1]
+        if not hits:
+            return None, []
+        tiers = [("L1·same-session" if c in self.session else "L2·prior-session") for c in hits]
+        return "+".join(dict.fromkeys(tiers)), _with_amendments(hits, pool)
+
     def retrieve_personal(self, query):
         """L1+L2 ranked as ONE pool. Ranking the stores separately let a weak same-session
         match ('hotel room number' for 'what is my employee ID?') ride along with the
