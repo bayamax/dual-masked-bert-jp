@@ -1,0 +1,184 @@
+{
+ "results": [
+  {
+   "name": "anchor",
+   "ok": true
+  },
+  {
+   "name": "anchor",
+   "ok": true
+  },
+  {
+   "name": "anchor",
+   "ok": true
+  },
+  {
+   "name": "anchor",
+   "ok": true
+  },
+  {
+   "name": "P1",
+   "ok": false
+  },
+  {
+   "name": "P1.terminated",
+   "ok": true
+  },
+  {
+   "name": "P2",
+   "ok": false
+  },
+  {
+   "name": "P2.terminated",
+   "ok": true
+  },
+  {
+   "name": "P3",
+   "ok": true
+  },
+  {
+   "name": "P3.terminated",
+   "ok": true
+  },
+  {
+   "name": "P4",
+   "ok": true
+  },
+  {
+   "name": "P4.terminated",
+   "ok": true
+  },
+  {
+   "name": "P5",
+   "ok": false
+  },
+  {
+   "name": "P5.terminated",
+   "ok": true
+  },
+  {
+   "name": "P6",
+   "ok": true
+  },
+  {
+   "name": "P6.terminated",
+   "ok": true
+  },
+  {
+   "name": "A.code",
+   "ok": true
+  },
+  {
+   "name": "A.math-budget",
+   "ok": true
+  },
+  {
+   "name": "A.gist",
+   "ok": true
+  },
+  {
+   "name": "A.honest-miss",
+   "ok": true
+  },
+  {
+   "name": "P7",
+   "ok": false
+  },
+  {
+   "name": "P7.terminated",
+   "ok": true
+  },
+  {
+   "name": "P8",
+   "ok": false
+  },
+  {
+   "name": "P8.terminated",
+   "ok": true
+  },
+  {
+   "name": "B.code",
+   "ok": true
+  },
+  {
+   "name": "B.math-budget",
+   "ok": false
+  },
+  {
+   "name": "B.gist",
+   "ok": true
+  },
+  {
+   "name": "B.honest-miss",
+   "ok": true
+  },
+  {
+   "name": "B.allergy",
+   "ok": true
+  }
+ ],
+ "answers": {
+  "anchor": "Got it \u2014 saved.",
+  "P1": "2000 * (1 + 0.05/1)^(1*2) = 2000 * 1.1025 = $2,205.00\n\n**Step-by-Step Explanation:**\n\n1. **Identify the Variables:**\n   - Principal (P) = $2,000\n   - Annual interest rate (r) = 5% = 0.05\n   - Number of times interest is compounded per year (n) = 1 (annually)\n   - Time (t) = 2 years\n\n2. **Apply the Compound Interest Formula:**\n   \\[\n   A = P \\left(1 + \\frac{r}{n}\\right)^{nt}\n   \\]\n\n3. **Plug in the Values:**\n   \\[\n   A = 2000 \\left(1 + \\frac{0.05}{1}\\right)^{1 \\times 2}\n   \\]\n\n4. **Calculate the Exponent:**\n   \\[\n   1 + 0.05 = 1.05\n   \\]\n   \\[\n   1.05^2 = 1.1025\n   \\]\n\n5. **Multiply by the Principal:**\n   \\[\n   A = 2000 \\times 1.1025 = 2205\n   \\]\n\n**Final Answer:**  \nThe total amount after 2 years is **$2,205.00**.",
+  "P2": "2000(1.05)^t, where t is the time period in years. If t is specified, substitute it into the formula to compute the amount. For example, after 3 years, the amount is $",
+  "P3": "74.",
+  "P4": "360, 300, 180, 360.",
+  "P5": "96 cm\u00b2, 40 cm.",
+  "P6": "23\n\n<|end_of_solution|>",
+  "A.code": "QX7-2291",
+  "A.math-budget": "1. $450, 2. $476.20, 3. $496.03",
+  "A.gist": "We've covered three main topics:  \n1. Calculating the future value of $2,000 invested at 5% compound interest.  \n2. Determining the remaining gift budget after spending $200.  \n3. Exploring the potential growth of $2,000 through investment.",
+  "A.honest-miss": "I don't have that saved exactly \u2014 the closest note I have: \"My reservation code is QX7-2291.\"",
+  "P7": "12/7 hours\n\n<|end_of_thought|>",
+  "P8": "95/264\n\n<|end_of_thought|>",
+  "B.code": "QX7-2291",
+  "B.math-budget": "210\n\n<|end_of_thought|>",
+  "B.gist": "1. Calculated the gift budget for a $650 gift, considering personal financial goals and expenses.  \n2. Analyzed the future value of $200 invested at 5% compound interest over 1, 2, and 3 years using the compound interest formula.  \n3. Summarized the key topics covered: gift budgeting, compound interest calculations, and investment scenarios.",
+  "B.honest-miss": "I don't have that saved exactly \u2014 the closest note I have: \"My reservation code is QX7-2291.\"",
+  "B.allergy": "Yes, I am allergic to peanuts."
+ },
+ "stream": 10864,
+ "evictions": 101,
+ "vol": [
+  {
+   "name": "P1",
+   "tok": 1134,
+   "sec": 252.60373091697693
+  },
+  {
+   "name": "P2",
+   "tok": 1843,
+   "sec": 441.31752371788025
+  },
+  {
+   "name": "P3",
+   "tok": 1361,
+   "sec": 337.84126710891724
+  },
+  {
+   "name": "P4",
+   "tok": 575,
+   "sec": 146.8137128353119
+  },
+  {
+   "name": "P5",
+   "tok": 331,
+   "sec": 88.68254327774048
+  },
+  {
+   "name": "P6",
+   "tok": 1459,
+   "sec": 381.16708302497864
+  },
+  {
+   "name": "P7",
+   "tok": 662,
+   "sec": 173.91027879714966
+  },
+  {
+   "name": "P8",
+   "tok": 1771,
+   "sec": 462.99213671684265
+  }
+ ]
+}
