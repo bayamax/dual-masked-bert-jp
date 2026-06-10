@@ -45,7 +45,8 @@ def run(sess, msg, store, name, want=None, custom=None, volume=False, cap=None):
     dt, ntok = time.time() - t0, len(sess.gen) - n0
     checks = {}
     if want is not None:
-        checks["answer"] = any(w.lower() in ans.lower() for w in want)
+        norm = ans.replace(",", "").lower()          # '$2,315.25' must match gold '2315.25'
+        checks["answer"] = any(w.lower() in norm for w in want)
     if custom is not None:
         checks["custom"] = custom(ans)
     ok = all(checks.values()) if checks else True
@@ -135,6 +136,7 @@ def main():
                "stream": len(s.gen), "evictions": s.evictions,
                "vol": [{"name": n, "tok": t, "sec": d} for n, t, d, _, _ in vol_stats]},
               open("composite5_results.json", "w"), indent=1)
+    print("HARNESS_V2")
     print("COMPOSITE5_DONE")
 
 
