@@ -32,13 +32,15 @@ class Block(nn.Module):
         self.lnq3 = nn.LayerNorm(H)
         self.ffn = nn.Sequential(nn.Linear(H, ffn), nn.GELU(), nn.Linear(ffn, H))
 
-    def forward(self, q, past):
+    def forward(self, q, past, return_w=False):
+        w = None
         if past is not None and past.size(1) > 0:
             kn = self.lnk(past)
-            a, _ = self.cross(self.lnq1(q), kn, kn, need_weights=False)
+            a, w = self.cross(self.lnq1(q), kn, kn, need_weights=return_w)  # head-avg (B,n_sp,L)
             q = q + a
         s, _ = self.selfa(self.lnq2(q), self.lnq2(q), self.lnq2(q), need_weights=False); q = q + s
-        return q + self.ffn(self.lnq3(q))
+        q = q + self.ffn(self.lnq3(q))
+        return (q, w) if return_w else q
 
 
 class AttnPoolSP(nn.Module):
@@ -51,16 +53,29 @@ class AttnPoolSP(nn.Module):
         self.out_scale = nn.Parameter(torch.tensor(float(target_norm)))
         self._pe = None
 
-    def forward(self, past_emb):
+    def _run(self, past_emb, want_mass):
         B, L = past_emb.size(0), past_emb.size(1)
         if self._pe is None or self._pe.size(0) < L:
             self._pe = sinusoidal(max(L, 1024), self.H, past_emb.device)
         past = past_emb + self._pe[:L].unsqueeze(0) if L > 0 else past_emb
         q = self.query.unsqueeze(0).expand(B, -1, -1).contiguous()
+        mass = torch.zeros(B, L, device=past_emb.device) if want_mass else None
         for blk in self.blocks:
-            q = blk(q, past)
+            if want_mass:
+                q, w = blk(q, past, return_w=True)
+                if w is not None:
+                    mass = mass + w.sum(dim=1)          # sum over the n_sp queries (as MLX)
+            else:
+                q = blk(q, past)
         sp = self.ln_out(q)
-        return sp / sp.norm(dim=-1, keepdim=True).clamp(min=1e-6) * self.out_scale.abs()
+        sp = sp / sp.norm(dim=-1, keepdim=True).clamp(min=1e-6) * self.out_scale.abs()
+        return (sp, mass) if want_mass else sp
+
+    def forward(self, past_emb):
+        return self._run(past_emb, want_mass=False)
+
+    def forward_with_mass(self, past_emb):
+        return self._run(past_emb, want_mass=True)
 
 
 def load_pooler(path="fft_out/pooler.pt"):

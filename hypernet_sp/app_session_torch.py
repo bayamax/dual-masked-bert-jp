@@ -37,16 +37,29 @@ _CAND = re.compile(
 
 class AppSession:
     def __init__(self, llm, tok, pooler, bge, intent_clf, spec_clf, mem, web=None,
-                 rw=512, C=64, cap=600, temp=0.6, seed=0):
+                 rw=512, C=64, cap=600, temp=0.6, maxD=4096, seed=0):
         self.llm, self.tok, self.pooler, self.bge = llm, tok, pooler, bge
         self.intent_clf, self.spec_clf = intent_clf, spec_clf
         self.mem, self.web = mem, web
-        self.rw, self.C, self.cap, self.temp = rw, C, cap, temp
+        self.rw, self.C, self.cap, self.temp, self.maxD = rw, C, cap, temp, maxD
         self.embT = llm.get_input_embeddings()
         self.eos = tok.eos_token_id
         self.THINK_OPEN = tok.encode("<think>\n", add_special_tokens=False)
         self.gen, self.kept, self.absorbed = [], [], 0
+        self.evictions = 0
         torch.manual_seed(seed)
+
+    def _evict(self, kept):
+        """Mass-based eviction (port of sp_mlx.evict / MAXD): when the distant buffer
+        exceeds maxD, keep the maxD tokens the pooler itself attends to most, in
+        chronological order. The production path RESULTS.md flags as barely exercised —
+        the 6k/12k long-haul battery exists to finally hit it."""
+        if not self.maxD or len(kept) <= self.maxD:
+            return kept
+        _, mass = self.pooler.forward_with_mass(self._emb(kept).float())
+        idx = sorted(mass[0].topk(self.maxD).indices.tolist())
+        self.evictions += 1
+        return [kept[i] for i in idx]
 
     # ---- learned heads -------------------------------------------------------------
     def intent_of(self, text):
@@ -90,6 +103,7 @@ class AppSession:
             c0 = len(gen); R = min(c0, self.rw); nd_end = c0 - R
             if nd_end > absorbed:
                 kept.extend(gen[absorbed:nd_end]); absorbed = nd_end
+                kept = self._evict(kept)
             sp = self.pooler(self._emb(kept).float()).to(self.embT.weight.dtype)
             parts = [sp] + ([self._emb(gen[c0 - R:c0])] if R > 0 else [])
             block = torch.cat(parts, 1)
