@@ -51,7 +51,7 @@ def run(sess, msg, store, name, want=None, custom=None, volume=False, cap=None):
         checks["custom"] = custom(ans)
     ok = all(checks.values()) if checks else True
     results.append((name, ok, checks))
-    ANSWERS[name] = ans
+    ANSWERS[name] = {'ans': ans, 'chunks': chunks}
     if volume:
         body = sess.tok.decode(sess.gen[n0:])
         closed = "</think>" in body

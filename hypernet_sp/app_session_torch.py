@@ -268,9 +268,14 @@ class AppSession:
             rel = mc.mark_superseded(rel)               # ...and are RESOLVED before injection:
             # the 'most recent value wins' instruction does not work on a 1.5B (v3 C7 twice);
             # explicit (outdated)/(current) tags are mechanical to follow.
+            multi = bool(re.search(r"\([a-c]\)", user_msg))
+            tail = ("Answer EVERY lettered part; end with one line listing each part's result."
+                    if multi else "End with the final number.")
+            # '(v5: "End with the final number." (singular) made the model stop after ONE
+            # sub-part of (a)/(b)/(c) questions — P1 concluded at part (b), P5 at part (a))
             aug = (f"{user_msg}\n\n(Earlier in this conversation: {' ; '.join(rel)})\n"
                    f"Use those earlier values if the question refers to them. Ignore lines "
-                   f"marked (outdated). End with the final number.")
+                   f"marked (outdated). {tail}")
         elif chunks:
             # retrieval confidence picks the template. Measured sims OVERLAP across the
             # boundary (true paraphrase match 0.592 vs blood-type/badge false hit 0.543),
