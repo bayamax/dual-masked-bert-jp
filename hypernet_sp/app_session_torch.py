@@ -208,10 +208,15 @@ class AppSession:
         else:
             src, chunks = None, []
         if chunks and compute_like:
-            aug = (f"Context (earlier in our conversation): {' ; '.join(chunks)}\n\n{user_msg}\n"
-                   f"If this question refers back to something earlier (e.g. 'she', 'it', 'the total', "
-                   f"'how much is left'), use the relevant fact(s) from the context (most recent value if a "
-                   f"value was corrected). If it is fully self-contained, ignore the context. Then compute.")
+            # keep compute injections SHORT and question-first. The verbatim MLX template
+            # (context first + a meta-instruction about she/it/corrections) made the 1.5B
+            # distill spend its entire think parsing the INSTRUCTION instead of computing
+            # (composite battery transcript: it re-quoted the instruction 3x, never reached
+            # 50-24, answered 27.5). Also relevance-filter the facts so unrelated pins
+            # (hotel room number) don't ride into an arithmetic turn.
+            rel = mc._sem_matches(user_msg, chunks, self.bge, cap=3, min_sim=0.4) or chunks[-2:]
+            aug = (f"{user_msg}\n\n(Earlier in this conversation: {' ; '.join(rel)})\n"
+                   f"Use those earlier values if the question refers to them. End with the final number.")
         elif chunks:
             aug = (f"Context (retrieved from {src}): {' ; '.join(chunks)}\n\n"
                    f"Question: {user_msg}\nThe answer is stated EXPLICITLY in the Context above. Do NOT "
