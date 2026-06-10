@@ -67,8 +67,33 @@ attr 2 / meas 2 — トリガーが算数文専用にならないようカテゴ
 - fold 横断のヘッド選択安定性レポート(単一タスク族でしか勝てないヘッドの検出)
 - 全データで fit した `attn_trigger3.joblib` {heads, clf, mu, sd} を保存
 
-実行は Mac 側(MLX + `fft_hf/` が必要): `python3 attn_export3.py && python3 attn_probe3.py`。
-CV ロジック自体は合成データで検証済み(植え込んだ 3 ヘッドを正しく回収、AUC 0.983、pairwise 30/30)。
+**実行済み(CPU/torch)**: `attn_export3_torch.py`(オリジナル PyTorch AttnPoolSP を
+`fft_out/pooler.pt` からロード)で STEP1 を、`attn_probe3.py` で STEP2 を本環境で完走。
+
+| 指標 | 結果 |
+|---|---|
+| LOO-CV AUC(選択リークなし) | **0.970** |
+| accuracy@0.5 | 0.917 |
+| pairwise (ref > ctrl) | **30/30** |
+| カテゴリ別 pairwise | math 10/10 / code 6/6 / name 6/6 / time 4/4 / attr 2/2 / meas 2/2 |
+
+ヘッド選択の安定性(30 fold 中の選択回数):
+
+```
+L 1H 0: 30/30  delta=+0.195      L 7H 9: 30/30  delta=+0.160
+L 1H 3: 30/30  delta=+0.190      L22H 9: 30/30  delta=+0.150
+L21H 4: 30/30  delta=+0.172      L 9H 3: 20/30  delta=+0.143
+```
+
+STATUS §4 の候補(L1H3, L7H9)は 30 シナリオでも全 fold で選択され**確証**。さらに
+強い新ヘッド L1H0, L21H4, L22H9 を発見。全ヘッド平均の delta は +0.055 と弱いままで、
+「専用 retrieval head が鋭い信号を持つ」という STATUS の仮説どおり。信号は math 専用では
+なく code/name/time/attr/meas の全タスク族に汎化した。
+
+成果物: `attn_trigger3.joblib`(heads + LogisticRegression + 標準化 μ/σ、本ディレクトリに同梱)、
+`attn_probe3.npz`(60 例の per-head 質量。プローブ変種の再分析に再収集不要)。
+Mac 側で SP を MLX 経由にしたい場合のみ `attn_export3.py` を使用(RESULTS.md より両者の
+pooler 差は 2.4e-7 なので結果は同等)。
 
 ランタイム接続(probe が有望なら): ターン開始時に eager-attention の 1 forward で選択ヘッドの
 SP 質量を読み、トリガー確率が閾値を超えたら外部検索(L1/L2/L3)を発火 — 「参照型か?」の
