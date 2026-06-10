@@ -74,6 +74,33 @@ def _matches(query, store, cap=4):
     return [t for _, _, t in sorted(top, key=lambda s: s[1])]
 
 
+_CORRECTION = re.compile(r"\b(actually|instead|scratch that|correction|rather|no wait|wait no|"
+                         r"make it|changed?( it| to)?|should be|moved to|now it'?s|\bnot\b)", re.I)
+
+
+def _with_amendments(selected, store):
+    """Corrections ride along with what they correct. A terse anaphoric correction ('And
+    the color should be matte black, not blue.') scores LOW against a multi-fact query
+    (measured 0.541 vs hi 0.744 — dropped by top_delta) because it names neither the object
+    nor the attribute asked about — so the similarity filter starves the model of exactly
+    the line the 'use the most recent value' instruction needs. Any line that (a) comes
+    after a selected line, (b) carries a correction marker, and (c) shares a content word
+    with a selected line, is appended (chained to a fixpoint, chronological order)."""
+    sel = set(selected)
+    changed = True
+    while changed:
+        changed = False
+        for i, t in enumerate(store):
+            if t in sel or not _CORRECTION.search(t):
+                continue
+            tw = _words(t)
+            for j, s in enumerate(store):
+                if s in sel and j < i and _overlap(_words(s), tw) >= 1:
+                    sel.add(t); changed = True
+                    break
+    return [t for t in store if t in sel]
+
+
 def _match(query, store, bge=None, cap=4):
     """Semantic (BGE) first for English; for CJK queries the order is REVERSED. Measured on
     bge-small-EN-v1.5: Japanese pos/neg margins collapse to +0.07..0.14 (vs +0.34 English)
@@ -83,11 +110,13 @@ def _match(query, store, bge=None, cap=4):
     if _CJK.search(query):
         lex = _matches(query, store, cap)
         if lex:
-            return lex
+            return _with_amendments(lex, store)
         r = _sem_matches(query, store, bge, cap, min_sim=0.72, top_delta=0.06)
-        return r or []
+        return _with_amendments(r, store) if r else []
     r = _sem_matches(query, store, bge, cap)
-    return _matches(query, store, cap) if r is None else r
+    if r is None:
+        r = _matches(query, store, cap)
+    return _with_amendments(r, store) if r else []
 
 
 _Q_LEAD = ("what", "what's", "whats", "who", "who's", "whose", "when", "where", "which",

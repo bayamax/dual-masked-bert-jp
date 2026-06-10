@@ -94,6 +94,20 @@ def main():
         check("weak L1 near-miss dropped by union top_delta",
               src == "L2·prior-session" and ch == ["my employee ID is EMP-90832"])
 
+    print("== amendment chaining (composite-v2 A4 regression) ==")
+    st = ["I'll paint the bookshelf blue with 5 shelves.",
+          "Actually, make it 6 shelves instead of 5.",
+          "And the color should be matte black, not blue."]
+    check("correction rides along with what it corrects",
+          mc._with_amendments([st[0]], st) == st)
+    chain = ["the venue is downtown", "actually the venue moved to Shibuya",
+             "no wait, it moved to Ginza instead"]
+    check("two-hop chain included", mc._with_amendments([chain[0]], chain) == chain)
+    check("unrelated correction does not ride",
+          mc._with_amendments(["my car is in bay 12"],
+                              ["my car is in bay 12", "Actually, make it 6 shelves instead of 5."])
+          == ["my car is in bay 12"])
+
     print("\n== FINDINGS (reported, not asserted) ==")
     jp_q, jp_store = "私の部屋番号は何ですか?", ["私の部屋番号は1408です"]
     lex = mc._matches(jp_q, jp_store)
