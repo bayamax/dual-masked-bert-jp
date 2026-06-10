@@ -23,6 +23,7 @@ from intent_route import route_intent, looks_mathy
 from anaphora import expand_web_query
 from web_guard import guard_chunks
 from decode_policy import DecodePolicy
+from calculator import repair_answer as calc_repair
 
 ANSCAP = 600
 
@@ -149,6 +150,7 @@ class AppSession:
                 gen.append(t); last = step(t)
             body = tok.decode(gen[start:]).split("<｜Assistant｜>", 1)[-1]
         self.gen, self.kept, self.absorbed = gen, kept, absorbed
+        self._last_body = body                       # for post-hoc arithmetic verification
         ans = mc._extract_answer(body)
         if "Final answer:" in ans:
             ans = ans.split("Final answer:")[-1].strip()
@@ -320,6 +322,13 @@ class AppSession:
                     break
                 self.gen, self.kept, self.absorbed = list(snap[0]), list(snap[1]), snap[2]
                 answer = self._gen_once(aug)
+        if compute_like and answer:
+            # post-hoc calculator (the 1.5B mis-EVALUATES its own correct expressions:
+            # 2000x1.05^3 -> 121550.625, 650-200 -> 210). Claims in the full turn body are
+            # re-computed mechanically; a wrong value that reached the answer is replaced.
+            fixed, corrections = calc_repair(answer, full_body=getattr(self, "_last_body", None))
+            if corrections:
+                answer = fixed
         if store == "persist":
             self.mem.persist(user_msg)
         elif store == "session" and intent == "fact":
