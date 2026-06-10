@@ -185,6 +185,12 @@ class AppSession:
             return "Got it — saved.", None, []
         if intent == "recall":
             src, chunks = self.mem.retrieve_personal(user_msg)
+            if not chunks:
+                # honest miss. Free generation here CONFABULATES (composite v2 B3: asked for
+                # a never-stated wifi password, the model invented "password123"). A recall
+                # is a lookup into the user's saved facts; an empty lookup has exactly one
+                # truthful answer, and it costs zero tokens.
+                return ("I don't have that saved — you haven't told me yet.", None, [])
         elif intent == "lookup":
             wm_only = [p for p in self.mem.pins if p not in self.mem.session]
             mp = mc._sem_matches(user_msg, wm_only, self.bge, min_sim=0.5) if wm_only else None
