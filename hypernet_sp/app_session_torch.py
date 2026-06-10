@@ -174,6 +174,15 @@ class AppSession:
         compute_like = intent in ("math", "command")
         if intent not in ("recall", "lookup") and self.specific_spans(user_msg):
             self.mem.pin(user_msg)
+        if intent == "fact":
+            # facts bypass generation (OPERATING.md): log + instant ack. Generating here
+            # wastes a full turn AND pollutes the conversation stream — the composite
+            # battery showed the previous fact's ramble bleeding into the next chitchat.
+            if store == "persist" or mc.wants_persist(user_msg):
+                self.mem.persist(user_msg)
+            else:
+                self.mem.remember_session(user_msg)
+            return "Got it — saved.", None, []
         if intent == "recall":
             src, chunks = self.mem.retrieve_personal(user_msg)
         elif intent == "lookup":

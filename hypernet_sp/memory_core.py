@@ -201,12 +201,16 @@ class TieredMemory:
             f.write(json.dumps({"text": text}) + "\n")
 
     def retrieve_personal(self, query):
-        m1 = _match(query, self.session, self.bge)
-        m2 = _match(query, self.persistent, self.bge)
-        if m1 or m2:
-            chunks = m1 + [c for c in m2 if c not in m1]
-            src = "+".join(p for p, ok in [("L1·same-session", m1), ("L2·prior-session", m2)] if ok)
-            return src, chunks
+        """L1+L2 ranked as ONE pool. Ranking the stores separately let a weak same-session
+        match ('hotel room number' for 'what is my employee ID?') ride along with the
+        strong prior-session hit — the union ranking applies min_sim/top_delta across
+        BOTH stores so off-topic near-misses are dropped (composite battery S2.recall-L2)."""
+        pool = self.session + [c for c in self.persistent if c not in self.session]
+        hits = _match(query, pool, self.bge)
+        if hits:
+            tiers = [("L1·same-session" if c in self.session else "L2·prior-session") for c in hits]
+            src = "+".join(dict.fromkeys(tiers))
+            return src, hits
         mp = _sem_matches(query, self.pins, self.bge, min_sim=0.5) if self.pins else None
         if mp:
             return "WM·pins", mp

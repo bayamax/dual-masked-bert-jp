@@ -76,6 +76,24 @@ def main():
         mem2.pin("pin 10 value 10")
         check("re-pin moves to front (stays fresh)", mem2.pins[-1] == "pin 10 value 10")
 
+    print("== cross-store union ranking (composite S2.recall-L2 regression) ==")
+    import numpy as np
+
+    class FakeBGE:                                  # measured profile: hotel 0.559 / employee 0.739
+        def _encode(self, texts, is_query=False):
+            if is_query:
+                return np.array([[1.0, 0.0]])
+            sims = {"My hotel room number for tonight is 1408.": 0.559}
+            return np.array([[sims.get(t, 0.739), 0.0] for t in texts])
+
+    with tempfile.TemporaryDirectory() as d:
+        m = mc.TieredMemory(os.path.join(d, "m.jsonl"), bge=FakeBGE())
+        m.session.append("My hotel room number for tonight is 1408.")
+        m.persistent.append("my employee ID is EMP-90832")
+        src, ch = m.retrieve_personal("What is my employee ID?")
+        check("weak L1 near-miss dropped by union top_delta",
+              src == "L2·prior-session" and ch == ["my employee ID is EMP-90832"])
+
     print("\n== FINDINGS (reported, not asserted) ==")
     jp_q, jp_store = "私の部屋番号は何ですか?", ["私の部屋番号は1408です"]
     lex = mc._matches(jp_q, jp_store)
