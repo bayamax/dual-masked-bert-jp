@@ -195,12 +195,15 @@ class AppSession:
                 src, chunks = self._web_retrieve(q)
         elif intent == "command" and (self.mem.session or self.mem.pins):
             log = self.mem.session[-self.mem.LOGCAP:]
-            chunks = log + [c for c in self.mem.pins if c not in log]
+            # a pin is redundant when a log line EXTENDS it ('<question> — result: 24'
+            # startswith '<question>'): re-injecting the bare question next to its answered
+            # form is what tangled the follow-up math turn in the composite battery.
+            chunks = log + [c for c in self.mem.pins if not any(l.startswith(c) for l in log)]
             src = "L1·same-session" + ("+WM·pins" if self.mem.pins else "")
         elif intent == "math" and any(p != user_msg for p in self.mem.pins):
             prev = [p for p in self.mem.pins if p != user_msg]
             log = self.mem.session[-self.mem.LOGCAP:]
-            chunks = log + [c for c in prev if c not in log]
+            chunks = log + [c for c in prev if not any(l.startswith(c) for l in log)]
             src = "WM·pins" + ("+L1" if log else "")
         else:
             src, chunks = None, []
