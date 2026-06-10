@@ -173,44 +173,6 @@ class AppSession:
             ans = f"\\boxed{{{box[-1].strip()}}}" if box and box[-1].strip() else ans
         return ans[:ANSCAP]
 
-    @torch.no_grad()
-    def _verify_contains(self, chunks, question):
-        """Micro entailment pass for the uncertain retrieval band: does the Context state
-        the answer? A trailing 'reply NOT ON RECORD if absent' clause inside the quote
-        prompt gets steamrolled by the 'reply with ONLY that value' instruction (v4 t35
-        retest: still quoted the badge code as a blood type). A separate yes/no turn makes
-        verification the PRIMARY task. Isolated context, tiny budgets — cheap, and only
-        runs when retrieval confidence < 0.65."""
-        tok, llm = self.tok, self.llm
-        cache = DynamicCache()
-        aug = (f"Context: {' ; '.join(chunks)}\nQuestion: {question}\n"
-               f"Does the Context state the answer to this exact question? Reply yes or no.")
-        ids = tok.encode(f"<｜User｜>{aug}<｜Assistant｜>", add_special_tokens=True) \
-            + list(self.THINK_OPEN)
-        last = llm(inputs_embeds=self._emb(ids), past_key_values=cache,
-                   use_cache=True).logits[:, -1, :].float()
-        out = []
-        for _ in range(60):                          # short think
-            t = int(torch.multinomial(F.softmax(last[0] / 0.1, -1), 1))
-            if t == self.eos:
-                break
-            out.append(t)
-            last = llm(inputs_embeds=self._emb([t]), past_key_values=cache,
-                       use_cache=True).logits[:, -1, :].float()
-        for t in tok.encode("\n</think>\n\nAnswer: ", add_special_tokens=False):
-            out.append(t)
-            last = llm(inputs_embeds=self._emb([t]), past_key_values=cache,
-                       use_cache=True).logits[:, -1, :].float()
-        for _ in range(4):
-            t = int(last[0].argmax())
-            if t == self.eos:
-                break
-            out.append(t)
-            last = llm(inputs_embeds=self._emb([t]), past_key_values=cache,
-                       use_cache=True).logits[:, -1, :].float()
-        tail = tok.decode(out).split("</think>")[-1].lower()
-        return "yes" in tail
-
     def _web_retrieve(self, query):
         if self.web is None:
             return None, []
@@ -303,9 +265,18 @@ class AppSession:
             # strict 'the answer IS in the Context' premise forced 'your blood type is
             # VB-7731' out of a badge-code chunk (v4 t35).
             qv = self.bge._encode([user_msg], is_query=True)[0]
-            conf = float(max(self.bge._encode(list(chunks), is_query=False) @ qv))
-            if conf < 0.65 and not self._verify_contains(chunks, user_msg):
-                return ("I don't have that saved — you haven't told me yet.", None, [])
+            sims = self.bge._encode(list(chunks), is_query=False) @ qv
+            if float(max(sims)) < 0.62:   # true-match floor measured at 0.653 (hotel)
+                # uncertain band: don't ASSERT an answer at all. Nothing separates a true
+                # paraphrase match from a false hit here — full-question sims overlap
+                # (0.592 vs 0.543), topic sims overlap (0.498 vs 0.487), the in-prompt
+                # escape hatch got steamrolled, and the yes/no micro-judge said yes and
+                # invented blood type 'A' for a badge code. So show the closest saved note
+                # verbatim instead: honest for a false hit, and for a genuine paraphrase
+                # the note IS the answer. Mechanical, zero extra latency.
+                note = chunks[int(sims.argmax())]
+                return (f"I don't have that saved exactly — the closest note I have: "
+                        f"\"{note}\"", src, chunks)
             aug = (f"Context (retrieved from {src}): {' ; '.join(chunks)}\n\n"
                    f"Question: {user_msg}\nThe answer is stated EXPLICITLY in the Context above. Do NOT "
                    f"calculate, reason about, or transform it, and ignore anything earlier in the "
