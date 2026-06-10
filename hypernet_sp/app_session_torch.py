@@ -258,12 +258,23 @@ class AppSession:
                    f"Use those earlier values if the question refers to them. Ignore lines "
                    f"marked (outdated). End with the final number.")
         elif chunks:
+            # retrieval confidence picks the template. Measured sims OVERLAP across the
+            # boundary (true paraphrase match 0.592 vs blood-type/badge false hit 0.543),
+            # so a threshold can't reject false hits without killing paraphrase recall —
+            # below 0.65 the template carries an ESCAPE HATCH instead. Without it, the
+            # strict 'the answer IS in the Context' premise forced 'your blood type is
+            # VB-7731' out of a badge-code chunk (v4 t35).
+            qv = self.bge._encode([user_msg], is_query=True)[0]
+            conf = float(max(self.bge._encode(list(chunks), is_query=False) @ qv))
+            hatch = ("" if conf >= 0.65 else
+                     " If the Context does not actually state the answer to this question, "
+                     "reply exactly: NOT ON RECORD.")
             aug = (f"Context (retrieved from {src}): {' ; '.join(chunks)}\n\n"
-                   f"Question: {user_msg}\nThe answer is stated EXPLICITLY in the Context above. Do NOT "
+                   f"Question: {user_msg}\nThe answer should be stated in the Context above. Do NOT "
                    f"calculate, reason about, or transform it, and ignore anything earlier in the "
                    f"conversation — just read the matching value from the Context and reply with ONLY that "
                    f"value, verbatim (keep letter prefixes/punctuation, e.g. 'EMP-1234' not '1234'; use the "
-                   f"most recent value if it was corrected).")
+                   f"most recent value if it was corrected).{hatch}")
         else:
             aug = user_msg
         quote_recall = bool(chunks) and not compute_like
@@ -271,9 +282,13 @@ class AppSession:
         if quote_recall:
             answer = self._clean_quote(aug)
             for _ in range(retries):
+                if "NOT ON RECORD" in answer.upper():   # the escape hatch fired: an honest
+                    return ("I don't have that saved — you haven't told me yet.", None, [])
                 if mc._answer_ok(answer, check_chunks, user_msg):
                     break
                 answer = self._clean_quote(aug)
+            if "NOT ON RECORD" in answer.upper():
+                return ("I don't have that saved — you haven't told me yet.", None, [])
         else:
             snap = (list(self.gen), list(self.kept), self.absorbed)
             answer = self._gen_once(aug)
