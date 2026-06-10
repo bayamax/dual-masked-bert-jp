@@ -108,6 +108,18 @@ def main():
                               ["my car is in bay 12", "Actually, make it 6 shelves instead of 5."])
           == ["my car is in bay 12"])
 
+    print("== mark_superseded: corrections resolved before injection (v3 C7) ==")
+    check("pair tagged", mc.mark_superseded(["My gift budget is $500.", "Correction: the budget is $650."])
+          == ["(outdated) My gift budget is $500.", "(current) Correction: the budget is $650."])
+    check("chain: only the last is current",
+          mc.mark_superseded(["the venue is downtown", "actually the venue moved to Shibuya",
+                              "no wait, it moved to Ginza instead"])
+          == ["(outdated) the venue is downtown", "(outdated) actually the venue moved to Shibuya",
+              "(current) no wait, it moved to Ginza instead"])
+    check("unrelated lines untouched",
+          mc.mark_superseded(["My hotel room is 1408.", "A vendor quote is $120 per unit."])
+          == ["My hotel room is 1408.", "A vendor quote is $120 per unit."])
+
     print("== retrieve_known: strict personal probe for lookup-routed turns (v3 B3/B4) ==")
 
     class AnchorBGE:                                # high sim everywhere: only the lexical

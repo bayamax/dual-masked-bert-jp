@@ -101,6 +101,25 @@ def _with_amendments(selected, store):
     return [t for t in store if t in sel]
 
 
+def mark_superseded(chunks):
+    """Resolve corrections BEFORE injection. Telling a 1.5B 'the most recent value wins'
+    in the instruction does not work (v3 C7, twice: it computed off the $500 line with
+    'Correction: the budget is $650.' sitting right next to it). Tag the lines instead —
+    '(outdated)' / '(current)' are mechanical to follow, no judgement required."""
+    n = len(chunks)
+    superseded, corrects = [False] * n, [False] * n
+    for i in range(n):
+        if not _CORRECTION.search(chunks[i]):
+            continue
+        cw = _words(chunks[i])
+        for j in range(i):
+            if _overlap(_words(chunks[j]), cw) >= 1:
+                superseded[j] = True
+                corrects[i] = True
+    return [(f"(outdated) {c}" if superseded[i] else f"(current) {c}" if corrects[i] else c)
+            for i, c in enumerate(chunks)]
+
+
 def _match(query, store, bge=None, cap=4):
     """Semantic (BGE) first for English; for CJK queries the order is REVERSED. Measured on
     bge-small-EN-v1.5: Japanese pos/neg margins collapse to +0.07..0.14 (vs +0.34 English)

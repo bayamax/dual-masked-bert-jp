@@ -250,9 +250,13 @@ class AppSession:
             # 50-24, answered 27.5). Also relevance-filter the facts so unrelated pins
             # (hotel room number) don't ride into an arithmetic turn.
             rel = mc._sem_matches(user_msg, chunks, self.bge, cap=3, min_sim=0.4) or chunks[-2:]
+            rel = mc._with_amendments(rel, chunks)      # corrections ride along...
+            rel = mc.mark_superseded(rel)               # ...and are RESOLVED before injection:
+            # the 'most recent value wins' instruction does not work on a 1.5B (v3 C7 twice);
+            # explicit (outdated)/(current) tags are mechanical to follow.
             aug = (f"{user_msg}\n\n(Earlier in this conversation: {' ; '.join(rel)})\n"
-                   f"Use those earlier values if the question refers to them; where a value was "
-                   f"corrected, the most recent one is correct. End with the final number.")
+                   f"Use those earlier values if the question refers to them. Ignore lines "
+                   f"marked (outdated). End with the final number.")
         elif chunks:
             aug = (f"Context (retrieved from {src}): {' ; '.join(chunks)}\n\n"
                    f"Question: {user_msg}\nThe answer is stated EXPLICITLY in the Context above. Do NOT "
