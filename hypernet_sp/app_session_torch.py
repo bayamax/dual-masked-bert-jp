@@ -118,8 +118,23 @@ class AppSession:
                            use_cache=True).logits[:, -1, :].float()
             if done:
                 break
-        self.gen, self.kept, self.absorbed = gen, kept, absorbed
         body = tok.decode(gen[start:]).split("<｜Assistant｜>", 1)[-1]
+        if "</think>" not in body or mc._extract_answer(body) in mc._EMPTY:
+            # pass-1 salvage (port of the MLX two-pass that this port was missing): the
+            # think meandered to the cap without converging or looping — close it and force
+            # a short greedy answer instead of returning the timeout token (v3 C7).
+            def step(t):
+                return llm(inputs_embeds=self._emb([t]), past_key_values=cache,
+                           use_cache=True).logits[:, -1, :].float()
+            for t in tok.encode("\n</think>\n\nFinal answer: ", add_special_tokens=False):
+                gen.append(t); last = step(t)
+            for _ in range(48):
+                t = int(last[0].argmax())
+                if t == self.eos:
+                    break
+                gen.append(t); last = step(t)
+            body = tok.decode(gen[start:]).split("<｜Assistant｜>", 1)[-1]
+        self.gen, self.kept, self.absorbed = gen, kept, absorbed
         ans = mc._extract_answer(body)
         if "Final answer:" in ans:
             ans = ans.split("Final answer:")[-1].strip()
