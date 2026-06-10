@@ -58,9 +58,24 @@ class DecodePolicy:
             return base_temp
         return 1e-4                                  # ~greedy without a divide-by-zero special case
 
+    LOOP_NGRAM, LOOP_REPS = 6, 4                     # a 6-gram seen 4x in think = a rut
+
+    def _think_loop(self, text):
+        """Second trigger (smoke finding): over-thinking that never ASSERTS a value — e.g.
+        re-reading the question over and over — evades the convergence counter. Catch it as
+        n-gram repetition over the think stream (same idea as the answer-side degeneration
+        guard, longer n / higher bar so legitimate re-derivation doesn't fire)."""
+        w = text.split()
+        if len(w) < self.LOOP_NGRAM * self.LOOP_REPS:
+            return False
+        from collections import Counter
+        tri = Counter(" ".join(w[i:i + self.LOOP_NGRAM]) for i in range(len(w) - self.LOOP_NGRAM + 1))
+        return tri.most_common(1)[0][1] >= self.LOOP_REPS
+
     def note_text(self, think_text):
         """Feed the CURRENT think text (decoded so far). Returns True exactly once, when the
-        same canonical asserted value has appeared >= k times -> caller force-closes think."""
+        same canonical asserted value has appeared >= k times (convergence) OR the think
+        stream is stuck in an n-gram loop -> caller force-closes think."""
         if self.fired or len(think_text) < self.min_think_chars:
             return False
         self.counts = {}
@@ -70,7 +85,7 @@ class DecodePolicy:
         for m in _BOXED.finditer(think_text):
             c = canon_num(m.group(1))
             self.counts[c] = self.counts.get(c, 0) + 1
-        if self.counts and max(self.counts.values()) >= self.k:
+        if (self.counts and max(self.counts.values()) >= self.k) or self._think_loop(think_text):
             self.fired = True
             return True
         return False

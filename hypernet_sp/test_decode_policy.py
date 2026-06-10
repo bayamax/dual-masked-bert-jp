@@ -1,7 +1,8 @@
 """Unit tests for decode_policy.py — pure stdlib:  python3 test_decode_policy.py"""
 from decode_policy import DecodePolicy, canon_num
 
-PAD = "Let me work through this problem carefully step by step. " * 4   # clears min_think_chars
+# clears min_think_chars without tripping the n-gram loop trigger (every word distinct)
+PAD = " ".join(f"reasoning{i} step{i} detail{i}" for i in range(16)) + ". "
 
 
 def check(name, cond):
@@ -39,6 +40,14 @@ def main():
     print("== boxed counts toward convergence ==")
     p = DecodePolicy(k=2)
     r.append(check("boxed + assertion", p.note_text(PAD + "the answer is 42... \\boxed{42}")))
+
+    print("== think-loop trigger (question-rereading rut, no asserted values) ==")
+    p = DecodePolicy(k=3)
+    rut = PAD + ('"How many clips did she sell altogether in April and May?" ' * 5)
+    r.append(check("6-gram x4 rut fires", p.note_text(rut)))
+    p = DecodePolicy(k=3)
+    r.append(check("varied reasoning does not fire", not p.note_text(
+        PAD + "First compute April: 48. May is half: 24. Sum both months. Check units. Verify once.")))
 
     print("== two-phase temperature ==")
     p = DecodePolicy()
