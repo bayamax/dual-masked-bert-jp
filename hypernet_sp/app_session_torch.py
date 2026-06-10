@@ -201,8 +201,8 @@ class AppSession:
             chunks = log + [c for c in self.mem.pins if not any(l.startswith(c) for l in log)]
             src = "L1·same-session" + ("+WM·pins" if self.mem.pins else "")
         elif intent == "math" and any(p != user_msg for p in self.mem.pins):
-            prev = [p for p in self.mem.pins if p != user_msg]
-            log = self.mem.session[-self.mem.LOGCAP:]
+            prev = [p for p in self.mem.pins if p != user_msg and not mc._is_question(p)]
+            log = [l for l in self.mem.session[-self.mem.LOGCAP:] if not mc._is_question(l)]
             chunks = log + [c for c in prev if not any(l.startswith(c) for l in log)]
             src = "WM·pins" + ("+L1" if log else "")
         else:
@@ -256,5 +256,9 @@ class AppSession:
             nums = re.findall(r"\$?\d[\d,]*(?:\.\d+)?", answer)
             val = box[-1].strip() if box else (nums[-1] if nums else None)
             if val:
-                self.mem.remember_session(f"{user_msg} — result: {val}")
+                # DECLARATIVE form only. Logging "<question> — result: 24" baited the model
+                # into re-answering the embedded QUESTION instead of the new one (composite
+                # transcript: it ignored the $50-change question entirely and re-derived the
+                # muffin total). Interrogative text must never be re-injected as context.
+                self.mem.remember_session(f"Earlier computed result: {val}.")
         return answer, src, chunks
