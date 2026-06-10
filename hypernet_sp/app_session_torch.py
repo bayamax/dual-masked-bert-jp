@@ -236,7 +236,8 @@ class AppSession:
             # (hotel room number) don't ride into an arithmetic turn.
             rel = mc._sem_matches(user_msg, chunks, self.bge, cap=3, min_sim=0.4) or chunks[-2:]
             aug = (f"{user_msg}\n\n(Earlier in this conversation: {' ; '.join(rel)})\n"
-                   f"Use those earlier values if the question refers to them. End with the final number.")
+                   f"Use those earlier values if the question refers to them; where a value was "
+                   f"corrected, the most recent one is correct. End with the final number.")
         elif chunks:
             aug = (f"Context (retrieved from {src}): {' ; '.join(chunks)}\n\n"
                    f"Question: {user_msg}\nThe answer is stated EXPLICITLY in the Context above. Do NOT "
