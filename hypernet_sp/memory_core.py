@@ -75,6 +75,17 @@ def _matches(query, store, cap=4):
 
 
 def _match(query, store, bge=None, cap=4):
+    """Semantic (BGE) first for English; for CJK queries the order is REVERSED. Measured on
+    bge-small-EN-v1.5: Japanese pos/neg margins collapse to +0.07..0.14 (vs +0.34 English)
+    while absolute sims sit ~0.65-0.78 — far above min_sim=0.46 and inside top_delta of the
+    best — so the EN-calibrated semantic tier INJECTS DISTRACTORS on Japanese. Lexical CJK
+    bigrams are precise; semantic only backstops them, at a raised bar."""
+    if _CJK.search(query):
+        lex = _matches(query, store, cap)
+        if lex:
+            return lex
+        r = _sem_matches(query, store, bge, cap, min_sim=0.72, top_delta=0.06)
+        return r or []
     r = _sem_matches(query, store, bge, cap)
     return _matches(query, store, cap) if r is None else r
 

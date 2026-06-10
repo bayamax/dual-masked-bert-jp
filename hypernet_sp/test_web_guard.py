@@ -39,6 +39,27 @@ def main():
     r.append(check("english behaviour unchanged",
                    mc._matches("how many shelves now", ["make it 6 shelves instead of 5"]) != []))
 
+    print("== CJK-aware tier ordering in _match (semantic distractor defence) ==")
+    import numpy as np
+
+    class FakeBGE:                                   # reproduces the MEASURED jp sim profile
+        def __init__(self, sims): self.sims = sims   # (pos 0.750 / neg 0.679: both clear the
+        def _encode(self, texts, is_query=False):    #  EN min_sim=0.46 and sit within top_delta)
+            if is_query:
+                return np.array([[1.0, 0.0, 0.0]])
+            return np.array([[self.sims[t], 0.0, 0.0] for t in texts])
+
+    st = ["私の部屋番号は1408です", "テーマは宇宙です"]
+    bge = FakeBGE({st[0]: 0.750, st[1]: 0.679})
+    r.append(check("jp: lexical wins, semantic distractor excluded",
+                   mc._match("私の部屋番号は何ですか?", st, bge) == [st[0]]))
+    r.append(check("jp: semantic fallback uses raised bar (distractor dropped)",
+                   st[1] not in (mc._match("今日は元気ですか?", st, bge) or [])))
+    en = ["my room number is 1408", "the theme is space"]
+    bge2 = FakeBGE({en[0]: 0.842, en[1]: 0.501})
+    r.append(check("en: semantic-first behaviour unchanged",
+                   mc._match("what is my room number?", en, bge2) == [en[0]]))
+
     print(f"\n{sum(r)}/{len(r)} passed")
     assert all(r), "web_guard / jp-lexical tests failed"
     print("TEST_WEB_GUARD_DONE")
