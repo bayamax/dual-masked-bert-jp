@@ -21,12 +21,18 @@ import re
 # referring expressions that need an antecedent: place/object/person pronouns + bare deictic
 # noun phrases ("the place", "the city"). \b keeps "their"/"theory" etc. from matching.
 _ANAPHOR = re.compile(r"\b(there|it|that one|that place|this place|them|they|he|she|him|her|its|"
-                      r"the (place|city|town|area|spot|venue|hotel|restaurant|museum|station|one))\b", re.I)
+                      r"the (place|city|town|area|spot|venue|hotel|restaurant|museum|station|one|"
+                      # value anaphora (trigger report finding B): 'verify the number' went
+                      # to the web naked and matched phone-verification spam
+                      r"number|total|result|value|price|amount|figure|answer|rate))\b", re.I)
 
 # an entity ALREADY in the query makes expansion unnecessary (and harmful: appending Kyoto
 # to "temples in Osaka?" would poison the search) — a proper-noun run past position 0, or a
 # code / number anywhere.
 _CODEISH = re.compile(r"\b[A-Za-z]*\d[A-Za-z0-9\-]*\b")
+# concrete VALUES (money, decimals, big integers) — the antecedent of value anaphora
+# ('verify the number' -> append the $82.40 the user was just told about)
+_VALUE = re.compile(r"\$\d[\d,]*(?:\.\d+)?|\b\d+\.\d+\b|\b\d{3,}\b")
 _PROPER = re.compile(r"\b[A-Z][a-z]+(?:[\s\-][A-Z][a-z]+){0,2}\b")   # 'Lisa Su' ('Su' is 2 chars)
 
 # generic capitalised words that are not anchors (sentence starters, weekdays, months, "I")
@@ -46,6 +52,8 @@ def _entities(text):
         if w.lower() in _GENERIC or all(p.lower() in _GENERIC for p in w.split()):
             continue
         ents.append(w)
+    for m in _VALUE.finditer(text):
+        ents.append(m.group(0))
     for m in _CODEISH.finditer(text):
         w = m.group(0)
         if len(w) >= 2 and not w.isdigit() or (w.isdigit() and len(w) >= 3):

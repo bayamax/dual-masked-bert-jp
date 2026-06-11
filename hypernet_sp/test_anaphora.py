@@ -40,6 +40,14 @@ def main():
     r.append(check("empty-memory", expand_web_query("what are the best temples there?", [], session=[]),
                    "what are the best temples there?"))
 
+    print("== value anaphora (trigger report finding B) ==")
+    pins3 = ["Brent crude is trading at $82.40 a barrel today."]
+    r.append(check("verify-the-number", expand_web_query("Can you verify the number?", pins3),
+                   "Can you verify the number? (Brent, $82.40)"))
+    r.append(check("value-NP own anchor wins",
+                   expand_web_query("verify the number 42 for me?", pins3),
+                   "verify the number 42 for me?"))
+
     print("== guards ==")
     r.append(check("needs-resolution", needs_resolution("what are the best temples there?"), True))
     r.append(check("anchor-detected", has_own_anchor("temples in Osaka"), True))
