@@ -38,7 +38,7 @@ _CAND = re.compile(
 
 class AppSession:
     def __init__(self, llm, tok, pooler, bge, intent_clf, spec_clf, mem, web=None,
-                 rw=512, C=64, cap=600, temp=0.6, maxD=4096, seed=0):
+                 rw=512, C=64, cap=600, temp=0.6, maxD=4096, seed=0, profile=True):
         self.llm, self.tok, self.pooler, self.bge = llm, tok, pooler, bge
         self.intent_clf, self.spec_clf = intent_clf, spec_clf
         self.mem, self.web = mem, web
@@ -48,7 +48,48 @@ class AppSession:
         self.THINK_OPEN = tok.encode("<think>\n", add_special_tokens=False)
         self.gen, self.kept, self.absorbed = [], [], 0
         self.evictions = 0
+        self.profile = profile                       # ambient identity in the MQ region
         torch.manual_seed(seed)
+
+    # ---- conversational continuity (chitchat carries memory) ------------------------
+    def _profile_ids(self):
+        """Compact user profile placed in the NEVER-EVICTED MQ prefix, so every turn —
+        chitchat included — knows who it is talking to. Declarative one-liner built from
+        persisted facts (recency-capped); never question-shaped (defect #3d)."""
+        if not self.profile or not self.mem.persistent:
+            return self.tok.encode("") or [self.tok.bos_token_id]
+        facts = [f for f in self.mem.persistent[-8:] if not mc._is_question(f)]
+        text = "(About the user: " + " ".join(facts) + ")\n"
+        return self.tok.encode(text)
+
+    def save_state(self, path):
+        """Persist the conversation stream so the NEXT session starts with the previous
+        one already compressed into the soft prompt ('SP warm start')."""
+        import json as _json
+        hist = (self.kept + self.gen[self.absorbed:])[-self.maxD:]
+        with open(path, "w") as f:
+            _json.dump({"kept": hist}, f)
+
+    def load_state(self, path):
+        """Resume continuity: the previous session's stream becomes this session's kept
+        buffer — the first rebuild compresses it into the 32 SP vectors, so casual turns
+        pick up tone/topics without any retrieval."""
+        import json as _json, os as _os
+        if not _os.path.exists(path):
+            return False
+        with open(path) as f:
+            self.kept = _json.load(f)["kept"][-self.maxD:]
+        self.gen, self.absorbed = [], 0
+        return True
+
+    def _stitch(self, user_msg, answer):
+        """Record a NON-GENERATING turn (fact ack / honest miss / closest note / isolated
+        recall quote) into the conversation stream. Without this, "I went to Kyoto today"
+        -> instant ack leaves NO trace in SP/raw, and the next casual turn ("what do you
+        think was the highlight?") has nothing to follow — the reported chitchat-continuity
+        gap. Tokens only; no generation happens here."""
+        text = ("<｜end▁of▁sentence｜>" if self.gen else "") +             f"<｜User｜>{user_msg}<｜Assistant｜>{answer}"
+        self.gen.extend(self.tok.encode(text, add_special_tokens=False))
 
     def _evict(self, kept):
         """Mass-based eviction (port of sp_mlx.evict / MAXD): when the distant buffer
@@ -95,8 +136,7 @@ class AppSession:
             + list(self.THINK_OPEN)
         start, fi, new = len(gen), 0, 0
         cache = DynamicCache()
-        llm(input_ids=torch.tensor([tok.encode("")]) if tok.encode("") else
-            torch.tensor([[tok.bos_token_id]]), past_key_values=cache, use_cache=True)
+        llm(input_ids=torch.tensor([self._profile_ids()]), past_key_values=cache, use_cache=True)
         MQ = cache.get_seq_length()
         in_think, forced_final, done = True, False, False
         policy = policy or DecodePolicy()
@@ -200,6 +240,7 @@ class AppSession:
     def turn(self, user_msg, store="session", ack_only=False, retries=2):
         if ack_only:
             (self.mem.persist if store == "persist" else self.mem.remember_session)(user_msg)
+            self._stitch(user_msg, "Got it — saved.")
             return "Got it — saved.", None, []
         intent = self.intent_of(user_msg)
         compute_like = intent in ("math", "command")
@@ -211,6 +252,7 @@ class AppSession:
                 and self.specific_spans(user_msg):
             self.mem.persist(user_msg)
             self.mem.pin(user_msg)
+            self._stitch(user_msg, "Got it — saved.")
             return "Got it — saved.", None, []
         if intent not in ("recall", "lookup") and self.specific_spans(user_msg):
             self.mem.pin(user_msg)
@@ -222,6 +264,7 @@ class AppSession:
                 self.mem.persist(user_msg)
             else:
                 self.mem.remember_session(user_msg)
+            self._stitch(user_msg, "Got it — saved.")
             return "Got it — saved.", None, []
         if intent == "recall":
             src, chunks = self.mem.retrieve_personal(user_msg)
@@ -230,7 +273,9 @@ class AppSession:
                 # a never-stated wifi password, the model invented "password123"). A recall
                 # is a lookup into the user's saved facts; an empty lookup has exactly one
                 # truthful answer, and it costs zero tokens.
-                return ("I don't have that saved — you haven't told me yet.", None, [])
+                ans = "I don't have that saved — you haven't told me yet."
+                self._stitch(user_msg, ans)
+                return (ans, None, [])
         elif intent == "lookup":
             # known-fact first (strict): a personal question that surface-classifies as a
             # world lookup ('Where does my sister live?', 'Where does Daniel live?') must
@@ -296,8 +341,10 @@ class AppSession:
                 # verbatim instead: honest for a false hit, and for a genuine paraphrase
                 # the note IS the answer. Mechanical, zero extra latency.
                 note = chunks[int(sims.argmax())]
-                return (f"I don't have that saved exactly — the closest note I have: "
-                        f"\"{note}\"", src, chunks)
+                ans = (f"I don't have that saved exactly — the closest note I have: "
+                       f"\"{note}\"")
+                self._stitch(user_msg, ans)
+                return (ans, src, chunks)
             aug = (f"Context (retrieved from {src}): {' ; '.join(chunks)}\n\n"
                    f"Question: {user_msg}\nThe answer is stated EXPLICITLY in the Context above. Do NOT "
                    f"calculate, reason about, or transform it, and ignore anything earlier in the "
@@ -329,6 +376,8 @@ class AppSession:
             fixed, corrections = calc_repair(answer, full_body=getattr(self, "_last_body", None))
             if corrections:
                 answer = fixed
+        if quote_recall:
+            self._stitch(user_msg, answer)             # isolated quote leaves a trace too
         if store == "persist":
             self.mem.persist(user_msg)
         elif store == "session" and intent == "fact":
