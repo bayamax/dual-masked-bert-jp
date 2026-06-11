@@ -40,7 +40,7 @@ L3 Web)と連携して動く。KV キャッシュは会話がどれだけ長く�
 | SP pooler(AttnPoolSP 32×1536) | `fft_out/pooler.pt` | 履歴→SP 圧縮+eviction 質量 |
 | intent ルータ(6クラス) | `hypernet_sp/intent_head.npz` | ターン種別判定 |
 | specificity probe | `hypernet_sp/specificity_head.npz` | 固有値 pin 判定 |
-| 検索トリガー(任意) | `hypernet_sp/attn_trigger3_head.npz` | SP 参照検知→検索発火 |
+| 検索トリガー(任意・**v1 は OFF**) | `hypernet_sp/attn_trigger4_head.npz` | SP 参照検知→メモリ再注入(v3 は使用禁止) |
 | 文埋め込み | BAAI/bge-small-en-v1.5(33M) | 検索・信頼度 |
 | ランタイムロジック | `hypernet_sp/*.py`(純Python 6 モジュール) | §3 のパイプライン |
 
@@ -81,7 +81,7 @@ npz ヘッドは `export_classifiers.LinearHead`(numpy のみ)でロード。skl
 | ターン上限 | 2000 tok / 240s | 多部回答は ANSCAP を可変に(#13) |
 | recall 確信閾値 | 0.62 | 未満は最近接メモ提示 |
 | known-fact 閾値 | 意味 0.6 + 語共有 | シャドーイング防止の二重ロック |
-| トリガー閾値 | 0.35 | recall 0.97 / 誤発火 0.10 |
+| 検索トリガー | **v1 は OFF**(任意機能) | 後日 ON 時は attn_trigger4 / th=0.6(MULTITURN_TRIGGER_RESPONSE 参照) |
 | pin 上限 / 検索 cap | 12 / 4 | |
 
 ## 5. できること(全て実測済み)
