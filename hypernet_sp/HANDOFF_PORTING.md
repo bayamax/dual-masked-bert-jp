@@ -72,6 +72,12 @@ HF リポジトリの本番ランタイム `tiered_rag_mlx.py` / `sp_mlx.py` に
 - [ ] **#2+並び順**: `retrieve_personal` はストア統合プール
   (**persistent が先、session が後** — 逆だと古い L2 が新しい訂正に勝つ)
 
+- [ ] **#15 ターン縫い込み**: 全ての早期 return パス(ack/正直 miss/最近接メモ/引用)で
+  `_stitch(user_msg, answer)` — 生成しないターンも会話ストリームに痕跡を残す
+  (雑談継続性の本体。v6 8/8、回帰 v1/v2 全緑)
+- [ ] **#14 意図対応の救済**: salvage 継続は compute 系のみ「Final answer: 」、
+  雑談/説明は think を閉じて自然回答(budget 200)。収束強制終了も compute 系のみ武装
+
 ## 3. _gen_once への配線(3点)
 
 1. **二相温度**: サンプリングの温度を `policy.temp(in_think, TEMP)` に。
