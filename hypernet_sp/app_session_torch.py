@@ -58,7 +58,8 @@ class AppSession:
         persisted facts (recency-capped); never question-shaped (defect #3d)."""
         if not self.profile or not self.mem.persistent:
             return self.tok.encode("") or [self.tok.bos_token_id]
-        facts = [f for f in self.mem.persistent[-8:] if not mc._is_question(f)]
+        facts = [f for f in self.mem.persistent[-8:]
+                 if not mc._is_question(f) and len(f.split()) <= 30]
         text = "(About the user: " + " ".join(facts) + ")\n"
         return self.tok.encode(text)
 
@@ -139,7 +140,11 @@ class AppSession:
         gen, kept, absorbed = self.gen, self.kept, self.absorbed
         feed = list(tok.encode(("<｜end▁of▁sentence｜>" if gen else "") +
                                f"<｜User｜>{aug}<｜Assistant｜>", add_special_tokens=False)) \
-            + (list(self.THINK_OPEN) if force_think else [])
+            + (list(self.THINK_OPEN) if force_think else
+               list(tok.encode("<think>\n\n</think>\n\n", add_special_tokens=False)))
+        # ^ non-compute turns get a PRE-CLOSED empty think: leaving it out entirely is not
+        #   enough — the FFT'd model re-opens its own <think>, drafts the artifact inside,
+        #   and emits only a self-review (v7 round-2 W2/B1). Pre-closing pins it to answer.
         start, fi, new = len(gen), 0, 0
         cache = DynamicCache()
         prime = llm(input_ids=torch.tensor([self._profile_ids()]), past_key_values=cache,
@@ -194,10 +199,6 @@ class AppSession:
             if done:
                 break
         body = tok.decode(gen[start:]).split("<｜Assistant｜>", 1)[-1]
-        if not force_think and "<think>" not in body:
-            self.gen, self.kept, self.absorbed = gen, kept, absorbed
-            self._last_body = body
-            return body.strip()[:ANSCAP]            # direct answer — nothing to unwrap
         if "</think>" not in body or mc._extract_answer(body) in mc._EMPTY:
             # pass-1 salvage (port of the MLX two-pass that this port was missing): the
             # think meandered to the cap without converging or looping — close it and force
@@ -276,8 +277,9 @@ class AppSession:
         # 8042?"): interrogative shape routes it to recall, whose empty-retrieval honest
         # miss would answer "you haven't told me yet" to the very message telling us.
         # A persist verb + an assertable value = a save, whatever the punctuation.
-        if mc.wants_persist(user_msg) and mc._FACTLIKE.search(user_msg) \
-                and self.specific_spans(user_msg):
+        head = " ".join(user_msg.split()[:8])
+        if mc.wants_persist(head) and len(user_msg.split()) <= 30 \
+                and mc._FACTLIKE.search(user_msg) and self.specific_spans(user_msg):
             self.mem.persist(user_msg)
             self.mem.pin(user_msg)
             self._stitch(user_msg, "Got it — saved.")
