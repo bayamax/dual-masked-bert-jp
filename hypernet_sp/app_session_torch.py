@@ -127,7 +127,7 @@ class AppSession:
             torch.zeros(1, 0, self.pooler.H, dtype=self.embT.weight.dtype)
 
     @torch.no_grad()
-    def _gen_once(self, aug, policy=None, cap=None):
+    def _gen_once(self, aug, policy=None, cap=None, salvage="Final answer: ", salvage_budget=48):
         cap = cap or self.cap
         tok, llm = self.tok, self.llm
         gen, kept, absorbed = self.gen, self.kept, self.absorbed
@@ -181,9 +181,13 @@ class AppSession:
             def step(t):
                 return llm(inputs_embeds=self._emb([t]), past_key_values=cache,
                            use_cache=True).logits[:, -1, :].float()
-            for t in tok.encode("\n</think>\n\nFinal answer: ", add_special_tokens=False):
+            # salvage continuation is INTENT-AWARE: "Final answer: " primes a bare number,
+            # which turned a binary-search explanation into the stub "100" (v6 C3 — the
+            # explanation never left <think> within the cap). Non-compute turns just close
+            # the think and answer naturally, on a larger budget.
+            for t in tok.encode(f"\n</think>\n\n{salvage}", add_special_tokens=False):
                 gen.append(t); last = step(t)
-            for _ in range(48):
+            for _ in range(salvage_budget):
                 t = int(last[0].argmax())
                 if t == self.eos:
                     break
@@ -369,12 +373,13 @@ class AppSession:
             # The verbatim-loop trigger stays armed on every turn.
             def _pol():
                 return DecodePolicy(k=3 if compute_like else 10 ** 9)
-            answer = self._gen_once(aug, policy=_pol())
+            sv = ("Final answer: ", 48) if compute_like else ("", 200)
+            answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1])
             for _ in range(retries):
                 if mc._answer_ok(answer, check_chunks, user_msg):
                     break
                 self.gen, self.kept, self.absorbed = list(snap[0]), list(snap[1]), snap[2]
-                answer = self._gen_once(aug, policy=_pol())
+                answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1])
         if compute_like and answer:
             # post-hoc calculator (the 1.5B mis-EVALUATES its own correct expressions:
             # 2000x1.05^3 -> 121550.625, 650-200 -> 210). Claims in the full turn body are
