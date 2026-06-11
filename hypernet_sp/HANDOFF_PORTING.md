@@ -78,6 +78,10 @@ HF リポジトリの本番ランタイム `tiered_rag_mlx.py` / `sp_mlx.py` に
 - [ ] **#14 意図対応の救済**: salvage 継続は compute 系のみ「Final answer: 」、
   雑談/説明は think を閉じて自然回答(budget 200)。収束強制終了も compute 系のみ武装
 
+- [ ] **#16 空 past では SP を前置しない**: kept が空の間は pooler を呼ばずブロックを
+  組む(挨拶タスク発明の根治 — 単離マトリクスで空 SP が単独犯と確定。
+  `GENERATION_CHITCHAT_RESPONSE.md` 参照)。**sp_mlx.generate_sp / Swift 両方に必須**
+
 ## 3. _gen_once への配線(3点)
 
 1. **二相温度**: サンプリングの温度を `policy.temp(in_think, TEMP)` に。
