@@ -136,7 +136,9 @@ class AppSession:
             + list(self.THINK_OPEN)
         start, fi, new = len(gen), 0, 0
         cache = DynamicCache()
-        llm(input_ids=torch.tensor([self._profile_ids()]), past_key_values=cache, use_cache=True)
+        prime = llm(input_ids=torch.tensor([self._profile_ids()]), past_key_values=cache,
+                    use_cache=True)
+        prime_last = prime.logits[:, -1, :].float()
         MQ = cache.get_seq_length()
         in_think, forced_final, done = True, False, False
         policy = policy or DecodePolicy()
@@ -145,12 +147,24 @@ class AppSession:
             if nd_end > absorbed:
                 kept.extend(gen[absorbed:nd_end]); absorbed = nd_end
                 kept = self._evict(kept)
-            sp = self.pooler(self._emb(kept).float()).to(self.embT.weight.dtype)
-            parts = [sp] + ([self._emb(gen[c0 - R:c0])] if R > 0 else [])
-            block = torch.cat(parts, 1)
+            # defect #16 (chitchat report): NO soft prompt when there is no past. The
+            # pooler was trained on math-CoT contexts only; its EMPTY-input output is a
+            # constant "there is a math problem" bias that made bare greetings invent
+            # tasks (isolation: SP-pipeline 0/2 vs same weights full-KV 3/3). A summary
+            # of nothing carries no information — don't inject one.
+            parts = []
+            if kept:
+                sp = self.pooler(self._emb(kept).float()).to(self.embT.weight.dtype)
+                parts.append(sp)
+            if R > 0:
+                parts.append(self._emb(gen[c0 - R:c0]))
             cache.crop(MQ)
-            last = llm(inputs_embeds=block, past_key_values=cache,
-                       use_cache=True).logits[:, -1, :].float()
+            if parts:
+                block = torch.cat(parts, 1)
+                last = llm(inputs_embeds=block, past_key_values=cache,
+                           use_cache=True).logits[:, -1, :].float()
+            else:
+                last = prime_last                    # first tokens of a first turn
             for _ in range(self.C):
                 if fi < len(feed):
                     t = feed[fi]; fi += 1
