@@ -108,6 +108,28 @@ npz ヘッドは `export_classifiers.LinearHead`(numpy のみ)でロード。skl
    レイテンシ/発熱計測が必要(マラソンバッテリーは無修正で再利用可)
 6. **セキュリティ**: web_guard はパターン第一線。恒久対策(span 制約デコード)は未実装
 
+## 6.5 既知の移植バグ対応(Swift SP-evict 崩壊 — 2026-06-10 回答済み)
+
+アプリ側報告(`GENONCE_DEGENERATION_REPORT.md`)の `,1!#!!!!` 型崩壊は**検証済みで、
+モデル/レシピの問題ではない**(torch リファレンスは同一重み・同一プロンプト・ガード無効で
+200 トークンの整合出力)。Swift 移植の忠実性バグであり、対応手順は以下を参照:
+
+| 参照先 | 内容 |
+|---|---|
+| `hypernet_sp/GENONCE_DEGENERATION_RESPONSE.md` | 判定・原因候補の再ランク・照合手順 |
+| `hypernet_sp/parity_reference.npz` | 機械照合用の基準データ(下記) |
+| `hypernet_sp/sp_evict_parity.py` | 基準データの再生成スクリプト |
+
+**最有力原因**: pooler の cross-attention に「past が空ならスキップ」のガード
+(`past.size(1) > 0`)が無い場合、空キー集合への softmax が NaN を返し SP 全体が
+NaN になる。初回ターンは rw=512 の間ずっと past が空なので、自明なプロンプトで
+即座に再現する — 報告症状と完全整合。
+
+**照合手順(この順で)**: ① Swift 側で空入力 pooler の出力に NaN が無いか確認
+② 全 32 ベクトルの L2 ノルムが **1.468531**(|out_scale|)に一致するか
+③ cache crop 後の RoPE 位置が MQ から再開しているか(`parity_reference.npz` の
+`q_ids` は 14 個 → 位置 14 から)④ `greedy_tokens` と突き合わせて最初の分岐点を特定。
+
 ## 7. 開発開始手順
 
 1. 本リポジトリを clone、`HANDOFF_PORTING.md` の順で `tiered_rag_mlx.py` に移植(0.5–1 日)
