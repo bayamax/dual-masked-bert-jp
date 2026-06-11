@@ -71,10 +71,25 @@ def regex_intent(text):
 # "when is my flight") — a WH-word with "my/I" inside the same clause.
 _RECALL_CUE = re.compile(r"\b(remind me|recall|do you remember|did (i|you) (say|mention|tell|leave|park)|"
                          r"what (was|did) (i|you)\b|again\b)|"
-                         r"\b(what|whats|what's|which|when|where|how)\b[^,.!?]{0,24}\b(my|mine)\b", re.I)
+                         # 'how' joins the WH+my branch only in its quantity forms:
+                         # "how old is my daughter" = recall, but "How can I make my phone
+                         # battery last longer?" is a how-to (v7 H1 was hijacked to recall)
+                         r"\b(what|whats|what's|which|when|where|how (?:many|much|old|long))\b"
+                         r"[^,.!?]{0,24}\b(my|mine)\b", re.I)
 # advice/ideas-seeking questions are open-ended generation (chitchat), not retrieval
 _ADVICE = re.compile(r"\b(tips?|suggest(ions?)?|recommend(ations?)?|ideas?|should (i|we)|"
                      r"what do you think|brainstorm|help me (plan|write|pick|decide)|good)\b", re.I)
+# imperative TEXT-ARTIFACT requests are generation, never fact/command ("Write a short
+# polite email..." was fact-acked 'Got it — saved.' in v7; the summarise-this-passage and
+# make-it-shorter turns likewise). "make it <digit>..." stays a correction-fact.
+_CREATIVE = re.compile(r"^(?:please\s+)?(?:write|draft|compose|create|rewrite|rephrase|"
+                       r"reword|summari[sz]e|shorten|expand|translate|edit|polish|improve)\b"
+                       r"|\bmake (?:it|this|that)\b(?![^.!?]*\d)", re.I)
+# first-person emotional shares need a RESPONSE, not a silent ack (v7 E1: venting got
+# 'Got it — saved.')
+_EMOTIONAL = re.compile(r"\b(i(?:'m| am| was| had|'ve had)?\b[^.!?]{0,40}\b"
+                        r"(feel|feeling|felt|rough|tough|stressed|exhausted|tired|sad|"
+                        r"happy|excited|frustrated|overwhelmed|anxious|vent|venting))", re.I)
 _NUMWORD = re.compile(r"\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|"
                       r"twenty|thirty|forty|fifty|hundred|thousand|dozen|half|quarter|double)\b", re.I)
 _OPWORD = re.compile(r"\b(plus|minus|times|divided|multiply|multiplied|subtract(ed)?|add(ed|s)?|percent|"
@@ -115,6 +130,10 @@ def route_intent(text, clf_bundle, bge, hi=0.5, lo=0.30):
         classes = list(clf_bundle["clf"].classes_)
     except Exception:
         return regex_intent(text)
+    if _CREATIVE.search(text):
+        return "chitchat"                          # generation request, whatever the clf says
+    if _EMOTIONAL.search(text) and not is_question(text):
+        return "chitchat"                          # respond with empathy (caller may still log)
     order = sorted(range(len(p)), key=lambda i: -p[i])
     top1, top2 = str(classes[order[0]]), str(classes[order[1]])
     p1 = float(p[order[0]])

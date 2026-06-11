@@ -127,20 +127,26 @@ class AppSession:
             torch.zeros(1, 0, self.pooler.H, dtype=self.embT.weight.dtype)
 
     @torch.no_grad()
-    def _gen_once(self, aug, policy=None, cap=None, salvage="Final answer: ", salvage_budget=48):
+    def _gen_once(self, aug, policy=None, cap=None, salvage="Final answer: ", salvage_budget=48,
+                  force_think=True):
+        # force_think is a MATH device. The #16 isolation arms C/E proved the model answers
+        # directly and well WITHOUT it; v7 proved that WITH it, creative tasks draft the
+        # artifact inside <think> and then emit a self-review ("I think this fits the
+        # user's request") as the visible answer. Compute paths keep the think; chat and
+        # creative turns answer directly at base temperature.
         cap = cap or self.cap
         tok, llm = self.tok, self.llm
         gen, kept, absorbed = self.gen, self.kept, self.absorbed
         feed = list(tok.encode(("<｜end▁of▁sentence｜>" if gen else "") +
                                f"<｜User｜>{aug}<｜Assistant｜>", add_special_tokens=False)) \
-            + list(self.THINK_OPEN)
+            + (list(self.THINK_OPEN) if force_think else [])
         start, fi, new = len(gen), 0, 0
         cache = DynamicCache()
         prime = llm(input_ids=torch.tensor([self._profile_ids()]), past_key_values=cache,
                     use_cache=True)
         prime_last = prime.logits[:, -1, :].float()
         MQ = cache.get_seq_length()
-        in_think, forced_final, done = True, False, False
+        in_think, forced_final, done = force_think, False, False
         policy = policy or DecodePolicy()
         while not done:
             c0 = len(gen); R = min(c0, self.rw); nd_end = c0 - R
@@ -169,7 +175,7 @@ class AppSession:
                 if fi < len(feed):
                     t = feed[fi]; fi += 1
                 else:
-                    T = policy.temp(in_think, self.temp)
+                    T = policy.temp(in_think, self.temp) if force_think else self.temp
                     t = int(torch.multinomial(F.softmax(last[0] / T, -1), 1))
                     if t == self.eos:
                         done = True; break
@@ -188,6 +194,10 @@ class AppSession:
             if done:
                 break
         body = tok.decode(gen[start:]).split("<｜Assistant｜>", 1)[-1]
+        if not force_think and "<think>" not in body:
+            self.gen, self.kept, self.absorbed = gen, kept, absorbed
+            self._last_body = body
+            return body.strip()[:ANSCAP]            # direct answer — nothing to unwrap
         if "</think>" not in body or mc._extract_answer(body) in mc._EMPTY:
             # pass-1 salvage (port of the MLX two-pass that this port was missing): the
             # think meandered to the cap without converging or looping — close it and force
@@ -388,12 +398,14 @@ class AppSession:
             def _pol():
                 return DecodePolicy(k=3 if compute_like else 10 ** 9)
             sv = ("Final answer: ", 48) if compute_like else ("", 200)
-            answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1])
+            answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1],
+                                    force_think=compute_like)
             for _ in range(retries):
                 if mc._answer_ok(answer, check_chunks, user_msg):
                     break
                 self.gen, self.kept, self.absorbed = list(snap[0]), list(snap[1]), snap[2]
-                answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1])
+                answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1],
+                                        force_think=compute_like)
         if compute_like and answer:
             # post-hoc calculator (the 1.5B mis-EVALUATES its own correct expressions:
             # 2000x1.05^3 -> 121550.625, 650-200 -> 210). Claims in the full turn body are
