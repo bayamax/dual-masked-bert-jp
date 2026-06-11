@@ -363,12 +363,18 @@ class AppSession:
                 answer = self._clean_quote(aug)
         else:
             snap = (list(self.gen), list(self.kept), self.absorbed)
-            answer = self._gen_once(aug)
+            # numeric-convergence forcing is a MATH device: on an explanation turn the
+            # example number recurs ("an array of 100... halve 100...") and k=3 fires,
+            # forcing "Final answer: 100" out of a binary-search explanation (v6 C3).
+            # The verbatim-loop trigger stays armed on every turn.
+            def _pol():
+                return DecodePolicy(k=3 if compute_like else 10 ** 9)
+            answer = self._gen_once(aug, policy=_pol())
             for _ in range(retries):
                 if mc._answer_ok(answer, check_chunks, user_msg):
                     break
                 self.gen, self.kept, self.absorbed = list(snap[0]), list(snap[1]), snap[2]
-                answer = self._gen_once(aug)
+                answer = self._gen_once(aug, policy=_pol())
         if compute_like and answer:
             # post-hoc calculator (the 1.5B mis-EVALUATES its own correct expressions:
             # 2000x1.05^3 -> 121550.625, 650-200 -> 210). Claims in the full turn body are
