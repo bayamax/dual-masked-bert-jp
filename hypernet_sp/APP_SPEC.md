@@ -65,8 +65,10 @@ npz ヘッドは `export_classifiers.LinearHead`(numpy のみ)でロード。skl
 7. math/command  → 文脈注入: 疑問形除外+関連度フィルタ+(outdated)/(current)タグ
                    +前回結果の平叙文注入。テンプレは質問先頭・(a)(b)(c)検出でパート指示
 8. 生成          SP-evict ループ(rw=512–1024, maxD=4096, C=64)
-                   + DecodePolicy(think 内 temp0.6 / 以降 greedy、収束・ループで強制終了)
-                   + 2パス救済(think 開きっぱなし→強制クローズ)
+                   ・compute 系(math/command): think 強制+DecodePolicy(二相温度、
+                     収束/ループ強制終了)+2パス救済
+                   ・それ以外(雑談・作文・要約等): **空 think 先行で直接回答**(temp 0.6)
+                     — think は math 装置。創作で強制すると成果物が think 置き去りになる(#20)
 9. 後処理        groundedness 検査+リトライ(≤2)、電卓検算(評価エラー修復)、
                    compute 結果の自己記録(旧結果は置換)
 ```

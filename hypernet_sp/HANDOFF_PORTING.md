@@ -82,6 +82,11 @@ HF リポジトリの本番ランタイム `tiered_rag_mlx.py` / `sp_mlx.py` に
   組む(挨拶タスク発明の根治 — 単離マトリクスで空 SP が単独犯と確定。
   `GENERATION_CHITCHAT_RESPONSE.md` 参照)。**sp_mlx.generate_sp / Swift 両方に必須**
 
+- [ ] **#18〜21 一般チャット対応**(v7): _CREATIVE/_EMOTIONAL ルーティング上書き、
+  _RECALL_CUE の how 限定、**非 compute ターンの空 think 先行**(直接回答・2〜5 倍高速)、
+  保存依頼ゲート(文頭 8 語・30 語以下)、profile 30 語制限。
+  リファレンス: intent_route.py / app_session_torch.py の該当コメント
+
 ## 3. _gen_once への配線(3点)
 
 1. **二相温度**: サンプリングの温度を `policy.temp(in_think, TEMP)` に。
