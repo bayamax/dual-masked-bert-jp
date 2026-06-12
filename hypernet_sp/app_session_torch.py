@@ -408,14 +408,25 @@ class AppSession:
             def _pol():
                 return DecodePolicy(k=3 if compute_like else 10 ** 9)
             sv = ("Final answer: ", 48) if compute_like else ("", 200)
+
+            def _ok(a):
+                # 25: a non-compute answer with NO alphabetic word is a copy artifact —
+                # the bare "8042" recall answer one turn earlier primed direct-answer mode
+                # into echoing it as the "haiku". Numbers-only replies are only legitimate
+                # on compute turns.
+                if not compute_like and not re.search(r"[A-Za-z]{2,}", a or ""):
+                    return False
+                return mc._answer_ok(a, check_chunks, user_msg)
             answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1],
                                     force_think=compute_like)
             for _ in range(retries):
-                if mc._answer_ok(answer, check_chunks, user_msg):
+                if _ok(answer):
                     break
                 self.gen, self.kept, self.absorbed = list(snap[0]), list(snap[1]), snap[2]
                 answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1],
                                         force_think=compute_like)
+            else:
+                pass
         if compute_like and answer:
             # post-hoc calculator (the 1.5B mis-EVALUATES its own correct expressions:
             # 2000x1.05^3 -> 121550.625, 650-200 -> 210). Claims in the full turn body are
