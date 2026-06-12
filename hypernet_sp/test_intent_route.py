@@ -65,6 +65,14 @@ def main():
                    route("what's a good souvenir to bring back from my trip?", recall=0.32, fact=0.26,
                          lookup=0.22, chitchat=0.2), "chitchat"))
 
+    print("== creative override defers to math cues ==")
+    r.append(check("write-out-calculation stays math",
+                   route("Write out the calculation of 17 * 24.", math=0.4, chitchat=0.35,
+                         fact=0.25), "math"))
+    r.append(check("plain writing request stays chitchat",
+                   route("Write a short poem about rain.", fact=0.6, chitchat=0.3,
+                         lookup=0.1), "chitchat"))
+
     print("== low confidence / no model: regex fallback ==")
     r.append(check("regex fallback on p1<lo",
                    route("what's my insurance policy number?", recall=0.2, lookup=0.18, fact=0.17,

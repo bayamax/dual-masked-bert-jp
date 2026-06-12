@@ -130,8 +130,11 @@ def route_intent(text, clf_bundle, bge, hi=0.5, lo=0.30):
         classes = list(clf_bundle["clf"].classes_)
     except Exception:
         return regex_intent(text)
-    if _CREATIVE.search(text):
-        return "chitchat"                          # generation request, whatever the clf says
+    if _CREATIVE.search(text) and not looks_mathy(text):
+        # generation request, whatever the clf says — UNLESS it carries a math cue
+        # ("Write out the calculation of 17*24" must keep the compute path: forced think,
+        # convergence policy, tags and the calculator all live there)
+        return "chitchat"
     if _EMOTIONAL.search(text) and not is_question(text):
         return "chitchat"                          # respond with empathy (caller may still log)
     order = sorted(range(len(p)), key=lambda i: -p[i])
