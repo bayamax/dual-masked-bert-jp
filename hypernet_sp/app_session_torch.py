@@ -38,10 +38,14 @@ _CAND = re.compile(
 
 class AppSession:
     def __init__(self, llm, tok, pooler, bge, intent_clf, spec_clf, mem, web=None,
-                 rw=512, C=64, cap=600, temp=0.6, maxD=4096, seed=0, profile=True):
+                 rw=512, C=64, cap=600, temp=0.6, maxD=4096, seed=0, profile=True,
+                 archive=None, recall_k=2):
         self.llm, self.tok, self.pooler, self.bge = llm, tok, pooler, bge
         self.intent_clf, self.spec_clf = intent_clf, spec_clf
         self.mem, self.web = mem, web
+        # Phase A block recall (BLOCKRECALL_V1): verbatim re-injection of evicted blocks
+        # scored in the model's own Q/K space. None = exact pre-existing behaviour.
+        self.archive, self.recall_k = archive, recall_k
         self.rw, self.C, self.cap, self.temp, self.maxD = rw, C, cap, temp, maxD
         self.embT = llm.get_input_embeddings()
         self.eos = tok.eos_token_id
@@ -153,6 +157,7 @@ class AppSession:
         #   enough — the FFT'd model re-opens its own <think>, drafts the artifact inside,
         #   and emits only a self-review (v7 round-2 W2/B1). Pre-closing pins it to answer.
         start, fi, new = len(gen), 0, 0
+        rec_emb = None                       # Phase A verbatim recall, filled after absorb
         cache = DynamicCache()
         prime = llm(input_ids=torch.tensor([self._profile_ids()]), past_key_values=cache,
                     use_cache=True)
@@ -163,8 +168,20 @@ class AppSession:
         while not done:
             c0 = len(gen); R = min(c0, self.rw); nd_end = c0 - R
             if nd_end > absorbed:
+                if self.archive is not None:
+                    self.archive.extend(gen[absorbed:nd_end])
                 kept.extend(gen[absorbed:nd_end]); absorbed = nd_end
                 kept = self._evict(kept)
+            # Phase A recall (BLOCKRECALL_V1): once per turn, after absorption, score the
+            # evicted-block archive with the current message's own pre-RoPE query
+            # projections and re-inject the winners verbatim between SP and the raw
+            # window. Exact values survive SP compression this way (SP stays the gist).
+            if rec_emb is None and self.archive is not None and \
+                    (self.archive.blocks or len(self.archive.buf) >= 16):
+                rid = self.archive.retrieve(tok.encode(aug, add_special_tokens=False),
+                                            k=self.recall_k)
+                if rid:
+                    rec_emb = self._emb(rid)
             # defect #16 (chitchat report): NO soft prompt when there is no past. The
             # pooler was trained on math-CoT contexts only; its EMPTY-input output is a
             # constant "there is a math problem" bias that made bare greetings invent
@@ -174,6 +191,8 @@ class AppSession:
             if kept:
                 sp = self.pooler(self._emb(kept).float()).to(self.embT.weight.dtype)
                 parts.append(sp)
+            if rec_emb is not None:
+                parts.append(rec_emb.to(self.embT.weight.dtype))
             if R > 0:
                 parts.append(self._emb(gen[c0 - R:c0]))
             cache.crop(MQ)
