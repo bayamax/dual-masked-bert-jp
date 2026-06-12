@@ -332,6 +332,15 @@ class AppSession:
                     # confidence bar (live oil test: unexpanded ranking chose the Brent
                     # chunk over the queried \$86.78 WTI one)
                     self._rank_query = q if q != user_msg else None
+                    if not chunks:
+                        # 26: offline/failed lookup must NOT fall through to free
+                        # generation — the 1.5B invents figures ("Mount Fuji is 2,0900
+                        # meters", full demo). A lookup means CHECKED knowledge; if we
+                        # cannot check, say so.
+                        ans = ("I can't look that up right now (no web access). "
+                               "Ask me again when I'm back online.")
+                        self._stitch(user_msg, ans)
+                        return (ans, None, [])
         elif intent == "command" and (self.mem.session or self.mem.pins):
             log = self.mem.session[-self.mem.LOGCAP:]
             # a pin is redundant when a log line EXTENDS it ('<question> — result: 24'
