@@ -1,14 +1,17 @@
 #!/bin/bash
-# GPU evaluation job — GPUEVAL_V2 (V1 failed: image fell back to torch cu130 wheel vs
-# 12.8 driver -> cuda False; and the HF repo has no fft_hf/, it must be rebuilt from
-# fft_out/student.pt via build_fft_hf.py; git-lfs clone was silently skipping LFS).
+# GPU evaluation job — GPUEVAL_V3 (V2 failed: cu128 index resolved torch 2.11 which
+# breaks transformers 5.10.2 model imports -> fft_hf build crashed -> cascade. V3 pins
+# torch==2.12.0 (the locally proven pairing), adds an import canary with full traceback,
+# and gates the stages on fft_hf actually existing).
 # Executed INSIDE a RunPod pod. Env: HF_TOKEN, RUNPOD_API_KEY, RUNPOD_POD_ID.
 set -x
 export HF_HUB_ENABLE_HF_TRANSFER=0
 cd /workspace 2>/dev/null || cd /
 REPO=baya1116/hypernet-sp-distill
 
-pip install -q --force-reinstall torch --index-url https://download.pytorch.org/whl/cu128 2>&1 | tail -1
+for IDX in cu128 cu126; do
+  pip install -q --force-reinstall "torch==2.12.0" --index-url "https://download.pytorch.org/whl/$IDX" 2>&1 | tail -1 && break
+done
 pip install -q "transformers==5.10.2" huggingface_hub joblib scikit-learn numpy 2>&1 | tail -1
 
 python3 - <<'PY'
@@ -22,11 +25,23 @@ snapshot_download("baya1116/hypernet-sp-distill", token=os.environ["HF_TOKEN"],
 PY
 cd /workspace/repo || exit 1
 mkdir -p hypernet_sp/gpu_eval
+python3 - > hypernet_sp/gpu_eval/canary.log 2>&1 <<'PY'
+import traceback, torch
+print("torch", torch.__version__, "cuda", torch.cuda.is_available())
+try:
+    import transformers
+    print("transformers", transformers.__version__)
+    from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa
+    from transformers.models.qwen2 import modeling_qwen2          # noqa
+    print("CANARY_OK")
+except Exception:
+    traceback.print_exc()
+PY
 python3 build_fft_hf.py > hypernet_sp/gpu_eval/build_fft.log 2>&1
 
-{ echo "GPUEVAL_V2 start $(date -u)"; nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv; \
+{ echo "GPUEVAL_V3 start $(date -u)"; nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv; \
   python3 -c "import torch;print('torch',torch.__version__,'cuda',torch.cuda.is_available())"; \
-  tail -1 hypernet_sp/gpu_eval/build_fft.log; } > hypernet_sp/gpu_eval/STATUS.txt 2>&1
+  tail -1 hypernet_sp/gpu_eval/canary.log; tail -1 hypernet_sp/gpu_eval/build_fft.log; } > hypernet_sp/gpu_eval/STATUS.txt 2>&1
 
 push_stage () {
   cp -f needle_results.json hypernet_sp/gpu_eval/ 2>/dev/null
@@ -38,7 +53,14 @@ upload_folder(repo_id='$REPO', folder_path='hypernet_sp/gpu_eval',
               path_in_repo='hypernet_sp/gpu_eval', token=os.environ['HF_TOKEN'],
               commit_message='gpu_eval: $1')" || true
 }
-push_stage "env ready (GPUEVAL_V2)"
+push_stage "env ready (GPUEVAL_V3)"
+
+if [ ! -d fft_hf ]; then
+  push_stage "FATAL: fft_hf build failed - see canary.log / build_fft.log; aborting"
+  curl -s -X DELETE "https://rest.runpod.io/v1/pods/${RUNPOD_POD_ID}" \
+    -H "Authorization: Bearer ${RUNPOD_API_KEY}"
+  sleep 120; exit 1
+fi
 
 SPCHAT_DEVICE=cuda timeout 5400 python3 hypernet_sp/needle_recall_test.py \
   > hypernet_sp/gpu_eval/needle.log 2>&1
