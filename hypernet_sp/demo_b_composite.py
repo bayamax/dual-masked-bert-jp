@@ -10,18 +10,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.getcwd(), "runtime"))
 
 FILLER_USERS = [
-    "The weather has been all over the place this week, sunny then storms.",
-    "I tried that new ramen place near the station yesterday.",
-    "I started reading a novel about Antarctic explorers.",
-    "My neighbor's dog learned to open the gate somehow, clever thing.",
-    "We are thinking about repainting the kitchen a lighter color.",
-    "The train was delayed twenty minutes this morning, annoying.",
-    "I have been trying to drink more water instead of coffee lately.",
-    "The garden tomatoes are finally turning red.",
-    "I watched a documentary about deep sea creatures last night.",
-    "My phone battery barely lasts the afternoon now.",
-    "We played board games with friends over the weekend.",
-    "I am learning to make sourdough bread, the starter is fussy.",
+    "The weather has been all over the place this week, sunny mornings and then sudden storms in the afternoon. It made the commute messy twice and I had to dry my jacket on the office chair. Do you have any tricks for planning around weather like this?",
+    "I tried that new ramen place near the station yesterday. The broth was a thick pork style with charred garlic oil, and the noodles were firmer than I expected. The line took twenty minutes but honestly it might be worth it. What makes a great bowl in your view?",
+    "I started reading a novel about Antarctic explorers and it is gripping so far. The chapter about rationing fuel during a whiteout had me holding my breath. The author apparently used real expedition diaries as source material. Do stories like that appeal to you?",
+    "My neighbor's dog learned to open the gate somehow, clever thing. It lifts the latch with its nose and trots straight to the park by itself. The neighbor added a carabiner but the dog is already studying it. Any ideas for dog-proofing a latch humanely?",
+    "We are thinking about repainting the kitchen a lighter color, maybe a soft sage or a warm off-white. The cabinets are old oak so we want something that will not clash. The room only gets morning light. Which direction would you lean and why?",
+    "The train was delayed twenty minutes this morning because of a signal inspection, and the platform got so crowded I let two trains pass before boarding. I used the time to clear my inbox at least. How do you usually make delays feel less wasted?",
+    "I have been trying to drink more water instead of coffee lately, keeping a big bottle on the desk where I can see it. The afternoon headaches are already milder, though I miss the ritual of the third cup. Any advice for keeping the habit going?",
+    "The garden tomatoes are finally turning red after weeks of stubborn green. We staked them late so a few vines sprawl along the ground, but the flavor of the first ripe one was incredible. Should I prune the lower leaves this late in the season?",
+    "I watched a documentary about deep sea creatures last night and the anglerfish segment was unreal. There was also a translucent octopus that seemed to glow from inside. The pressure down there crushes submarines yet life thrives. What part of the ocean fascinates you?",
+    "My phone battery barely lasts the afternoon now, even after I dimmed the screen and disabled background refresh for most apps. It is about three years old so maybe the cells are just tired. Is a battery swap worth it or should I hold out for a new phone?",
+    "We played board games with friends over the weekend, a long strategy one about trading routes and a fast bluffing card game after midnight. I lost both but the table talk was the real prize. Do you think losing gracefully is a learnable skill?",
+    "I am learning to make sourdough bread and the starter is fussy, bubbling happily one day and sulking flat the next. I feed it on a schedule and keep it warm near the oven. The last loaf had a great crust but dense crumb. What should I adjust first?",
 ]
 
 def checks():

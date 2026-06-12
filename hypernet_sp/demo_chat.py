@@ -33,6 +33,7 @@ class RealWeb:
 
     def __init__(self):
         ssl._create_default_https_context = ssl._create_unverified_context
+        ssl.create_default_context = lambda *a, **k: ssl._create_unverified_context()
         from web_search import DuckDuckGoSearch, WikipediaSearch
         self.backends = [DuckDuckGoSearch(n_results=5), WikipediaSearch(n_results=3)]
 
