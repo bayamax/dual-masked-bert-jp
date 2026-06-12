@@ -89,7 +89,14 @@ class AppSession:
         -> instant ack leaves NO trace in SP/raw, and the next casual turn ("what do you
         think was the highlight?") has nothing to follow — the reported chitchat-continuity
         gap. Tokens only; no generation happens here."""
-        text = ("<｜end▁of▁sentence｜>" if self.gen else "") +             f"<｜User｜>{user_msg}<｜Assistant｜>{answer}"
+        rec = answer
+        if len((answer or "").split()) < 4:
+            # 25 root: a BARE-TOKEN assistant turn in the stream ("8042") is a copy
+            # attractor so strong that neither rejection-retries nor temperature 1.0
+            # escape it — the next creative turn echoes it verbatim. The user still SEES
+            # the terse answer; only the stream RECORD is wrapped into prose.
+            rec = f"The answer to your question is {answer}."
+        text = ("<｜end▁of▁sentence｜>" if self.gen else "") +             f"<｜User｜>{user_msg}<｜Assistant｜>{rec}"
         self.gen.extend(self.tok.encode(text, add_special_tokens=False))
 
     def _evict(self, kept):
