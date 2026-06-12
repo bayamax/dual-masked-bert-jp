@@ -1,0 +1,70 @@
+[
+ {
+  "name": "A1.fact",
+  "ok": true
+ },
+ {
+  "name": "A2.correction",
+  "ok": true
+ },
+ {
+  "name": "A3.correction",
+  "ok": true
+ },
+ {
+  "name": "A4.multi-fact-recall",
+  "ok": true
+ },
+ {
+  "name": "A5.fact-code",
+  "ok": true
+ },
+ {
+  "name": "A6.code-recall",
+  "ok": true
+ },
+ {
+  "name": "B1.fact",
+  "ok": true
+ },
+ {
+  "name": "B2.world-not-shadowed",
+  "ok": true
+ },
+ {
+  "name": "B3.unanswerable",
+  "ok": true
+ },
+ {
+  "name": "C1.math",
+  "ok": true
+ },
+ {
+  "name": "C2.command-recompute",
+  "ok": true
+ },
+ {
+  "name": "C3.change-latest",
+  "ok": true
+ },
+ {
+  "name": "D1.fact",
+  "ok": true
+ },
+ {
+  "name": "D2.distractor",
+  "ok": true
+ },
+ {
+  "name": "D3.distractor",
+  "ok": true
+ },
+ {
+  "name": "D4.distractor",
+  "ok": true
+ },
+ {
+  "name": "D5.deep-recall",
+  "ok": true
+ }
+]

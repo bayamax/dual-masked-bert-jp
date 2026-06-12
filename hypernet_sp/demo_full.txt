@@ -1,0 +1,22 @@
+# Comprehensive functional pass for demo_chat.py (one user message per line).
+# Covers: greeting, facts+recall (L1/L2), corrections, math chain + calculator,
+# creative + refinement, summarisation, emotional, web lookup + anaphora + verify,
+# honest miss, memory x creative. Run:  python3 demo_chat.py --script demo_full.txt
+Hello!
+Please remember: my name is Aki and I work at Hoshino Labs.
+My desk locker code is 7741.
+I went to Kanazawa over the weekend.
+What do you think was the highlight of my trip?
+A bento costs $9 and I buy 4 for the team. What's the total?
+I pay with a $50 bill. How much change do I get back?
+Actually I bought one more bento. Recompute the total.
+What's my desk locker code?
+Write a short friendly email inviting the team to lunch on Friday.
+Make it shorter.
+Summarize this in one sentence: The new prototype passed all thermal tests on Tuesday, the battery module exceeded its target by eleven percent, and the firmware team closed the last blocking bug before the demo.
+I'm honestly a bit burned out this week.
+Tell me a short joke to cheer me up.
+How tall is Mount Fuji?
+Can you verify the number?
+What's my blood type?
+Write a two-line poem about my weekend trip.

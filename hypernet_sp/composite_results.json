@@ -1,0 +1,80 @@
+[
+ {
+  "name": "S1.persist-ack",
+  "ok": true,
+  "checks": {}
+ },
+ {
+  "name": "S2.fact-log",
+  "ok": true,
+  "checks": {}
+ },
+ {
+  "name": "S2.chitchat",
+  "ok": true,
+  "checks": {
+   "clean": true
+  }
+ },
+ {
+  "name": "S2.hygiene-not-logged",
+  "ok": true,
+  "checks": {}
+ },
+ {
+  "name": "S2.recall-L1",
+  "ok": true,
+  "checks": {
+   "tier": true,
+   "answer": true
+  }
+ },
+ {
+  "name": "S2.recall-L2",
+  "ok": true,
+  "checks": {
+   "tier": true,
+   "answer": true
+  }
+ },
+ {
+  "name": "S2.math-single",
+  "ok": true,
+  "checks": {
+   "answer": true
+  }
+ },
+ {
+  "name": "S2.math-followup",
+  "ok": true,
+  "checks": {
+   "answer": true
+  }
+ },
+ {
+  "name": "S2.lookup-L3",
+  "ok": true,
+  "checks": {
+   "tier": true,
+   "answer": true
+  }
+ },
+ {
+  "name": "S3.fact-log",
+  "ok": true,
+  "checks": {}
+ },
+ {
+  "name": "S3.lookup-anaphora",
+  "ok": true,
+  "checks": {
+   "tier": true,
+   "answer": true
+  }
+ },
+ {
+  "name": "S3.query-expanded",
+  "ok": true,
+  "checks": {}
+ }
+]
