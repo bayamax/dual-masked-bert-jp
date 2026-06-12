@@ -39,6 +39,19 @@ NEEDLE_TEMPLATES = [
      "Where did Dr. {person2}'s clinic move to?"),
 ]
 
+HELDOUT_TEMPLATES = [
+    ("The shed door code out back is {code2}, same as last summer.",
+     "What is the code for the shed door?"),
+    ("Our flight back got moved to gate {letter}{num2}.",
+     "Which gate is our flight back leaving from?"),
+    ("The orchestra tickets were row {letter}, seats {num2} and after.",
+     "Which row are the orchestra tickets in?"),
+    ("The mechanic quoted {num4} yen to replace the brake pads.",
+     "How much did the mechanic quote for the brake pads?"),
+    ("My library card number ends in {num3}, oddly easy to remember.",
+     "What does my library card number end in?"),
+]
+
 FILLER = [
     ("The weather this week has been all over the place, sunny then storms.",
      "It really has. Those sudden shifts make it hard to plan anything outdoors, though the cool evenings after the rain have been pleasant for walks."),
@@ -104,11 +117,12 @@ def _fill(t, rng):
              .replace("{letter}", rng.choice("ABCDEF")))
 
 
-def make_conversation(seed, n_needles=3, target=3800):
+def make_conversation(seed, n_needles=3, target=3800, heldout=False):
     """Returns (pairs, questions): pairs = [(user, assistant)], questions =
     [(question, needle_user_text)] where needle_user_text locates the gold block."""
     rng = random.Random(seed)
-    tpls = rng.sample(NEEDLE_TEMPLATES, n_needles)
+    pool = HELDOUT_TEMPLATES if heldout else NEEDLE_TEMPLATES
+    tpls = rng.sample(pool, min(n_needles, len(pool)))
     fillers = rng.sample(FILLER, len(FILLER))
     pairs, questions, fi = [], [], 0
     for ut, qt in tpls:

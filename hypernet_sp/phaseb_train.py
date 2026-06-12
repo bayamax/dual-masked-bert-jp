@@ -57,6 +57,7 @@ def main():
     ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--val", type=float, default=0.2)
     ap.add_argument("--out", default="phaseb_indexer.npz")
+    ap.add_argument("--evaldata", default="")
     args = ap.parse_args()
     rows = load(args.data)
     print(f"PHASEB_TRAIN_V1 samples={len(rows)}", flush=True)
@@ -105,6 +106,10 @@ def main():
         print(f"ep{ep:02d} loss={tot/len(tr):.4f} val_top2={v:.3f} (best {best:.3f})",
               flush=True)
     model.load_state_dict(best_state)
+    if args.evaldata:
+        ho = load(args.evaldata)
+        if ho:
+            print(f"HELDOUT top2={top2(ho):.3f} n={len(ho)}", flush=True)
     np.savez(args.out, **{k2: v2.numpy() for k2, v2 in best_state.items()},
              meta=np.array([L, Hq, Hkv, D, model.d]))
     print(f"PHASEB_TRAIN_DONE best_val_top2={best:.3f} train_top2={top2(tr):.3f}",

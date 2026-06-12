@@ -1,5 +1,5 @@
 #!/bin/bash
-# Phase B job — PHASEB_POD_V1. Teacher-label generation + indexer training on a pod.
+# Phase B job — PHASEB_POD_V2. Teacher-label generation + indexer training on a pod.
 # Staged: env (V6-proven recipe) -> label smoke n=3 -> scale n=300 -> train -> upload.
 # No self-delete (RUNPOD_POD_ID not injected); ends with sleep to prevent restart loops;
 # the session deletes the pod on ALL_DONE/FATAL.
@@ -36,7 +36,7 @@ except Exception:
 PY
 python3 build_fft_hf.py > hypernet_sp/phaseb/build_fft.log 2>&1
 
-{ echo "PHASEB_POD_V1 start $(date -u)"; nvidia-smi --query-gpu=name,driver_version --format=csv,noheader; \
+{ echo "PHASEB_POD_V2 start $(date -u)"; nvidia-smi --query-gpu=name,driver_version --format=csv,noheader; \
   tail -1 hypernet_sp/phaseb/canary.log; tail -1 hypernet_sp/phaseb/build_fft.log; } \
   > hypernet_sp/phaseb/STATUS.txt 2>&1
 
@@ -50,7 +50,7 @@ upload_folder(repo_id='$REPO', folder_path='hypernet_sp/phaseb',
               path_in_repo='hypernet_sp/phaseb', token=os.environ['HF_TOKEN'],
               commit_message='phaseb: $1')" || true
 }
-push_stage "env ready (PHASEB_POD_V1)"
+push_stage "env ready (PHASEB_POD_V2)"
 
 if ! grep -q CANARY_OK hypernet_sp/phaseb/canary.log || [ ! -d fft_hf ]; then
   push_stage "FATAL: env"; sleep infinity
@@ -67,7 +67,12 @@ timeout 7200 python3 hypernet_sp/phaseb_labels.py --n 300 --shard 0 \
   > hypernet_sp/phaseb/labels_full.log 2>&1
 push_stage "labels done (exit $?)"
 
+timeout 1800 python3 hypernet_sp/phaseb_labels.py --n 60 --shard 1 --heldout \
+  > hypernet_sp/phaseb/labels_heldout.log 2>&1
+push_stage "heldout labels done (exit $?)"
+
 timeout 3600 python3 hypernet_sp/phaseb_train.py --data 'phaseb_labels_0.npz' \
+  --evaldata 'phaseb_labels_1.npz' \
   > hypernet_sp/phaseb/train.log 2>&1
 push_stage "train done (exit $?); ALL_DONE"
 sleep infinity

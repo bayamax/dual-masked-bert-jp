@@ -53,8 +53,8 @@ class Capture:
 
 
 @torch.no_grad()
-def process(llm, tok, dev, seed):
-    pairs, questions = make_conversation(seed)
+def process(llm, tok, dev, seed, heldout=False):
+    pairs, questions = make_conversation(seed, heldout=heldout)
     ids, _ = to_ids(tok, pairs)
     n_evict = ((len(ids) - WINDOW) // BLOCK) * BLOCK
     if n_evict < BLOCK * 4:
@@ -106,8 +106,10 @@ def process(llm, tok, dev, seed):
             s = ev.sum().item()
             if s > 0:
                 labels[lidx] = (ev / s).cpu().numpy()
-        # student features
-        qf = np.stack([qfeat[li][ans_start_rel:].mean(0).view(Hq, D).cpu().float().numpy()
+        # student features: QUESTION-position queries (what inference actually has —
+        # answer-position queries would be a train/inference mismatch; labels still come
+        # from answer-position teacher attention above)
+        qf = np.stack([qfeat[li][:ans_start_rel].mean(0).view(Hq, D).cpu().float().numpy()
                        for li in LAYERS])                          # [L, Hq, D]
         kf = []
         for li in LAYERS:
@@ -124,6 +126,7 @@ def main():
     ap.add_argument("--n", type=int, default=200)
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--out", default="phaseb_labels_{shard}.npz")
+    ap.add_argument("--heldout", action="store_true")
     args = ap.parse_args()
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     torch.set_num_threads(os.cpu_count())
@@ -136,7 +139,7 @@ def main():
     for i in range(args.n):
         seed = args.shard * 100000 + i
         try:
-            rows += process(llm, tok, dev, seed)
+            rows += process(llm, tok, dev, seed, heldout=args.heldout)
         except Exception as e:
             print(f"seed {seed} failed: {e}", flush=True)
         if (i + 1) % 10 == 0:
