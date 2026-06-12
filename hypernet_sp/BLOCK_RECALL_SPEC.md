@@ -101,3 +101,36 @@ SP 側の処理(pooler への kept 供給、maxD eviction)は**一切変更し�
   採用された場合も**本仕様のスコアリング関数が置き換わるだけ**で、
   データ構造・注入・配線は変わらない設計
 - 多セッション永続(ブロックのディスク保存と世代管理)は v2 スコープ
+
+## 8. B方式(アンサンブル)実装仕様 — 2026-06-12 追記
+
+A方式(§1-6)に**スコアリングの差し替えだけ**を加える。データ構造・注入・配線は不変。
+実測: needle 10/10(A=7/10)、未知テンプレ検索 top-2 .983(A=.894)。参照実装
+`ensemble_archive.py`、学習済み重み `hypernet_sp/phaseb/phaseb_indexer.npz`(数百KB)。
+
+### スコア計算(retrieve 時)
+
+score_i = z(bge_i) + 1.5 * z(idx_i)   (z = スコア列の平均0/分散1正規化、top-2選択)
+
+- bge_i: §3 と同じ BGE cosine
+- idx_i: 学習インデクサ。npz の Aq[L,Hq,D,d], Bk[L,Hkv,2D,d], w[L,Hq](meta=[3,12,2,128,32]):
+  q'=einsum(q,Aq)、k'=einsum(kfeat,Bk) を GQA 6 倍複製、sim=ReLU(q'·k')、
+  score=Σ softmax(w)·sim(層・ヘッド重み付き和)。numpy のみで実装可(Swift は Accelerate)
+
+### 特徴量(ここが B の本体・パリティの急所)
+
+1. **ブロックキー kfeat[nB,L,Hkv,2D]**: 層 (8,14,20) の k_proj **出力(pre-RoPE)**を、
+   ブロックが追い出される前に**文脈付き**で取得し、ブロック内 mean と max を連結。
+   文脈付き=そのトークンが生成 forward を通った時の k_proj 値。アプリでは生成中の
+   rebuild forward にフックして収穫するか(推奨・無料)、検証時は履歴全体を 1 回
+   forward して取る(参照実装はこちら。学習データと同形)
+2. **クエリ q[L,Hq,D]**: 質問を `<eos><User>{q}<Assistant><think>\n\n</think>\n\n` の形にし、
+   **履歴キャッシュを背後に置いた状態で** forward した q_proj 出力の平均。
+   ⚠ 素の単独 forward だと深層でドリフトし実測で 2/10 落ちる(§8 検証で確認すること)
+
+### 検証手順(移植後)
+
+1. needle ベンチ ens 条件 10/10 ± 1(`needle_recall_test.py --conds ens` と同一入力)
+2. 中間値パリティ: 同一履歴で idx_i スコア列が torch 実装と一致(<1e-3)
+3. 留意: 本番の逐次キー収穫形での再学習(V3)は未了。それまでは検証時も
+   参照実装と同じ「履歴 1 回 forward」収穫で評価すること
