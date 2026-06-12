@@ -34,6 +34,7 @@ class BlockArchive:
         self.Hkv = cfg.num_key_value_heads
         self.D = cfg.hidden_size // cfg.num_attention_heads
         self.group = self.Hq // self.Hkv
+        self.dev = next(llm.parameters()).device     # keys are stored on CPU regardless
         self.buf = []                # pending ids, not yet a full block
         self.blocks = []             # {"ids": [...], "k": [L,T,Hkv,D] fp16, "emb": vec}
 
@@ -52,12 +53,12 @@ class BlockArchive:
                 return fn
             hooks.append(tgt.register_forward_hook(mk(li)))
         try:
-            self.llm.model(input_ids=torch.tensor([ids]))
+            self.llm.model(input_ids=torch.tensor([ids], device=self.dev))
         finally:
             for h in hooks:
                 h.remove()
         H = self.Hq if want_q else self.Hkv
-        return {li: outs[li][0].view(len(ids), H, self.D).to(torch.float16)
+        return {li: outs[li][0].view(len(ids), H, self.D).to(torch.float16).cpu()
                 for li in self.layers}
 
     def _seal(self, ids):

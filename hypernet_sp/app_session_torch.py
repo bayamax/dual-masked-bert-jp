@@ -43,8 +43,20 @@ class AppSession:
         self.llm, self.tok, self.pooler, self.bge = llm, tok, pooler, bge
         self.intent_clf, self.spec_clf = intent_clf, spec_clf
         self.mem, self.web = mem, web
-        # Phase A block recall (BLOCKRECALL_V1): verbatim re-injection of evicted blocks
-        # scored in the model's own Q/K space. None = exact pre-existing behaviour.
+        # SPCHAT_DEVICE=cuda moves the LLM+pooler at construction time, so the composite
+        # batteries (which all build their model on CPU then hand it to AppSession) run
+        # on GPU without edits. Default: leave devices untouched.
+        if os.environ.get("SPCHAT_DEVICE"):
+            llm.to(os.environ["SPCHAT_DEVICE"])
+            pooler.to(os.environ["SPCHAT_DEVICE"])
+        self.dev = next(llm.parameters()).device
+        # Phase A block recall (BLOCKRECALL_V1): verbatim re-injection of evicted blocks.
+        # None = exact pre-existing behaviour. SPCHAT_BLOCK_RECALL=bge|qk turns it on
+        # globally (lets the composite batteries run with recall without edits).
+        if archive is None and os.environ.get("SPCHAT_BLOCK_RECALL") in ("bge", "qk"):
+            from block_recall import BlockArchive
+            archive = BlockArchive(llm, tok, mode=os.environ["SPCHAT_BLOCK_RECALL"],
+                                   bge=bge)
         self.archive, self.recall_k = archive, recall_k
         self.rw, self.C, self.cap, self.temp, self.maxD = rw, C, cap, temp, maxD
         self.embT = llm.get_input_embeddings()
@@ -135,8 +147,9 @@ class AppSession:
 
     # ---- generation core (port of sp_mlx/_gen_once bounded loop) --------------------
     def _emb(self, ids):
-        return self.embT(torch.tensor([ids])) if ids else \
-            torch.zeros(1, 0, self.pooler.H, dtype=self.embT.weight.dtype)
+        return self.embT(torch.tensor([ids], device=self.dev)) if ids else \
+            torch.zeros(1, 0, self.pooler.H, dtype=self.embT.weight.dtype,
+                        device=self.dev)
 
     @torch.no_grad()
     def _gen_once(self, aug, policy=None, cap=None, salvage="Final answer: ", salvage_budget=48,
@@ -159,8 +172,8 @@ class AppSession:
         start, fi, new = len(gen), 0, 0
         rec_emb = None                       # Phase A verbatim recall, filled after absorb
         cache = DynamicCache()
-        prime = llm(input_ids=torch.tensor([self._profile_ids()]), past_key_values=cache,
-                    use_cache=True)
+        prime = llm(input_ids=torch.tensor([self._profile_ids()], device=self.dev),
+                    past_key_values=cache, use_cache=True)
         prime_last = prime.logits[:, -1, :].float()
         MQ = cache.get_seq_length()
         in_think, forced_final, done = force_think, False, False
