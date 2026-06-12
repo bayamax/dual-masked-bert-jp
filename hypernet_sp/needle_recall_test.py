@@ -134,6 +134,9 @@ def build(cond, args):
     archive = None
     if cond in ("qk", "bge"):
         archive = BlockArchive(llm, tok, mode=cond, bge=bge)
+    elif cond == "ens":
+        from ensemble_archive import EnsembleArchive
+        archive = EnsembleArchive(llm, tok, bge)
     s = AppSession(llm, tok, pooler, bge, iclf, sclf, mem, web=None,
                    rw=rw, cap=64, seed=0, profile=False, archive=archive,
                    recall_k=args.k)
@@ -158,6 +161,8 @@ def main():
             s.gen, s.kept, s.absorbed = list(hist), [], 0
             if s.archive is not None:
                 s.archive.buf, s.archive.blocks = [], []
+                if hasattr(s.archive, "_k"):
+                    s.archive._k = None
             t0 = time.time()
             ans = s._gen_once(q, force_think=False, temp_override=0.05,
                               cap=56, salvage="", salvage_budget=24)
