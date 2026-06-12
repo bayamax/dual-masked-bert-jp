@@ -1,36 +1,44 @@
 #!/bin/bash
-# GPU evaluation job (GPUEVAL_V1) — executed INSIDE a RunPod pytorch pod.
-# Pulled from the HF repo and piped to bash by the pod's docker start command.
-# Env expected: HF_TOKEN, RUNPOD_API_KEY, RUNPOD_POD_ID (auto-set by RunPod).
-#
-# Evaluates option A (BGE-scored verbatim block recall) on GPU:
-#   1) needle bench, 4 conditions (sp / qk / bge / full ceiling), 4213-tok history
-#   2) composite battery v1 with recall ON   (regression: expect 12/12)
-#   3) composite battery v2 with recall ON   (regression: expect 17/17)
-#   4) composite battery v1 with recall OFF  (GPU-port control: expect 12/12)
-# Results are committed back to the HF repo under hypernet_sp/gpu_eval/ after each
-# stage, then the pod deletes itself.
+# GPU evaluation job — GPUEVAL_V2 (V1 failed: image fell back to torch cu130 wheel vs
+# 12.8 driver -> cuda False; and the HF repo has no fft_hf/, it must be rebuilt from
+# fft_out/student.pt via build_fft_hf.py; git-lfs clone was silently skipping LFS).
+# Executed INSIDE a RunPod pod. Env: HF_TOKEN, RUNPOD_API_KEY, RUNPOD_POD_ID.
 set -x
-cd /workspace || cd /
-apt-get update -qq 2>/dev/null; apt-get install -y -qq git-lfs curl 2>/dev/null || true
-git lfs install --skip-repo
-git clone "https://baya1116:${HF_TOKEN}@huggingface.co/baya1116/hypernet-sp-distill" repo
-cd repo || exit 1
-git config user.email "gpu-eval@local"; git config user.name "gpu-eval"
-pip install -q -U torch 2>&1 | tail -1
-pip install -q "transformers==5.10.2" joblib scikit-learn numpy 2>&1 | tail -1
+export HF_HUB_ENABLE_HF_TRANSFER=0
+cd /workspace 2>/dev/null || cd /
+REPO=baya1116/hypernet-sp-distill
+
+pip install -q --force-reinstall torch --index-url https://download.pytorch.org/whl/cu128 2>&1 | tail -1
+pip install -q "transformers==5.10.2" huggingface_hub joblib scikit-learn numpy 2>&1 | tail -1
+
+python3 - <<'PY'
+from huggingface_hub import snapshot_download
+import os
+snapshot_download("baya1116/hypernet-sp-distill", token=os.environ["HF_TOKEN"],
+                  local_dir="/workspace/repo",
+                  allow_patterns=["hypernet_sp/*", "runtime/*", "evals/*",
+                                  "fft_out/student.pt", "fft_out/pooler.pt",
+                                  "build_fft_hf.py"])
+PY
+cd /workspace/repo || exit 1
 mkdir -p hypernet_sp/gpu_eval
-{ echo "GPUEVAL_V1 start $(date -u)"; nvidia-smi --query-gpu=name,memory.total --format=csv; \
-  python3 -c "import torch;print('torch',torch.__version__,'cuda',torch.cuda.is_available())"; } \
-  > hypernet_sp/gpu_eval/STATUS.txt 2>&1
+python3 build_fft_hf.py > hypernet_sp/gpu_eval/build_fft.log 2>&1
+
+{ echo "GPUEVAL_V2 start $(date -u)"; nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv; \
+  python3 -c "import torch;print('torch',torch.__version__,'cuda',torch.cuda.is_available())"; \
+  tail -1 hypernet_sp/gpu_eval/build_fft.log; } > hypernet_sp/gpu_eval/STATUS.txt 2>&1
 
 push_stage () {
   cp -f needle_results.json hypernet_sp/gpu_eval/ 2>/dev/null
   echo "$1 $(date -u)" >> hypernet_sp/gpu_eval/STATUS.txt
-  git add hypernet_sp/gpu_eval && git commit -qm "gpu_eval: $1" || true
-  git push -q origin main || { git pull --rebase -q origin main; git push -q origin main; } || true
+  python3 -c "
+from huggingface_hub import upload_folder
+import os
+upload_folder(repo_id='$REPO', folder_path='hypernet_sp/gpu_eval',
+              path_in_repo='hypernet_sp/gpu_eval', token=os.environ['HF_TOKEN'],
+              commit_message='gpu_eval: $1')" || true
 }
-push_stage "env ready"
+push_stage "env ready (GPUEVAL_V2)"
 
 SPCHAT_DEVICE=cuda timeout 5400 python3 hypernet_sp/needle_recall_test.py \
   > hypernet_sp/gpu_eval/needle.log 2>&1
