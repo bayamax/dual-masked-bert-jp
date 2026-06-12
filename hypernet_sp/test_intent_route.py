@@ -73,6 +73,11 @@ def main():
                    route("Write a short poem about rain.", fact=0.6, chitchat=0.3,
                          lookup=0.1), "chitchat"))
 
+    print("== verification requests are lookups ==")
+    r.append(check("verify-the-number -> lookup",
+                   route("Can you verify the number?", recall=0.5, lookup=0.3, chitchat=0.2),
+                   "lookup"))
+
     print("== low confidence / no model: regex fallback ==")
     r.append(check("regex fallback on p1<lo",
                    route("what's my insurance policy number?", recall=0.2, lookup=0.18, fact=0.17,

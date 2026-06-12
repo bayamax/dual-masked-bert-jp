@@ -90,6 +90,7 @@ _CREATIVE = re.compile(r"^(?:please\s+)?(?:write|draft|compose|create|rewrite|re
 _EMOTIONAL = re.compile(r"\b(i(?:'m| am| was| had|'ve had)?\b[^.!?]{0,40}\b"
                         r"(feel|feeling|felt|rough|tough|stressed|exhausted|tired|sad|"
                         r"happy|excited|frustrated|overwhelmed|anxious|vent|venting))", re.I)
+_VERIFY = re.compile(r"\b(verify|double-?check|fact-?check|confirm)\b", re.I)
 _NUMWORD = re.compile(r"\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|"
                       r"twenty|thirty|forty|fifty|hundred|thousand|dozen|half|quarter|double)\b", re.I)
 _OPWORD = re.compile(r"\b(plus|minus|times|divided|multiply|multiplied|subtract(ed)?|add(ed|s)?|percent|"
@@ -137,6 +138,12 @@ def route_intent(text, clf_bundle, bge, hi=0.5, lo=0.30):
         return "chitchat"
     if _EMOTIONAL.search(text) and not is_question(text):
         return "chitchat"                          # respond with empathy (caller may still log)
+    if _VERIFY.search(text):
+        # "verify/confirm/double-check the number" means GO CHECK THE SOURCE -> lookup.
+        # Routed to recall it dead-ends in honest-miss (live oil-price test); as lookup,
+        # known-fact-first serves stored values and the web path gets the value-anaphora
+        # expansion ("... ($86.78)") that defect 17 built.
+        return "lookup"
     order = sorted(range(len(p)), key=lambda i: -p[i])
     top1, top2 = str(classes[order[0]]), str(classes[order[1]])
     p1 = float(p[order[0]])
