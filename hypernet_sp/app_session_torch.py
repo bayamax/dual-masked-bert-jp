@@ -129,7 +129,7 @@ class AppSession:
 
     @torch.no_grad()
     def _gen_once(self, aug, policy=None, cap=None, salvage="Final answer: ", salvage_budget=48,
-                  force_think=True):
+                  force_think=True, temp_override=None):
         # force_think is a MATH device. The #16 isolation arms C/E proved the model answers
         # directly and well WITHOUT it; v7 proved that WITH it, creative tasks draft the
         # artifact inside <think> and then emit a self-review ("I think this fits the
@@ -180,7 +180,8 @@ class AppSession:
                 if fi < len(feed):
                     t = feed[fi]; fi += 1
                 else:
-                    T = policy.temp(in_think, self.temp) if force_think else self.temp
+                    base_t = temp_override or self.temp
+                    T = policy.temp(in_think, base_t) if force_think else base_t
                     t = int(torch.multinomial(F.softmax(last[0] / T, -1), 1))
                     if t == self.eos:
                         done = True; break
@@ -419,14 +420,16 @@ class AppSession:
                 return mc._answer_ok(a, check_chunks, user_msg)
             answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1],
                                     force_think=compute_like)
-            for _ in range(retries):
+            for attempt in range(retries):
                 if _ok(answer):
                     break
                 self.gen, self.kept, self.absorbed = list(snap[0]), list(snap[1]), snap[2]
+                # escalate temperature on retry: a copy attractor (the bare "8042" one
+                # turn back) survives same-temp resampling — all three 0.6 draws echoed it
                 answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1],
-                                        force_think=compute_like)
-            else:
-                pass
+                                        force_think=compute_like,
+                                        temp_override=None if compute_like else
+                                        (0.85 if attempt == 0 else 1.0))
         if compute_like and answer:
             # post-hoc calculator (the 1.5B mis-EVALUATES its own correct expressions:
             # 2000x1.05^3 -> 121550.625, 650-200 -> 210). Claims in the full turn body are
