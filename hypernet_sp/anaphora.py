@@ -39,7 +39,7 @@ _PROPER = re.compile(r"\b[A-Z][a-z]+(?:[\s\-][A-Z][a-z]+){0,2}\b")   # 'Lisa Su'
 _GENERIC = set("the this that what who when where which how why can could should would do does did is are was "
                "i my our we you your please also and but yes no okay monday tuesday wednesday thursday friday "
                "saturday sunday january february march april may june july august september october november "
-               "december am pm ok hey hi hello thanks".split())
+               "december am pm ok hey hi hello thanks earlier today yesterday tomorrow".split())
 
 
 def _entities(text):

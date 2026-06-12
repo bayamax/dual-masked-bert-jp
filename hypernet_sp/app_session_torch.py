@@ -319,6 +319,11 @@ class AppSession:
                 else:
                     q = expand_web_query(user_msg, self.mem.pins, self.mem.session)
                     src, chunks = self._web_retrieve(q)
+                    # rank/conf with the EXPANDED query: it carries the anchor value, so
+                    # the chunk sharing it wins the closest-note pick and can clear the
+                    # confidence bar (live oil test: unexpanded ranking chose the Brent
+                    # chunk over the queried \$86.78 WTI one)
+                    self._rank_query = q if q != user_msg else None
         elif intent == "command" and (self.mem.session or self.mem.pins):
             log = self.mem.session[-self.mem.LOGCAP:]
             # a pin is redundant when a log line EXTENDS it ('<question> — result: 24'
@@ -360,7 +365,9 @@ class AppSession:
             # below 0.65 the template carries an ESCAPE HATCH instead. Without it, the
             # strict 'the answer IS in the Context' premise forced 'your blood type is
             # VB-7731' out of a badge-code chunk (v4 t35).
-            qv = self.bge._encode([user_msg], is_query=True)[0]
+            rq = getattr(self, "_rank_query", None) or user_msg
+            self._rank_query = None
+            qv = self.bge._encode([rq], is_query=True)[0]
             sims = self.bge._encode(list(chunks), is_query=False) @ qv
             if float(max(sims)) < 0.62:   # true-match floor measured at 0.653 (hotel)
                 # uncertain band: don't ASSERT an answer at all. Nothing separates a true
@@ -371,8 +378,9 @@ class AppSession:
                 # verbatim instead: honest for a false hit, and for a genuine paraphrase
                 # the note IS the answer. Mechanical, zero extra latency.
                 note = chunks[int(sims.argmax())]
-                ans = (f"I don't have that saved exactly — the closest note I have: "
-                       f"\"{note}\"")
+                lead = ("Here's the closest source I found: " if (src or "").startswith("L3")
+                        else "I don't have that saved exactly — the closest note I have: ")
+                ans = f"{lead}\"{note}\""
                 self._stitch(user_msg, ans)
                 return (ans, src, chunks)
             aug = (f"Context (retrieved from {src}): {' ; '.join(chunks)}\n\n"
