@@ -417,6 +417,13 @@ class AppSession:
                 answer = fixed
         if quote_recall:
             self._stitch(user_msg, answer)             # isolated quote leaves a trace too
+            if intent == "lookup" and src and src.startswith("L3") \
+                    and mc._answer_ok(answer, chunks, user_msg):
+                # 23: web results were remembered NOWHERE (compute results self-log via
+                # #3b, lookups didn't — asymmetry). "Can you verify the number?" right
+                # after a successful oil-price lookup hit the honest-miss wall. Log the
+                # grounded answer declaratively so follow-ups can reference it.
+                self.mem.remember_session(f"Earlier looked up: {answer[:160]}")
         if store == "persist":
             self.mem.persist(user_msg)
         elif store == "session" and intent == "fact":
