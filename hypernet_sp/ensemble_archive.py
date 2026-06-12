@@ -24,7 +24,7 @@ class EnsembleArchive:
         self.dev = next(llm.parameters()).device
         self.blocks, self.buf, self._k = [], [], None
 
-    def _hooked(self, ids, want_q):
+    def _hooked(self, ids, want_q, cache=None):
         outs, hooks = {}, []
         for li in LAYERS:
             attn = self.llm.model.layers[li].self_attn
@@ -37,7 +37,10 @@ class EnsembleArchive:
             hooks.append(tgt.register_forward_hook(mk(li)))
         try:
             with torch.no_grad():
-                self.llm.model(input_ids=torch.tensor([ids], device=self.dev))
+                kw = {}
+                if cache is not None:
+                    kw = dict(past_key_values=cache, use_cache=True)
+                self.llm.model(input_ids=torch.tensor([ids], device=self.dev), **kw)
         finally:
             for h in hooks:
                 h.remove()
@@ -52,8 +55,11 @@ class EnsembleArchive:
         self._k = None                                  # features stale
 
     def _featurize(self):
+        from transformers.cache_utils import DynamicCache
         ids = [t for b in self.blocks for t in b["ids"]]
-        kc = self._hooked(ids, want_q=False)            # contextual keys, full history
+        self._cache = DynamicCache()
+        self._clen = len(ids)
+        kc = self._hooked(ids, want_q=False, cache=self._cache)   # contextual keys
         nB = len(self.blocks)
         kf = []
         for li in LAYERS:
@@ -71,7 +77,11 @@ class EnsembleArchive:
         q_text = self.tok.decode(query_ids)
         pre = self.tok.encode(f"<｜end▁of▁sentence｜><｜User｜>{q_text}<｜Assistant｜>"
                               f"<think>\n\n</think>\n\n", add_special_tokens=False)
-        qc = self._hooked(pre, want_q=True)
+        # query features WITH the history cache behind them — matches how the
+        # training labels were generated (a bare standalone encode drifts at deep
+        # layers and flipped two e2e retrievals)
+        self._cache.crop(self._clen)
+        qc = self._hooked(pre, want_q=True, cache=self._cache)
         qf = np.stack([qc[li].mean(0).view(self.Hq, self.D).numpy() for li in LAYERS])
         qp = np.einsum("lhd,lhde->lhe", qf, self.Aq)
         kp = np.einsum("blkf,lkfe->blke", self._k.astype(np.float32), self.Bk)
@@ -82,7 +92,7 @@ class EnsembleArchive:
 
         def z(s):
             return (s - s.mean()) / (s.std() + 1e-8)
-        s = z(s_idx) + z(np.asarray(s_bge))
+        s = 1.5 * z(s_idx) + z(np.asarray(s_bge))   # w=1.5: held-out .983
         top = sorted(np.argsort(-s)[:k].tolist())
         out = []
         for i in top:
