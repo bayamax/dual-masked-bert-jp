@@ -68,7 +68,7 @@ def build():
     cfg = llm.config; dims = (cfg.num_attention_heads, cfg.num_key_value_heads,
                               cfg.hidden_size // cfg.num_attention_heads)
     gate = RecallGate.load("art/gate.npz")
-    if GATE_THRESH is not None:
+    if GATE_THRESH:
         gate.thresh = float(GATE_THRESH)
     qk = QKIndexer.load("art/indexer.npz", dims, device=DEV)
     bge_ret = BGERetriever.load("art/bge_head.npz", bge, device=DEV)
@@ -99,7 +99,9 @@ def solve(tok, llm, pooler, embT, gate, qk, bge_ret, dims, problem, arm):
     Hq, Hkv, D = dims
     THINK = tok.encode("<think>\n", add_special_tokens=False)
     eos = tok.eos_token_id
-    doc = problem + " " + FILLER * 10
+    doc = problem + " "
+    while len(tok.encode(doc, add_special_tokens=False)) < 1200:
+        doc += FILLER
     doc_ids = tok.encode(doc, add_special_tokens=False)
     n_evict = ((len(doc_ids) - RW) // BLOCK) * BLOCK
     nB = n_evict // BLOCK
@@ -141,8 +143,8 @@ def solve(tok, llm, pooler, embT, gate, qk, bge_ret, dims, problem, arm):
         with _Cap(llm, LAYERS, q=True, k=False) as cap:
             llm.model(inputs_embeds=emb(embT, qids), past_key_values=c2, use_cache=True)
         qf = np.stack([cap.q[li][0].float().cpu().numpy().mean(0).reshape(Hq, D) for li in LAYERS])
-        top = qk.rank(qf, keys)[0]
-        rec_emb = emb(embT, block_ids[top]); pinned = True
+        tops = sorted(qk.rank(qf, keys)[:2])
+        rec_emb = emb(embT, [t for b in tops for t in block_ids[b]]); pinned = True
 
     def frontier():
         return np.stack([fq[li].view(Hq, D).cpu().numpy() for li in LAYERS])   # [L,Hq,D]
@@ -154,11 +156,9 @@ def solve(tok, llm, pooler, embT, gate, qk, bge_ret, dims, problem, arm):
             qf = frontier()
             if gate.fires(qf.reshape(-1)):
                 n_fire += 1; first_fire = len(gen_new)
-                if arm == "GATE_QK":
-                    top = qk.rank(qf, keys)[0]
-                else:
-                    top = bge_ret.rank(qf.reshape(-1), block_texts)[0]
-                rec_emb = emb(embT, block_ids[top]); pinned = True
+                order = qk.rank(qf, keys) if arm == "GATE_QK" else bge_ret.rank(qf.reshape(-1), block_texts)
+                tops = sorted(order[:2])
+                rec_emb = emb(embT, [t for b in tops for t in block_ids[b]]); pinned = True
         win = (window_ctx + gen_new)[-RW:]
         parts = [sp] + ([rec_emb] if rec_emb is not None else []) + [emb(embT, win)]
         cache.crop(MQ)
