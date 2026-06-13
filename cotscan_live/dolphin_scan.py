@@ -188,11 +188,12 @@ def collect(pool, llm, tok, pooler, embT, dims, tag, t0):
     return (np.array(Xg, np.float32), np.array(yg, np.int32), np.array(grp), IX)
 
 
-def train_indexer(rows_tr, rows_te, dims, seeds=3, epochs=30):
+def train_indexer(rows_tr, rows_te, dims, seeds=2, epochs=20):
     Hq, Hkv, D = dims; L = len(LAYERS)
     def tens(r):
-        q = torch.tensor(r["q"]); k = torch.tensor(r["k"], dtype=torch.float32)
-        lab = torch.tensor(r["labels"].mean(0)); lab = lab / max(lab.sum().item(), 1e-8)
+        q = torch.tensor(r["q"], device=DEV)
+        k = torch.tensor(r["k"], dtype=torch.float32, device=DEV)
+        lab = torch.tensor(r["labels"].mean(0), device=DEV); lab = lab / max(lab.sum().item(), 1e-8)
         return q, k, lab
     def top2(m, split):
         h = 0
@@ -203,7 +204,7 @@ def train_indexer(rows_tr, rows_te, dims, seeds=3, epochs=30):
         return h / max(len(split), 1)
     best, bs = -1, None
     for sd in range(seeds):
-        torch.manual_seed(sd); m = Indexer(L, Hq, Hkv, D)
+        torch.manual_seed(sd); m = Indexer(L, Hq, Hkv, D).to(DEV)
         opt = torch.optim.Adam(m.parameters(), lr=3e-3); rng = np.random.RandomState(sd)
         for _ in range(epochs):
             rng.shuffle(rows_tr)
@@ -255,6 +256,15 @@ def main():
         log(f"[GATE] heldout AUC = {auc:.4f}  (generalization)")
     snap(res)
     if len(IXtr) > 10 and len(IXte) > 5:
+        # subsample positives: top-2 saturates well below the full set, and per-row CPU
+        # training over 10k+ rows is the runtime bottleneck. cap for a fast, sufficient fit.
+        IXCAP = int(os.environ.get("IDX_CAP", "2500"))
+        rng = np.random.RandomState(0)
+        if len(IXtr) > IXCAP:
+            IXtr = [IXtr[i] for i in rng.choice(len(IXtr), IXCAP, replace=False)]
+        if len(IXte) > IXCAP // 2:
+            IXte = [IXte[i] for i in rng.choice(len(IXte), IXCAP // 2, replace=False)]
+        log(f"[indexer] training on {len(IXtr)} pos, eval on {len(IXte)} pos")
         t1, _ = train_indexer([dict(r) for r in IXtr], IXte, dims)
         # raw qk reference at recall positions
         rawhit = 0
