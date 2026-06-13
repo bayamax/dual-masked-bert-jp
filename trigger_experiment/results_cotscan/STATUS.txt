@@ -1,0 +1,14 @@
+++ date -u
++ echo 'COTSCAN_POD_V1 start Sat Jun 13 06:41:52 UTC 2026'
+COTSCAN_POD_V1 start Sat Jun 13 06:41:52 UTC 2026
++ nvidia-smi --query-gpu=name --format=csv,noheader
+NVIDIA RTX A4000
++ tail -1 hypernet_sp/cotscan/canary.log
+CANARY_OK
++ tail -1 hypernet_sp/cotscan/build_fft.log
+FFT_HF_DONE t=41s
+env ready Sat Jun 13 06:41:52 UTC 2026
+smoke ok (6 samples) Sat Jun 13 06:42:16 UTC 2026
+labels done (exit 0) Sat Jun 13 06:51:26 UTC 2026
+heldout labels done (exit 0) Sat Jun 13 06:54:37 UTC 2026
+eval done (exit 0); ALL_DONE Sat Jun 13 07:16:13 UTC 2026
