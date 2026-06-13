@@ -156,7 +156,7 @@ def run_turn(tok, llm, pooler, embT, doc, aug, gold, operand, arm):
     archive.extend(gen[:nd_end])
     kept = list(gen[:nd_end])
     absorbed = nd_end
-    gi = gold_block_index(archive, tok, gold)
+    gi = gold_block_index(archive, tok, operand)   # the planted value is what recall targets
 
     feed = tok.encode(f"<｜User｜>{aug}<｜Assistant｜>", add_special_tokens=False) + list(THINK_OPEN)
     turn_start = len(gen)
