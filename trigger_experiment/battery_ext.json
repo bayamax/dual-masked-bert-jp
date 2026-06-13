@@ -1,0 +1,574 @@
+{
+ "needles": [
+  {
+   "u": "I found out that my favorite bakery on {street} opens at {time}.",
+   "q": "What time does the bakery on {street} open?"
+  },
+  {
+   "u": "I noticed that my car's license plate has the code {code}.",
+   "q": "What is your car's license plate code?"
+  },
+  {
+   "u": "On {time}, we usually have a family dinner every Saturday.",
+   "q": "When do you usually have family dinner?"
+  },
+  {
+   "u": "I remember the movie starts at {time}, so we should hurry.",
+   "q": "What time does the movie start?"
+  },
+  {
+   "u": "Our team finished the project three weeks early, on {time}.",
+   "q": "When did your team finish the project?"
+  },
+  {
+   "u": "I got a new phone with the code {code2} for my birthday.",
+   "q": "What is the code on your new phone?"
+  },
+  {
+   "u": "I always keep my old stamps in a box with the letter {letter}.",
+   "q": "What letter is on the box where you keep your old stamps?"
+  },
+  {
+   "u": "I finally managed to get tickets to the concert on {time}.",
+   "q": "When did you get tickets to the concert?"
+  },
+  {
+   "u": "My bike weighs only {kg}, making it easy to carry around.",
+   "q": "How much does your bike weigh?"
+  },
+  {
+   "u": "The meeting with {person} is scheduled for {time} tomorrow.",
+   "q": "What time is the meeting with {person} scheduled for?"
+  },
+  {
+   "u": "The gym near my house opens at {time} in the morning.",
+   "q": "What time does the gym near your house open in the morning?"
+  },
+  {
+   "u": "My backpack weighs about {kg} when it's packed for school.",
+   "q": "How much does your backpack weigh?"
+  },
+  {
+   "u": "I need to remember my online meeting code: {code}.",
+   "q": "What's the code for your online meeting?"
+  },
+  {
+   "u": "The train arrives at {time} sharp, so we should leave early.",
+   "q": "What time does the train arrive?"
+  },
+  {
+   "u": "I got a new phone with a model number of {code2}.",
+   "q": "What is the model number of your new phone?"
+  },
+  {
+   "u": "This recipe calls for {num4} grams of sugar.",
+   "q": "How much sugar does the recipe require?"
+  },
+  {
+   "u": "My dog weighs around {kg}, which is a lot for a dachshund.",
+   "q": "How much does your dog weigh?"
+  },
+  {
+   "u": "I finished the book in {time}, it was hard to put down!",
+   "q": "How long did it take you to finish the book?"
+  },
+  {
+   "u": "I need to send you the access code: {code}.",
+   "q": "What is the access code you need to send?"
+  },
+  {
+   "u": "My favorite game has a score of {num3} points for winning.",
+   "q": "How many points do you need to win the game?"
+  },
+  {
+   "u": "The secret to this recipe is adding {num2} teaspoons of salt.",
+   "q": "How many teaspoons of salt do you need to add?"
+  },
+  {
+   "u": "My favorite snack has a code: {code2}.",
+   "q": "What is the code for your favorite snack?"
+  },
+  {
+   "u": "I ran for {time} this morning and it felt great!",
+   "q": "How long did you run this morning?"
+  },
+  {
+   "u": "I found a fantastic deal on that shirt for just {num2} dollars.",
+   "q": "How much did the shirt cost?"
+  },
+  {
+   "u": "The building code for our renovation is {code}.",
+   "q": "What is the building code for your renovation?"
+  },
+  {
+   "u": "The cat's collar has a charm that weighs {kg}.",
+   "q": "How much does the cat's charm weigh?"
+  },
+  {
+   "u": "I received a letter marked with code {letter}.",
+   "q": "What is the letter code you received?"
+  },
+  {
+   "u": "We need {num3} chairs for the conference room.",
+   "q": "How many chairs do we need for the room?"
+  },
+  {
+   "u": "The delivery truck arrives every Tuesday at {time}.",
+   "q": "What time does the delivery truck arrive?"
+  },
+  {
+   "u": "The concert ticket has a code: {code2}.",
+   "q": "What is the code on your concert ticket?"
+  },
+  {
+   "u": "I met a friend who scored {num4} goals last season.",
+   "q": "How many goals did your friend score last season?"
+  },
+  {
+   "u": "This pasta has a cooking time of {time} minutes.",
+   "q": "How long does the pasta need to cook?"
+  },
+  {
+   "u": "I bought a bottle that holds {kg} of water.",
+   "q": "What is the capacity of the bottle you bought?"
+  },
+  {
+   "u": "My phone plan gives me {num2} gigabytes of data.",
+   "q": "How many gigabytes of data does your phone plan provide?"
+  },
+  {
+   "u": "The final exam password is {code}.",
+   "q": "What is the password for the final exam?"
+  },
+  {
+   "u": "The weight limit for the elevator is {kg}.",
+   "q": "What is the weight limit of the elevator?"
+  },
+  {
+   "u": "I collect coins, and I have {num3} coins in my collection.",
+   "q": "How many coins do you have in your collection?"
+  },
+  {
+   "u": "My favorite movie was released in {num4}.",
+   "q": "What year was your favorite movie released?"
+  },
+  {
+   "u": "The party starts at {time}, don't be late!",
+   "q": "What time does the party start?"
+  },
+  {
+   "u": "I need to remember my friend's ID code: {code}.",
+   "q": "What is your friend's ID code?"
+  },
+  {
+   "u": "I have {num2} pets at home - it's pretty lively!",
+   "q": "How many pets do you have at home?"
+  },
+  {
+   "u": "Their house number is {num3}, it's hard to miss.",
+   "q": "What is their house number?"
+  },
+  {
+   "u": "The markup code for that item is {code2}.",
+   "q": "What is the markup code for the item?"
+  },
+  {
+   "u": "The tour lasts for {time}, including the lunch break.",
+   "q": "How long does the tour last?"
+  },
+  {
+   "u": "It's fun to play basketball, especially when I score {num2} points.",
+   "q": "How many points do you usually score in basketball?"
+  },
+  {
+   "u": "The software update has a version code of {code}.",
+   "q": "What is the version code for the software update?"
+  },
+  {
+   "u": "Our favorite coffee shop is open from {time} to {time}.",
+   "q": "What are the opening hours of your favorite coffee shop?"
+  },
+  {
+   "u": "I just upgraded my computer with a new RAM of {num4} GB.",
+   "q": "How much RAM did you upgrade to?"
+  },
+  {
+   "u": "That's a beautiful watch and I can see it has a special code {code2}.",
+   "q": "What is the special code on your watch?"
+  },
+  {
+   "u": "Her birthday is on {time}, and I can't wait to celebrate!",
+   "q": "What time is her birthday celebration?"
+  },
+  {
+   "u": "I completed that puzzle in {time}, it was tricky!",
+   "q": "How long did it take you to complete the puzzle?"
+  },
+  {
+   "u": "The box contains {kg} of cookies, so it's heavy!",
+   "q": "How much do the cookies weigh in the box?"
+  }
+ ],
+ "lookup": [
+  {
+   "q": "What is the current price of Bitcoin?",
+   "a": "The price of Bitcoin fluctuates but was around $30,000 today."
+  },
+  {
+   "q": "What are the latest NBA game scores?",
+   "a": "The latest NBA game scores include the Lakers defeating the Clippers 112-109."
+  },
+  {
+   "q": "What is the weather like in Tokyo today?",
+   "a": "Today in Tokyo, the weather is partly cloudy with a high of 25\u00b0C."
+  },
+  {
+   "q": "What is the current exchange rate for USD to Euro?",
+   "a": "The current exchange rate is approximately 1 USD to 0.86 Euro."
+  },
+  {
+   "q": "What time does the Louvre Museum close today?",
+   "a": "The Louvre Museum closes at 6 PM today."
+  },
+  {
+   "q": "What major events are happening in New York this weekend?",
+   "a": "This weekend, New York is hosting the New York Film Festival and various concerts."
+  },
+  {
+   "q": "Who won the Nobel Peace Prize in 2023?",
+   "a": "The Nobel Peace Prize in 2023 was awarded to Abiy Ahmed for his efforts toward peace."
+  },
+  {
+   "q": "What's the latest on the weather forecast for London?",
+   "a": "The weather forecast for London predicts rain and a high of 15\u00b0C for the weekend."
+  },
+  {
+   "q": "What is the population of Brazil in 2023?",
+   "a": "The estimated population of Brazil in 2023 is around 213 million."
+  },
+  {
+   "q": "What are gas prices like in California right now?",
+   "a": "Gas prices in California are currently around $5.50 per gallon."
+  },
+  {
+   "q": "How many countries are there in the world as of 2023?",
+   "a": "As of 2023, there are 195 countries in the world."
+  },
+  {
+   "q": "What was the outcome of the recent UEFA Champions League match?",
+   "a": "In the latest UEFA Champions League match, Manchester City won against Paris Saint-Germain."
+  },
+  {
+   "q": "What is the score of the current MLB playoff game?",
+   "a": "The current MLB playoff game score is Texas Rangers 4, Houston Astros 2."
+  },
+  {
+   "q": "What is the current inflation rate in the United States?",
+   "a": "The current inflation rate in the United States is around 3.7%."
+  },
+  {
+   "q": "What are the latest results from the Formula 1 Grand Prix?",
+   "a": "The latest Formula 1 Grand Prix was won by Lewis Hamilton."
+  },
+  {
+   "q": "What is the stock price of Apple Inc. today?",
+   "a": "Apple Inc.'s stock price is approximately $174.75 today."
+  },
+  {
+   "q": "What is the current situation in Ukraine?",
+   "a": "The current situation in Ukraine involves ongoing conflict and international diplomatic efforts."
+  },
+  {
+   "q": "Where can I find information on this year's Sundance Film Festival dates?",
+   "a": "The Sundance Film Festival will take place from January 18 to January 28, 2024."
+  },
+  {
+   "q": "What are the main exports of India?",
+   "a": "India's main exports include petroleum products, gems, and pharmaceuticals."
+  },
+  {
+   "q": "What is the world record for the 100m dash?",
+   "a": "The world record for the 100m dash is 9.58 seconds, set by Usain Bolt."
+  },
+  {
+   "q": "What is the latest major technology product launch from Apple?",
+   "a": "The latest major product launch from Apple is the iPhone 15."
+  },
+  {
+   "q": "What are the opening hours for the British Museum?",
+   "a": "The British Museum opens at 10 AM and closes at 5:30 PM."
+  },
+  {
+   "q": "What is the current status of the COVID-19 pandemic?",
+   "a": "The COVID-19 pandemic is still ongoing, with various countries monitoring new variants."
+  },
+  {
+   "q": "How many medals did the USA win in the last Olympic Games?",
+   "a": "The USA won a total of 113 medals in the last Olympic Games."
+  },
+  {
+   "q": "What is the latest news on climate change initiatives worldwide?",
+   "a": "Recent news highlights international commitments to reduce carbon emissions and invest in renewable energy."
+  },
+  {
+   "q": "What is the price of gold per ounce today?",
+   "a": "The price of gold is approximately $1,850 per ounce today."
+  },
+  {
+   "q": "What are the latest developments in the Middle East peace process?",
+   "a": "The latest developments include renewed talks between Israel and Palestine, focusing on a two-state solution."
+  },
+  {
+   "q": "What are some popular tourist attractions in Paris?",
+   "a": "Popular tourist attractions in Paris include the Eiffel Tower, Louvre Museum, and Notre-Dame Cathedral."
+  },
+  {
+   "q": "What do experts say about the future of remote work?",
+   "a": "Experts suggest that remote work may continue to grow, with hybrid models becoming common."
+  },
+  {
+   "q": "What is the current status of the Amazon rainforest?",
+   "a": "The Amazon rainforest continues to face deforestation and environmental challenges."
+  },
+  {
+   "q": "What is the latest update on the James Webb Space Telescope findings?",
+   "a": "The James Webb Space Telescope has recently provided new insights into distant galaxies."
+  },
+  {
+   "q": "What is the annual rainfall in Seattle?",
+   "a": "Seattle receives approximately 37 inches of rainfall annually."
+  },
+  {
+   "q": "What is the latest news about electric vehicle sales?",
+   "a": "Electric vehicle sales have surged, with a notable increase in market share in 2023."
+  },
+  {
+   "q": "What are the top five largest countries by land area?",
+   "a": "The top five largest countries by land area are Russia, Canada, China, the USA, and Brazil."
+  },
+  {
+   "q": "What is the next major sporting event coming up?",
+   "a": "The next major sporting event is the FIFA World Cup 2026."
+  },
+  {
+   "q": "What is the average temperature in Sydney in December?",
+   "a": "The average temperature in Sydney in December is around 25\u00b0C."
+  },
+  {
+   "q": "What is the latest on the state of the global economy?",
+   "a": "The global economy is experiencing mixed recovery patterns following the pandemic."
+  },
+  {
+   "q": "What is the current status of electric bike usage in cities?",
+   "a": "Electric bike usage is increasing, particularly in urban areas, as cities promote sustainable transport options."
+  },
+  {
+   "q": "What is the price of natural gas today?",
+   "a": "The price of natural gas is approximately $3.90 per million British thermal units."
+  }
+ ],
+ "generic": [
+  {
+   "q": "What is a quick way to soften butter for baking?",
+   "a": "You can cut it into small cubes and let it sit at room temperature for about 10-15 minutes."
+  },
+  {
+   "q": "How do you keep vegetables fresh in the fridge?",
+   "a": "Store them in breathable bags or containers and keep them in the crisper drawer."
+  },
+  {
+   "q": "What is a simple way to improve my knife skills?",
+   "a": "Practice consistently and focus on using a proper grip and technique while cutting."
+  },
+  {
+   "q": "What is the etiquette for using a buffet?",
+   "a": "Always serve yourself a small portion first and return for more if desired."
+  },
+  {
+   "q": "How can I prevent pasta from sticking together after cooking?",
+   "a": "Toss it with a little olive oil immediately after draining."
+  },
+  {
+   "q": "What's the best way to store leftover pizza?",
+   "a": "Place it in an airtight container in the fridge or wrap it tightly in foil."
+  },
+  {
+   "q": "How do you know when chicken is cooked through?",
+   "a": "Use a meat thermometer; it should reach an internal temperature of 165\u00b0F (75\u00b0C)."
+  },
+  {
+   "q": "What is a simple hack to peel garlic quickly?",
+   "a": "Smash the garlic clove with the flat side of a knife, which loosens the skin."
+  },
+  {
+   "q": "What is a good habit to start in the morning?",
+   "a": "Drinking a glass of water to hydrate after waking up."
+  },
+  {
+   "q": "What\u2019s a polite way to decline an invitation?",
+   "a": "Thank the person for the invite and simply say you won\u2019t be able to make it."
+  },
+  {
+   "q": "How can I make scrambled eggs fluffier?",
+   "a": "Add a splash of milk or cream before whisking, and cook on low heat."
+  },
+  {
+   "q": "What should I do if I burn something while cooking?",
+   "a": "Remove the burnt part if possible, and transfer the unburnt food to another pot or pan."
+  },
+  {
+   "q": "How do I keep my houseplants alive?",
+   "a": "Water them according to their specific needs and ensure they get proper sunlight."
+  },
+  {
+   "q": "What is the best way to brew a cup of tea?",
+   "a": "Steep the tea in hot water for the recommended time, usually 3-5 minutes."
+  },
+  {
+   "q": "What is a common mistake when making a salad?",
+   "a": "Adding dressing too early; it\u2019s best to dress just before serving."
+  },
+  {
+   "q": "How can I make my bed look more inviting?",
+   "a": "Fluff the pillows and add a throw blanket or decorative cushions."
+  },
+  {
+   "q": "What\u2019s a good way to enhance the flavor of your soups?",
+   "a": "Add fresh herbs or spices during the cooking process for depth of flavor."
+  },
+  {
+   "q": "How should I dispose of cooking oil?",
+   "a": "Let it cool, then pour it into a container and throw it in the trash, or check for local recycling options."
+  },
+  {
+   "q": "What\u2019s a polite way to ask someone to repeat themselves?",
+   "a": "Say, 'I'm sorry, could you please say that again?'"
+  },
+  {
+   "q": "How can I tell if fruit is ripe?",
+   "a": "Check for a pleasant aroma and gently press the skin; it should give slightly."
+  },
+  {
+   "q": "What\u2019s a good way to organize a small kitchen?",
+   "a": "Use vertical space for storage, such as wall shelves or hanging racks."
+  },
+  {
+   "q": "How can I reduce food waste at home?",
+   "a": "Plan your meals, use leftovers creatively, and store food properly."
+  },
+  {
+   "q": "What is the best way to wash fruits and vegetables?",
+   "a": "Rinse them under running water and scrub with a brush for tougher skins."
+  },
+  {
+   "q": "How can I keep my cutting boards sanitary?",
+   "a": "Wash them with hot soapy water and sanitize with a vinegar solution."
+  },
+  {
+   "q": "What\u2019s a quick way to make my home smell good?",
+   "a": "Simmer water with herbs, citrus, or spices on the stove for a fresh scent."
+  }
+ ],
+ "filler": [
+  {
+   "u": "I just had the weirdest dream about flying on a giant pizza.",
+   "a": "That sounds both hilarious and delicious! Dreams can really take us to some strange places, can't they?"
+  },
+  {
+   "u": "I finally tried that new coffee place in town and it was so good!",
+   "a": "Nice! There's nothing like discovering a great spot for a caffeine fix. What did you order?"
+  },
+  {
+   "u": "I spent the whole afternoon organizing my closet\u2014it feels like a new person lives in there now!",
+   "a": "That\u2019s impressive! A decluttered space can really refresh your mind. How do you feel about it now?"
+  },
+  {
+   "u": "I watched a documentary on penguins, and they are such dedicated parents!",
+   "a": "Penguins are amazing! It\u2019s fascinating how nature shows such strong family bonds, isn\u2019t it?"
+  },
+  {
+   "u": "I just finished reading a book that totally exceeded my expectations!",
+   "a": "That\u2019s the best feeling! What was the book about?"
+  },
+  {
+   "u": "I caught a glimpse of the sunset today, and it was stunning.",
+   "a": "Sunsets can be magical! It's like nature's way of reminding us to pause and appreciate the moment."
+  },
+  {
+   "u": "I tried cooking a new recipe today, and it actually turned out well!",
+   "a": "That\u2019s awesome! There\u2019s nothing quite like the satisfaction of creating a tasty meal. What did you make?"
+  },
+  {
+   "u": "I went for a long walk in the park and saw so many cute dogs!",
+   "a": "That sounds lovely! Dog spotting always makes a walk more fun. Did you get to pet any?"
+  },
+  {
+   "u": "I binge-watched a series over the weekend, and I'm feeling a little guilty about it now.",
+   "a": "Guilty pleasures are the best sometimes! What show captivated you?"
+  },
+  {
+   "u": "I bought a new plant for my living room, and I\u2019m hoping I can keep it alive this time.",
+   "a": "Good luck! Plants bring such life into a space\u2014here's to hoping yours thrives!"
+  },
+  {
+   "u": "I met a friend for lunch today, and we ended up talking for hours.",
+   "a": "That\u2019s wonderful! Catching up like that is always a good time. What did you two chat about?"
+  },
+  {
+   "u": "I saw some kids doing a lemonade stand on my street and it brought back memories of my own childhood.",
+   "a": "That\u2019s so nostalgic! It\u2019s great to see the spirit of entrepreneurship starting young."
+  },
+  {
+   "u": "I finally finished a puzzle that took me ages to complete.",
+   "a": "Congratulations! There\u2019s nothing more satisfying than finishing a challenging puzzle. What was the picture?"
+  },
+  {
+   "u": "The other day, I accidentally matched my socks, and it made my day.",
+   "a": "Matching socks can be such a small win! It\u2019s the little things that can really brighten your mood."
+  },
+  {
+   "u": "I tried a new workout class and it was way tougher than I expected.",
+   "a": "That\u2019s brave of you! Sometimes those challenging classes can be the most rewarding. How did you feel afterward?"
+  },
+  {
+   "u": "I just switched to a new skincare routine, and I'm already seeing some changes.",
+   "a": "That's exciting! It\u2019s amazing how a good skincare routine can boost your confidence. What are you using?"
+  },
+  {
+   "u": "I finally caught up on laundry after it piling up for weeks.",
+   "a": "That\u2019s a victory! It always feels good to tackle a chore that\u2019s been looming over you."
+  },
+  {
+   "u": "I discovered a podcast that has been keeping me entertained during my commute.",
+   "a": "Podcasts can be such a great way to learn and be entertained on the go! What\u2019s the podcast about?"
+  },
+  {
+   "u": "I had the most interesting conversation with a stranger at the bus stop today.",
+   "a": "Those unexpected chats can be so enriching! It\u2019s amazing what we can learn from each other."
+  },
+  {
+   "u": "I made a giant sandwich for lunch, and it was a challenge to eat it all.",
+   "a": "That sounds epic! Sometimes the larger the sandwich, the better the experience\u2014did you manage to finish it?"
+  },
+  {
+   "u": "I found an old playlist from high school and have been jamming out to it.",
+   "a": "Nostalgia hits hard with those old playlists! What songs took you back to those days?"
+  },
+  {
+   "u": "I finally started my own garden, and I\u2019m so excited to see how it grows!",
+   "a": "That\u2019s fantastic! Gardening can be such a rewarding hobby. What are you planting?"
+  },
+  {
+   "u": "I stumbled upon a flea market and saw some cool vintage items.",
+   "a": "Flea markets are like treasure hunts! Did you find anything special that you couldn\u2019t resist?"
+  },
+  {
+   "u": "I made a new recipe for dinner and it was surprisingly easy to prepare.",
+   "a": "That\u2019s great! Discovering easy and tasty meals is always a win. What did you cook?"
+  },
+  {
+   "u": "I had a lazy Sunday, just snuggled up with some blankets and snacks.",
+   "a": "That sounds so cozy! Sometimes a laid-back day is exactly what we need to recharge."
+  }
+ ]
+}

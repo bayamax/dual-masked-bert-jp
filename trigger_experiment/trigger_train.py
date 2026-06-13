@@ -18,7 +18,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import GroupKFold
 from sklearn.preprocessing import StandardScaler
 
-TYPES = ("EVICT", "WINDOW", "GENERIC")
+TYPES = ("EVICT", "WINDOW", "GENERIC", "LOOKUP")
 
 
 def load(path):
@@ -37,7 +37,7 @@ def premise_stats(rows, name):
         print("  (no teacher fracs in this file — feature-only shard, skipping)")
         return
     L = rows[0]["fracs"].shape[0]
-    for t in range(3):
+    for t in range(len(TYPES)):
         sel = [r for r in rows if r["qtype"] == t]
         if not sel:
             continue
@@ -51,9 +51,11 @@ def premise_stats(rows, name):
     if 0 < y.sum() < len(y):
         print(f"  ORACLE evicted-mass AUC (evict vs rest): {roc_auc_score(y, score):.4f}")
         yw = np.array([r["qtype"] for r in rows])
-        m = yw != 2
-        if 0 < y[m].sum() < m.sum():
-            print(f"  ORACLE evicted-mass AUC (evict vs window): {roc_auc_score(y[m], score[m]):.4f}")
+        for t in range(1, len(TYPES)):
+            m = (yw == 0) | (yw == t)
+            if 0 < y[m].sum() < m.sum():
+                print(f"  ORACLE evicted-mass AUC (evict vs {TYPES[t].lower()}): "
+                      f"{roc_auc_score(y[m], score[m]):.4f}")
 
 
 def featurize(rows):
@@ -100,19 +102,20 @@ def main():
         Xev, yev, _, tev = featurize(ev)
         s = clf.decision_function(sc.transform(Xev))
         print(f"EVAL AUC evict-vs-all:     {roc_auc_score(yev, s):.4f}")
-        m = tev != 2
-        if 0 < yev[m].sum() < m.sum():
-            print(f"EVAL AUC evict-vs-window:  {roc_auc_score(yev[m], s[m]):.4f}")
-        m = tev != 1
-        if 0 < yev[m].sum() < m.sum():
-            print(f"EVAL AUC evict-vs-generic: {roc_auc_score(yev[m], s[m]):.4f}")
+        for t in range(1, len(TYPES)):
+            m = (tev == 0) | (tev == t)
+            if 0 < yev[m].sum() < m.sum():
+                print(f"EVAL AUC evict-vs-{TYPES[t].lower():8s} {roc_auc_score(yev[m], s[m]):.4f}")
         if args.prevhead:
             h = np.load(args.prevhead)
             sp = ((Xev - h["mean"]) / h["scale"]) @ h["coef"].T + h["intercept"]
             sp = sp.ravel()
-            print(f"PREVHEAD transfer AUC evict-vs-all:    {roc_auc_score(yev, sp):.4f}")
-            m = tev != 2
-            print(f"PREVHEAD transfer AUC evict-vs-window: {roc_auc_score(yev[m], sp[m]):.4f}")
+            print(f"PREVHEAD transfer AUC evict-vs-all: {roc_auc_score(yev, sp):.4f}")
+            for t in range(1, len(TYPES)):
+                m = (tev == 0) | (tev == t)
+                if 0 < yev[m].sum() < m.sum():
+                    print(f"PREVHEAD transfer AUC evict-vs-{TYPES[t].lower():8s} "
+                          f"{roc_auc_score(yev[m], sp[m]):.4f}")
 
     np.savez(args.out, coef=clf.coef_.astype(np.float32),
              intercept=clf.intercept_.astype(np.float32),

@@ -1,0 +1,14 @@
+++ date -u
++ echo 'TRIGGER_SP_POD_V1 start Sat Jun 13 01:25:03 UTC 2026'
+TRIGGER_SP_POD_V1 start Sat Jun 13 01:25:03 UTC 2026
++ nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
+NVIDIA RTX A4000, 550.144.03
++ tail -1 hypernet_sp/trigger_sp/canary.log
+CANARY_OK
++ tail -1 hypernet_sp/trigger_sp/build_fft.log
+FFT_HF_DONE t=43s
+env ready (TRIGGER_SP_POD_V1) Sat Jun 13 01:25:03 UTC 2026
+smoke ok Sat Jun 13 01:25:18 UTC 2026
+labels done (exit 0) Sat Jun 13 01:32:08 UTC 2026
+heldout labels done (exit 0) Sat Jun 13 01:34:20 UTC 2026
+train done (exit 0); ALL_DONE Sat Jun 13 01:34:30 UTC 2026

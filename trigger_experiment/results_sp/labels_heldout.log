@@ -1,0 +1,9 @@
+TRIGGER_LABELS_SP_V2 dev=cuda layers=(8, 14, 20)
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   1%|          | 2/339 [00:00<00:17, 19.47it/s]Loading weights:  12%|█▏        | 40/339 [00:00<00:01, 226.98it/s]Loading weights:  24%|██▍       | 82/339 [00:00<00:00, 313.60it/s]Loading weights:  34%|███▎      | 114/339 [00:00<00:00, 313.07it/s]Loading weights:  43%|████▎     | 146/339 [00:00<00:00, 314.89it/s]Loading weights:  53%|█████▎    | 180/339 [00:00<00:00, 321.14it/s]Loading weights:  63%|██████▎   | 213/339 [00:00<00:00, 254.83it/s]Loading weights:  72%|███████▏  | 244/339 [00:00<00:00, 268.13it/s]Loading weights:  83%|████████▎ | 281/339 [00:00<00:00, 294.29it/s]Loading weights:  92%|█████████▏| 312/339 [00:01<00:00, 294.88it/s]Loading weights: 100%|██████████| 339/339 [00:01<00:00, 303.36it/s]
+10/60 convs -> 60 samples
+20/60 convs -> 120 samples
+30/60 convs -> 180 samples
+40/60 convs -> 240 samples
+50/60 convs -> 300 samples
+60/60 convs -> 360 samples
+TRIGGER_LABELS_DONE samples=360
