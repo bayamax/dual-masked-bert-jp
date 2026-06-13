@@ -1,0 +1,9 @@
+RECALLQ_LABELS_V1 dev=cuda layers=(8, 14, 20)
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<01:48,  3.12it/s]Loading weights:  21%|██        | 72/339 [00:00<00:01, 216.19it/s]Loading weights:  33%|███▎      | 112/339 [00:00<00:01, 223.32it/s]Loading weights:  44%|████▍     | 149/339 [00:00<00:00, 261.37it/s]Loading weights:  54%|█████▍    | 184/339 [00:00<00:00, 283.60it/s]Loading weights:  64%|██████▍   | 218/339 [00:00<00:00, 297.27it/s]Loading weights:  75%|███████▍  | 254/339 [00:01<00:00, 314.97it/s]Loading weights:  85%|████████▌ | 289/339 [00:01<00:00, 321.45it/s]Loading weights:  96%|█████████▌| 324/339 [00:01<00:00, 325.46it/s]Loading weights: 100%|██████████| 339/339 [00:01<00:00, 278.60it/s]
+10/60 convs -> 30 samples
+20/60 convs -> 60 samples
+30/60 convs -> 90 samples
+40/60 convs -> 120 samples
+50/60 convs -> 150 samples
+60/60 convs -> 180 samples
+RECALLQ_LABELS_DONE samples=180

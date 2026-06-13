@@ -1,0 +1,14 @@
+++ date -u
++ echo 'RECALLQ_POD_V1 start Sat Jun 13 02:27:17 UTC 2026'
+RECALLQ_POD_V1 start Sat Jun 13 02:27:17 UTC 2026
++ nvidia-smi --query-gpu=name --format=csv,noheader
+NVIDIA RTX A4500
++ tail -1 hypernet_sp/recallq/canary.log
+CANARY_OK
++ tail -1 hypernet_sp/recallq/build_fft.log
+FFT_HF_DONE t=31s
+env ready Sat Jun 13 02:27:17 UTC 2026
+smoke ok Sat Jun 13 02:27:39 UTC 2026
+labels done (exit 0) Sat Jun 13 02:50:47 UTC 2026
+heldout labels done (exit 0) Sat Jun 13 02:55:32 UTC 2026
+train done (exit 0); ALL_DONE Sat Jun 13 03:00:26 UTC 2026

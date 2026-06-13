@@ -1,0 +1,10 @@
+RECALLQ_TRAIN samples=900 heldout=180
+--- untrained reference (heldout top-2) ---
+  q_fullq  raw_cos=0.556 raw_qk=0.533
+  q_spq    raw_cos=0.556 raw_qk=0.522
+  q_spans  raw_cos=0.489 raw_qk=0.350
+--- learned indexer ---
+  q_fullq  val_top2=1.000 heldout_top2=0.911
+  q_spq    val_top2=1.000 heldout_top2=0.878
+  q_spans  val_top2=1.000 heldout_top2=0.872
+RECALLQ_TRAIN_DONE q_fullq=0.911 q_spq=0.878 q_spans=0.872
