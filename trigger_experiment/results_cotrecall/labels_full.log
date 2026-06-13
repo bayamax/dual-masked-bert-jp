@@ -1,0 +1,27 @@
+COTRECALL_LABELS_V1 dev=cuda items=31
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<02:17,  2.47it/s]Loading weights:  22%|██▏       | 76/339 [00:00<00:01, 195.05it/s]Loading weights:  35%|███▌      | 119/339 [00:00<00:01, 211.92it/s]Loading weights:  45%|████▌     | 153/339 [00:00<00:00, 241.02it/s]Loading weights:  55%|█████▌    | 187/339 [00:00<00:00, 251.81it/s]Loading weights:  68%|██████▊   | 229/339 [00:01<00:00, 290.11it/s]Loading weights:  78%|███████▊  | 264/339 [00:01<00:00, 267.06it/s]Loading weights:  87%|████████▋ | 295/339 [00:01<00:00, 272.15it/s]Loading weights:  96%|█████████▌| 325/339 [00:01<00:00, 279.20it/s]Loading weights: 100%|██████████| 339/339 [00:01<00:00, 242.53it/s]
+10/240 -> 10 samples
+20/240 -> 20 samples
+30/240 -> 30 samples
+40/240 -> 40 samples
+50/240 -> 50 samples
+60/240 -> 60 samples
+70/240 -> 70 samples
+80/240 -> 80 samples
+90/240 -> 90 samples
+100/240 -> 100 samples
+110/240 -> 110 samples
+120/240 -> 120 samples
+130/240 -> 130 samples
+140/240 -> 140 samples
+150/240 -> 150 samples
+160/240 -> 160 samples
+170/240 -> 170 samples
+180/240 -> 180 samples
+190/240 -> 190 samples
+200/240 -> 200 samples
+210/240 -> 210 samples
+220/240 -> 220 samples
+230/240 -> 230 samples
+240/240 -> 240 samples
+COTRECALL_LABELS_DONE samples=240

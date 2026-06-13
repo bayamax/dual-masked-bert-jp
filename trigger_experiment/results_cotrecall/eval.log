@@ -1,0 +1,12 @@
+COTRECALL_EVAL train=240 heldout=80
+--- Q2 mid-CoT gate ---
+  teacher attn->evicted: fire 0.224  ctrl 0.302  (fire>ctrl in 10% of samples)
+  SP-context probe fire-vs-control AUC (heldout): 1.000
+--- Q1 retrieval (heldout top-1 / top-2, 3-seed) ---
+  q_question  raw_qk top2=0.787
+  q_fire_generic raw_qk top2=0.388
+  q_fire      raw_qk top2=0.412
+  q_question  indexer top1=1.000±0.000  top2=1.000±0.000
+  q_fire_generic indexer top1=1.000±0.000  top2=1.000±0.000
+  q_fire      indexer top1=1.000±0.000  top2=1.000±0.000
+COTRECALL_EVAL_DONE q_question_top2=1.000 q_fire_generic_top2=1.000 q_fire_top2=1.000

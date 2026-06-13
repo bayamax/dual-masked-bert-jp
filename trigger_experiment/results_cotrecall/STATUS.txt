@@ -1,0 +1,14 @@
+++ date -u
++ echo 'COTRECALL_POD_V1 start Sat Jun 13 04:25:01 UTC 2026'
+COTRECALL_POD_V1 start Sat Jun 13 04:25:01 UTC 2026
++ nvidia-smi --query-gpu=name --format=csv,noheader
+NVIDIA RTX A4500
++ tail -1 hypernet_sp/cotrecall/canary.log
+CANARY_OK
++ tail -1 hypernet_sp/cotrecall/build_fft.log
+FFT_HF_DONE t=32s
+env ready Sat Jun 13 04:25:01 UTC 2026
+smoke ok (4 samples) Sat Jun 13 04:25:16 UTC 2026
+labels done (exit 0) Sat Jun 13 04:32:21 UTC 2026
+heldout labels done (exit 0) Sat Jun 13 04:34:49 UTC 2026
+eval done (exit 0); ALL_DONE Sat Jun 13 04:36:04 UTC 2026
