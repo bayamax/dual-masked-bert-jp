@@ -33,6 +33,9 @@ def load(path):
 
 def premise_stats(rows, name):
     print(f"--- premise stats [{name}] n={len(rows)} ---")
+    if not np.any(np.stack([r["fracs"] for r in rows])):
+        print("  (no teacher fracs in this file — feature-only shard, skipping)")
+        return
     L = rows[0]["fracs"].shape[0]
     for t in range(3):
         sel = [r for r in rows if r["qtype"] == t]
@@ -66,6 +69,8 @@ def main():
     ap.add_argument("--data", required=True)
     ap.add_argument("--evaldata", default=None)
     ap.add_argument("--out", default="trigger_head.npz")
+    ap.add_argument("--prevhead", default=None,
+                    help="score eval data with a previously trained head (transfer check)")
     args = ap.parse_args()
     tr = load(args.data)
     premise_stats(tr, args.data)
@@ -101,6 +106,13 @@ def main():
         m = tev != 1
         if 0 < yev[m].sum() < m.sum():
             print(f"EVAL AUC evict-vs-generic: {roc_auc_score(yev[m], s[m]):.4f}")
+        if args.prevhead:
+            h = np.load(args.prevhead)
+            sp = ((Xev - h["mean"]) / h["scale"]) @ h["coef"].T + h["intercept"]
+            sp = sp.ravel()
+            print(f"PREVHEAD transfer AUC evict-vs-all:    {roc_auc_score(yev, sp):.4f}")
+            m = tev != 2
+            print(f"PREVHEAD transfer AUC evict-vs-window: {roc_auc_score(yev[m], sp[m]):.4f}")
 
     np.savez(args.out, coef=clf.coef_.astype(np.float32),
              intercept=clf.intercept_.astype(np.float32),
