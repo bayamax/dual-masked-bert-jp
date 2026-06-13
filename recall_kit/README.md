@@ -52,11 +52,26 @@ for p in range(ctx.win_len):
 
 ## Validation
 
-- **Unit tests** (`build_package.py`): each component loads from its saved weights and is
-  asserted on heldout fixtures — gate separation AUC, QK top-2, BGE-head top-2, BGE encode.
-- **Composite test** (`composite_test.py`): the wired `RecallRuntime` runs end-to-end on
-  unseen held items; reports gate precision/recall/F1, retrieval@true-recall, and the
-  end-to-end "fired-on-a-real-recall-and-pulled-the-right-block" rate, for both backends.
+**Unit tests** (`build_package.py`) — each component loaded from its saved weights, on
+heldout fixtures. ALL PASS:
 
-Artifacts (weights + reports) and these results live in the HF repo under
-`trigger_experiment/recall_kit/`.
+| test | result |
+|---|---|
+| gate loads & separates | AUC 0.94 |
+| QK indexer top-2 | 1.000 |
+| BGE-head top-2 | 1.000 |
+| BGE encode path | PASS |
+
+**Composite test** (`composite_test.py`) — the wired `RecallRuntime` end-to-end on unseen
+held items (46 items, 2117 real recall positions):
+
+| metric | QK backend | BGE backend (state-free) |
+|---|---|---|
+| retrieval@true-recall top-2 | **0.999** | **0.979** |
+| end-to-end (fired & right block) | **1.000** | **0.969** |
+
+Gate at the shipped threshold: precision 0.75, recall 0.48, F1 0.59 (a TPR-first operating
+point; lower the threshold for higher recall).
+
+Artifacts (weights + reports) and results live in the HF repo under
+`trigger_experiment/recall_kit_v4/` (canonical). Earlier `recall_kit*/` dirs are superseded.

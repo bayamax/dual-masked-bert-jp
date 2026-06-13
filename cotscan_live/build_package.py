@@ -45,7 +45,7 @@ def train_gate(Xtr, ytr):
     return sc, clf, thresh
 
 
-def train_indexer(rows, dims, epochs=25, seeds=2):
+def train_indexer(rows, dims, epochs=15, seeds=1):
     Hq, Hkv, D = dims; L = len(DS.LAYERS)
     nv = max(50, int(len(rows) * 0.15)); val = rows[:nv]; tr = rows[nv:]   # held-based seed pick
     def tens(r):
@@ -72,7 +72,7 @@ def train_indexer(rows, dims, epochs=25, seeds=2):
     return bstate
 
 
-def train_bge(rows, epochs=25, seeds=2):
+def train_bge(rows, epochs=15, seeds=1):
     qdim = rows[0]["q"].reshape(-1).shape[0]; kdim = rows[0]["bge_k"].shape[1]; d = 128
     def tens(r):
         q = torch.tensor(r["q"].reshape(-1), device=DEV)

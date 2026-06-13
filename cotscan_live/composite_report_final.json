@@ -1,0 +1,27 @@
+{
+  "held_items": 46,
+  "real_recall_positions": 2117,
+  "gate": {
+    "precision": 0.748,
+    "recall": 0.482,
+    "f1": 0.586,
+    "TP": 1020,
+    "FP": 344,
+    "FN": 1097,
+    "TN": 23726
+  },
+  "retrieval_at_true_recall": {
+    "qk_top1": 0.999,
+    "qk_top2": 0.999,
+    "bge_top1": 0.957,
+    "bge_top2": 0.979,
+    "n": 2117
+  },
+  "end_to_end_fired_and_correct": {
+    "qk_top2": 1.0,
+    "bge_top2": 0.969,
+    "n_fired_true": 1020
+  },
+  "elapsed_s": 99.9,
+  "final": true
+}
