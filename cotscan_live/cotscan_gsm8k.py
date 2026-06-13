@@ -100,6 +100,7 @@ def solve(tok, llm, pooler, embT, problem, arm):
     MQ = cache.get_seq_length()
 
     rec_emb = None; fi = new = 0; in_think = True; done = False; n_recall = 0
+    acc_score = {}                                  # MID_ACC: cumulative block scores
 
     def qids():
         tail = gen[turn_start:]
@@ -121,6 +122,24 @@ def solve(tok, llm, pooler, embT, problem, arm):
                 rid = archive.retrieve(qids(), k=RECALL_K)
                 if rid:
                     rec_emb = emb(embT, rid); n_recall += 1
+        elif arm == "MID_ACC":
+            # per-position but ACCUMULATE: each rebuild adds the current tail's top-k block
+            # scores; the injected context is the union of the top blocks by cumulative
+            # score, so a block that keeps matching (the problem statement) stays PINNED
+            # instead of being swapped out the moment the CoT tail drifts.
+            if archive.blocks or len(archive.buf) >= 16:
+                archive.retrieve(qids(), k=RECALL_K)
+                sc = getattr(archive, "_last_scores", []) or []
+                nb = len(archive.blocks)
+                for idx in sorted(range(len(sc)), key=lambda i: -sc[i])[:RECALL_K]:
+                    if idx < nb:                       # ignore the volatile pending buffer
+                        acc_score[idx] = acc_score.get(idx, 0.0) + sc[idx]
+                if acc_score:
+                    keep = sorted(sorted(acc_score, key=lambda i: -acc_score[i])[:3])
+                    ids = []
+                    for i in keep:
+                        ids += archive.blocks[i]["ids"]
+                    rec_emb = emb(embT, ids); n_recall += 1
 
         parts = []
         if kept:
