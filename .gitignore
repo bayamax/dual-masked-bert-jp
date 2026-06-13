@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .DS_Store
 wandb/
+
+# large recall-query label npz (regenerable; exceed GitHub 50MB advisory)
+trigger_experiment/results_recallq/recall_query_labels_*.npz

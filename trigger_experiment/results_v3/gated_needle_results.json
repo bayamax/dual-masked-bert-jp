@@ -1,0 +1,96 @@
+{
+ "always": [
+  {
+   "qtype": "evict",
+   "q": "What was the wifi password at the mountain cabin?",
+   "val": "9182",
+   "ans": "The WiFi password at the mountain cabin was trout-9182.",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "evict",
+   "q": "What is Dr. Imai's office extension?",
+   "val": "4408",
+   "ans": "Dr. Imai's office extension is located at the 4th floor of the Science Building, Room 408. The exact address is **4408 Science Building, Room 408**. For more de",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "evict",
+   "q": "How much did the rover prototype weigh?",
+   "val": "18.4",
+   "ans": "The weight of the rover prototype is approximately 18.4 kilograms. This weight is typical for a small robotic vehicle designed for exploration purposes, conside",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "window",
+   "q": "What is my gym locker code this month?",
+   "val": "44-19-72",
+   "ans": "It seems like you're asking about your gym locker code for the month. Unfortunately, I don't have access to specific locker codes for individuals. However, if y",
+   "ok": false,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "generic",
+   "q": "Can you suggest a quick dinner idea for tonight?",
+   "val": null,
+   "ans": "Certainly! Here's a quick dinner idea for tonight:\n\n**Grilled Salmon with Garlic Sauce and Garlic Bread**\n\n1. **Grilled Salmon**: Slice salmon thinly and season",
+   "ok": true,
+   "fired": true,
+   "score": null
+  }
+ ],
+ "gated": [
+  {
+   "qtype": "evict",
+   "q": "What was the wifi password at the mountain cabin?",
+   "val": "9182",
+   "ans": "The wifi password at the mountain cabin was trout-9182. Took us forever to find it.",
+   "ok": true,
+   "fired": true,
+   "score": 5.38
+  },
+  {
+   "qtype": "evict",
+   "q": "What is Dr. Imai's office extension?",
+   "val": "4408",
+   "ans": "Dr. Imai's office extension is located at Room 4408 of the Science Building. For more detailed information, please visit the official website of the university'",
+   "ok": true,
+   "fired": true,
+   "score": 6.71
+  },
+  {
+   "qtype": "evict",
+   "q": "How much did the rover prototype weigh?",
+   "val": "18.4",
+   "ans": "The weight of the rover prototype is approximately 18.4 kilograms. This weight is typical for a small robotic vehicle designed for exploration purposes, conside",
+   "ok": true,
+   "fired": true,
+   "score": 6.1
+  },
+  {
+   "qtype": "window",
+   "q": "What is my gym locker code this month?",
+   "val": "44-19-72",
+   "ans": "It seems like you're asking about your gym locker code for the month. Unfortunately, I don't have access to specific locker codes for individuals. However, if y",
+   "ok": false,
+   "fired": true,
+   "score": -2.43
+  },
+  {
+   "qtype": "generic",
+   "q": "Can you suggest a quick dinner idea for tonight?",
+   "val": null,
+   "ans": "Certainly! Here's a quick dinner idea for tonight:\n\n**Grilled Salmon with Garlic Sauce and Garlic Bread**\n\n1. **Grilled Salmon**: Slice salmon thinly and season",
+   "ok": true,
+   "fired": false,
+   "score": -5.08
+  }
+ ]
+}
