@@ -21,7 +21,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import StandardScaler
 
-QVARIANTS = ("q_question", "q_fire")
+QVARIANTS = ("q_question", "q_fire_generic", "q_fire")
 
 
 def load(pattern):
@@ -32,7 +32,7 @@ def load(pattern):
         for j in range(n):
             rows.append({k: z[f"{j}_{k}"] for k in
                          ("labels", "k", "gold", "nB", "q_question", "q_fire",
-                          "q_ctrl", "fire_mass", "ctrl_mass")})
+                          "q_fire_generic", "q_ctrl", "fire_mass", "ctrl_mass")})
     return rows
 
 

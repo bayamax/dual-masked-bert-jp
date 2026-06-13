@@ -94,32 +94,7 @@ def to_ids(tok, pairs):
 
 
 @torch.no_grad()
-def generate_cot(llm, tok, dev, history_ids, pre, value, maxgen=90):
-    """Full-KV greedy CoT: let the model reason (value IS visible in history) until it
-    naturally emits `value`. Returns the generated ids BEFORE the value token (the
-    natural fire prefix), or None if the model never reaches the value."""
-    from transformers.cache_utils import DynamicCache
-    cache = DynamicCache()
-    out = llm(input_ids=torch.tensor([history_ids + pre], device=dev),
-              past_key_values=cache, use_cache=True)
-    nxt = int(out.logits[0, -1].argmax())
-    gen, norm_val = [], value.replace(",", "")
-    for _ in range(maxgen):
-        gen.append(nxt)
-        if norm_val in tok.decode(gen).replace(",", ""):
-            # back off to the largest prefix that does NOT yet contain the value
-            m = len(gen)
-            while m > 0 and norm_val in tok.decode(gen[:m]).replace(",", ""):
-                m -= 1
-            return gen[:m]
-        out = llm(input_ids=torch.tensor([[nxt]], device=dev),
-                  past_key_values=cache, use_cache=True)
-        nxt = int(out.logits[0, -1].argmax())
-    return None
-
-
-@torch.no_grad()
-def process(llm, tok, pooler, dev, seed, natural=True):
+def process(llm, tok, pooler, dev, seed):
     item_idx = seed % len(ITEMS)
     built = build_conversation(seed, item_idx)
     if built is None:
@@ -146,20 +121,17 @@ def process(llm, tok, pooler, dev, seed, natural=True):
 
     pre = tok.encode(f"<｜end▁of▁sentence｜><｜User｜>{q_text}<｜Assistant｜><think>\n",
                      add_special_tokens=False)
-    if natural:
-        # let the real model write its OWN CoT (full-KV, value visible) and take the
-        # point where it naturally reaches for the value as the fire position — removes
-        # the hand-written-lead bias.
-        lead_ids = generate_cot(llm, tok, dev, ids, pre, value)
-        if not lead_ids:
-            return []
-    else:
-        lead_ids = tok.encode(lead, add_special_tokens=False)
+    # two teacher-forced CoT leads (reliable; model self-generation yields <5% here):
+    #   role    — names the specific role, as a real CoT does ("...the ferry price, which is ")
+    #   generic — role-free, the cue must carry the fact from the question context only
+    role_ids = tok.encode(lead, add_special_tokens=False)
+    generic_ids = tok.encode("From earlier in our chat, the exact figure I need here is ",
+                             add_special_tokens=False)
     val_ids = tok.encode(value, add_special_tokens=False)
-    suffix = pre + lead_ids + val_ids
-    q_start, fire_pos = 0, len(pre) + len(lead_ids) - 1     # last CoT token before value
-    ctrl_pos = len(pre)                                      # first CoT token
-    val_start = len(pre) + len(lead_ids)
+    suffix = pre + role_ids + val_ids                       # role lead carries the label
+    q_start, fire_pos = 0, len(pre) + len(role_ids) - 1     # last role-lead token
+    ctrl_pos = len(pre)                                      # first lead token (gate control)
+    val_start = len(pre) + len(role_ids)
 
     from transformers.cache_utils import DynamicCache
     # (1) full-KV: block keys + teacher attention (per-position to evicted) ------------
@@ -195,25 +167,35 @@ def process(llm, tok, pooler, dev, seed, natural=True):
     kept, window = ids[:n_evict], ids[n_evict:]
     sp = pooler(embT(torch.tensor([kept], device=dev)).float()).to(embT.weight.dtype)
     win_emb = embT(torch.tensor([window], device=dev))
-    cache = DynamicCache()
-    llm.model(input_ids=torch.tensor([[bos]], device=dev), past_key_values=cache,
-              use_cache=True)
-    llm.model(inputs_embeds=torch.cat([sp, win_emb], 1), past_key_values=cache,
-              use_cache=True)
-    with Capture(llm, LAYERS, want_q=True, want_k=False) as cap2:
-        llm.model(inputs_embeds=embT(torch.tensor([suffix], device=dev)),
-                  past_key_values=cache, use_cache=True)
-    qsp = cap2.q
 
-    def pick(pos_a, pos_b=None):
-        return np.stack([qsp[li][0][0][pos_a:pos_b].mean(0).view(Hq, D).cpu()
+    def harvest(suf):
+        # rebuild the SP prefix each call (cheap; avoids version-fragile cache cloning)
+        c = DynamicCache()
+        llm.model(input_ids=torch.tensor([[bos]], device=dev), past_key_values=c,
+                  use_cache=True)
+        llm.model(inputs_embeds=torch.cat([sp, win_emb], 1), past_key_values=c,
+                  use_cache=True)
+        with Capture(llm, LAYERS, want_q=True, want_k=False) as cap2:
+            llm.model(inputs_embeds=embT(torch.tensor([suf], device=dev)),
+                      past_key_values=c, use_cache=True)
+        return cap2.q
+
+    qsp = harvest(suffix)                                   # role lead
+
+    def pick(qd, pos_a, pos_b=None):
+        return np.stack([qd[li][0][0][pos_a:pos_b].mean(0).view(Hq, D).cpu()
                          .float().numpy() for li in LAYERS]).astype(np.float16)
 
-    q_question = pick(q_start, len(pre))                    # over the oblique question
-    q_fire = pick(fire_pos, fire_pos + 1)
-    q_ctrl = pick(ctrl_pos, ctrl_pos + 1)
+    q_question = pick(qsp, q_start, len(pre))               # over the oblique question
+    q_fire = pick(qsp, fire_pos, fire_pos + 1)              # after role named
+    q_ctrl = pick(qsp, ctrl_pos, ctrl_pos + 1)              # gate control (first lead tok)
+    gsuffix = pre + generic_ids
+    qsp_g = harvest(gsuffix)                                # role-free generic lead
+    q_fire_generic = pick(qsp_g, len(pre) + len(generic_ids) - 1,
+                          len(pre) + len(generic_ids))
     return [{"labels": labels, "k": kf, "gold": np.array(gold), "nB": np.array(nB),
-             "q_question": q_question, "q_fire": q_fire, "q_ctrl": q_ctrl,
+             "q_question": q_question, "q_fire": q_fire,
+             "q_fire_generic": q_fire_generic, "q_ctrl": q_ctrl,
              "fire_mass": np.array(np.mean(fire_mass), dtype=np.float32),
              "ctrl_mass": np.array(np.mean(ctrl_mass), dtype=np.float32),
              "seed": np.array(seed), "item": np.array(item_idx)}]
@@ -224,8 +206,6 @@ def main():
     ap.add_argument("--n", type=int, default=200)
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--out", default="cot_recall_labels_{shard}.npz")
-    ap.add_argument("--template", action="store_true",
-                    help="use the hand-written CoT lead instead of model-generated CoT")
     args = ap.parse_args()
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     torch.set_num_threads(os.cpu_count())
@@ -239,7 +219,7 @@ def main():
     for i in range(args.n):
         seed = args.shard * 100000 + i
         try:
-            rows += process(llm, tok, pooler, dev, seed, natural=not args.template)
+            rows += process(llm, tok, pooler, dev, seed)
         except Exception as e:
             print(f"seed {seed} failed: {e}", flush=True)
         if (i + 1) % 10 == 0:
