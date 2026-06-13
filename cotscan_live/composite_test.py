@@ -39,9 +39,12 @@ def main():
     bge_ret = BGERetriever.load(os.path.join(ART, "bge_head.npz"), bge, device=DEV)
     rt = RecallRuntime(llm, tok, pooler, gate, qk=qk, bge=bge_ret, device=DEV)
 
-    pool = DS.pick_items(420)
-    items = pool[360:400]                        # unseen tail (train used <=340)
-    log(f"[composite] {len(items)} unseen held items")
+    ci = os.path.join(ART, "composite_items.json")
+    if os.path.exists(ci):                        # same sorted pool as training (matched regime)
+        items = [(0, u, c) for u, c in json.load(open(ci))]
+    else:
+        items = DS.pick_items(420)[360:400]
+    log(f"[composite] {len(items)} unseen held items (from build pool: {os.path.exists(ci)})")
 
     TP = FP = FN = TN = 0
     qk_t1 = qk_t2 = bge_t1 = bge_t2 = nfire_pos = 0

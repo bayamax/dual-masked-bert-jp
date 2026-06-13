@@ -45,8 +45,9 @@ def train_gate(Xtr, ytr):
     return sc, clf, thresh
 
 
-def train_indexer(rows, dims, epochs=20, seeds=2):
+def train_indexer(rows, dims, epochs=25, seeds=2):
     Hq, Hkv, D = dims; L = len(DS.LAYERS)
+    nv = max(50, int(len(rows) * 0.15)); val = rows[:nv]; tr = rows[nv:]   # held-based seed pick
     def tens(r):
         q = torch.tensor(r["q"], device=DEV)
         k = torch.tensor(r["k"], dtype=torch.float32, device=DEV)
@@ -57,14 +58,14 @@ def train_indexer(rows, dims, epochs=20, seeds=2):
         torch.manual_seed(sd); m = Indexer(L, Hq, Hkv, D).to(DEV)
         opt = torch.optim.Adam(m.parameters(), lr=3e-3); rng = np.random.RandomState(sd)
         for _ in range(epochs):
-            rng.shuffle(rows)
-            for r in rows:
+            rng.shuffle(tr)
+            for r in tr:
                 q, k, lab = tens(r)
                 loss = F.kl_div(F.log_softmax(m(q, k), 0), lab, reduction="sum")
                 opt.zero_grad(); loss.backward(); opt.step()
-        # simple train-fit score to pick seed
         sc = sum(int(r["gold"]) in m(*tens(r)[:2]).topk(min(2, r["nB"])).indices.tolist()
-                 for r in rows[:400]) / min(400, len(rows))
+                 for r in val) / max(len(val), 1)
+        log(f"    indexer seed {sd}: val top2={sc:.3f}")
         if sc > best:
             best = sc; bstate = {k: v.detach().cpu().numpy() for k, v in m.state_dict().items()}
     np.savez(os.path.join(OUT, "indexer.npz"), **bstate)
@@ -142,10 +143,14 @@ def main():
     tok, llm, pooler, embT, bge = DS.build_model()
     cfg = llm.config; dims = (cfg.num_attention_heads, cfg.num_key_value_heads,
                               cfg.hidden_size // cfg.num_attention_heads)
-    N_TR = int(os.environ.get("PKG_N_TRAIN", "250")); N_HE = int(os.environ.get("PKG_N_HELD", "90"))
-    pool = DS.pick_items(N_TR + N_HE)
-    tr_pool, te_pool = pool[:N_TR], pool[N_TR:]
-    log(f"[data] train_items={len(tr_pool)} held_items={len(te_pool)}")
+    N_TR = int(os.environ.get("PKG_N_TRAIN", "300")); N_HE = int(os.environ.get("PKG_N_HELD", "60"))
+    N_CO = int(os.environ.get("PKG_N_COMP", "60"))
+    pool = DS.pick_items(N_TR + N_HE + N_CO)
+    tr_pool, te_pool, co_pool = pool[:N_TR], pool[N_TR:N_TR + N_HE], pool[N_TR + N_HE:]
+    # hand the composite test items from the SAME sorted pool (same CoT-length regime)
+    json.dump([[u, c] for _, u, c in co_pool],
+              open(os.path.join(OUT, "composite_items.json"), "w"))
+    log(f"[data] train_items={len(tr_pool)} held_items={len(te_pool)} comp_items={len(co_pool)}")
     Xtr, ytr, _, IXtr = DS.collect(tr_pool, llm, tok, pooler, embT, dims, "TRAIN", t0, bge=bge)
     Xte, yte, _, IXte = DS.collect(te_pool, llm, tok, pooler, embT, dims, "HELD", t0, bge=bge)
     log(f"[data] gate train {len(ytr)}({int(ytr.sum())}+) held {len(yte)}({int(yte.sum())}+) "
