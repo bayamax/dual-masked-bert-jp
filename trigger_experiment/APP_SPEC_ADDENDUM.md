@@ -66,3 +66,37 @@
 - 「いつ引くか」の追補であり「どれを引くか」は不変(現行 BGE / Phase B indexer アンサンブル
   .983 のまま)。発火位置の隠れ表現をクエリにする案は質問位置と同等で改善せず(RESULTS.md)。
 - MLX 本番ランタイムへの移植は未実施(`HANDOFF_PORTING.md` のパリティ手順に沿うこと)。
+
+## 実装ハンドオフ — これだけ見れば実装できる
+
+ゲートを本番アプリに入れる人が見るもの・やることの全リスト。
+
+### 渡す成果物(すべて HF `hypernet_sp/gate/`)
+
+| ファイル | 何のために見るか |
+|---|---|
+| `APP_SPEC_ADDENDUM.md`(本書) | 設計・配線箇所・設定・実測根拠 |
+| `gate/app_session_torch.gated.py` | **配線の実物**。正典 `hypernet_sp/app_session_torch.py` と diff すれば入れる変更が全部見える |
+| `gate/trigger_gate.py` | ゲート判定ロジック(torch 参照実装)。MLX へ移植する対象 |
+| `gate/trigger_head_v3_gate.npz` | ゲート重み(coef/intercept/scaler/thresh)。そのままロード |
+
+### 手順
+
+1. **diff を取る**: `app_session_torch.gated.py` vs 正典 `app_session_torch.py`。入る変更は3箇所だけ:
+   - `__init__`: `SPCHAT_TRIGGER=head` のとき `TriggerGate` を生成(数行)
+   - `_gen_once`: ブロック引き戻しの直前に `gate.fires(kept, window, user_msg)` を呼び、False なら retrieve をスキップ(`rec_skip`)
+   - `turn`: 生のユーザーメッセージを `self._cur_user_msg` に保持(ゲートのクエリ用、1行)
+2. **`trigger_gate.py` を MLX に移植**(`HANDOFF_PORTING.md` のパリティ手順)。ロジックは:
+   - 本番レイアウト `[BOS][SP(pooler)][露出窓512][質問]` で 1 回 forward
+   - 層 8/14/20 の **pre-RoPE q_proj** を質問位置で平均プール → 4608 次元(=3層×Hq×D)
+   - `npz` の `(x-mean)/scale @ coef + intercept` を計算 → `thresh`(-2.6)超なら発火
+   - 採取する部品(pooler・モデル forward・SP+窓レイアウト)は既にアプリにある
+3. **パリティ確認**: torch 版ゲートと MLX 版ゲートで、同じ入力に対し発火スコアが一致することを数例で確認(`parity_reference.npz` と同じ流儀)。
+4. **受け入れ確認**: `SPCHAT_TRIGGER=head` で #15/16/20/25 等の既存バッテリーを回し、(a) 過去参照ターンの想起が維持、(b) 雑談・窓内ターンの引き戻しがスキップされる、を確認(本書「実測」表が torch 版の合格基準)。
+
+### 確認すべき数値(合格ライン)
+
+- 過去参照ターンの発火率 = 10/10(取りこぼしゼロ)
+- 陰性(雑談・窓内)スキップ率 ≈ 8/10
+- 想起精度が always(毎ターン引く)と同等
+- 誤発火が気になるなら閾値 -2.6 → -2.0(ラベル保存済み・GPU 不要で再調整可)
