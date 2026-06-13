@@ -19,8 +19,9 @@ class Indexer(nn.Module):
     def __init__(self, L, Hq, Hkv, D, d=32):
         super().__init__()
         self.group = Hq // Hkv
-        self.Aq = nn.Parameter(torch.zeros(L, Hq, D, d))
-        self.Bk = nn.Parameter(torch.zeros(L, Hkv, 2 * D, d))
+        # NOTE: must be non-zero init — zeros give dead gradients (q·Aq=k·Bk=0 -> no signal)
+        self.Aq = nn.Parameter(torch.randn(L, Hq, D, d) * D ** -0.5)
+        self.Bk = nn.Parameter(torch.randn(L, Hkv, 2 * D, d) * (2 * D) ** -0.5)
         self.w = nn.Parameter(torch.zeros(L, Hq))
 
     def forward(self, q, k):                       # q:[L,Hq,D]  k:[nB,L,Hkv,2D] -> [nB]
