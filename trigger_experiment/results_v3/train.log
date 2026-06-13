@@ -1,0 +1,19 @@
+--- premise stats [trigger_labels_v3_0.npz] n=1600 ---
+  (no teacher fracs in this file — feature-only shard, skipping)
+C=0.003 cv_auc=1.0000
+C=0.01 cv_auc=1.0000
+C=0.03 cv_auc=1.0000
+C=0.1 cv_auc=1.0000
+C=0.3 cv_auc=1.0000
+chosen C=0.003 (cv_auc=1.0000)
+--- premise stats [trigger_labels_v3_1.npz] n=480 ---
+  (no teacher fracs in this file — feature-only shard, skipping)
+EVAL AUC evict-vs-all:     0.9998
+EVAL AUC evict-vs-window   0.9994
+EVAL AUC evict-vs-generic  1.0000
+EVAL AUC evict-vs-lookup   0.9997
+PREVHEAD transfer AUC evict-vs-all: 0.9208
+PREVHEAD transfer AUC evict-vs-window   0.9984
+PREVHEAD transfer AUC evict-vs-generic  0.9965
+PREVHEAD transfer AUC evict-vs-lookup   0.8063
+TRIGGER_TRAIN_DONE cv_auc=1.0000

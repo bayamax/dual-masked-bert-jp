@@ -49,3 +49,28 @@ evicted質量比の中央値(train、層 8/14/20 = L0/L1/L2):
 - results/trigger_labels_{0,1,999}.npz — ラベル(train/heldout/smoke)
 - results/trigger_head.npz — ヘッド重み(coef/intercept/scaler)
 - results/*.log, results/STATUS.txt — Pod 実行ログ一式
+
+# TRIGGER_V2 / V3 結果 (2026-06-13 追記)
+
+## V2: 本番文脈(SP+露出窓)での再採取 — results_sp/
+[BOS][SP(pooler圧縮)][露出窓512][質問] の本番レイアウトで特徴を採り直して再学習。
+A4000、9分、$0.026。npzからローカル再計算で検証済み。
+- EVAL AUC: evict-vs-all / -window / -generic 全て **1.0000**
+- **V1ヘッド(フルKV文脈学習)の転移も1.0000** — 文脈ズレは検索キーには致命的
+  (Phase A実測)だがトリガー判定には効かない。
+- 本体SFT不要・本番投入可能な形の判定器が確定。
+
+## V3: テンプレ拡張+LOOKUP陰性クラス — results_v3/
+gpt-4o-mini生成+機械検証のテンプレ拡張(needle 15+52 / generic 8+25 /
+filler 16+25、評価シャードは全カテゴリ未知テンプレ)+web行き質問39種を
+4クラス目の陰性として追加。A5000、8分、$0.022。
+- V3ヘッド EVAL AUC: evict-vs-all .9998 / **-window .9994** / -generic 1.0000 /
+  **-lookup .9997** — テンプレ多様性を大きく広げてもセッション内トリガーは天井近くを維持。
+- V2ヘッド(lookup陰性なしで学習)の転移: -window .9984 / -generic .9965 は保つが
+  **-lookup .8063 に崩落** — 「過去参照とweb参照の混同」というアプリの実症状を
+  バッテリー上で定量再現。lookup陰性を訓練に入れるだけで .9997 に回復。
+- 採用ヘッド: results_v3/trigger_head_v3.npz(4608dim ロジスティック回帰)。
+
+## 次: アプリ配線(学習なし)
+毎ターン無条件 retrieve → 「ヘッド発火ターンのみ retrieve」(SPCHAT_TRIGGER=head)。
+評価: needle想起維持 + v1/v2回帰 + 引き戻しスキップ率。

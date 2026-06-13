@@ -1,0 +1,9 @@
+TRIGGER_LABELS_V3 dev=cuda layers=(8, 14, 20) pools: needles 50/22 generic 23/10 lookup 27/12 filler 41
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<02:51,  1.98it/s]Loading weights:  27%|██▋       | 91/339 [00:00<00:01, 199.61it/s]Loading weights:  42%|████▏     | 144/339 [00:00<00:00, 258.50it/s]Loading weights:  57%|█████▋    | 192/339 [00:00<00:00, 273.08it/s]Loading weights:  69%|██████▊   | 233/339 [00:01<00:00, 284.43it/s]Loading weights:  80%|███████▉  | 271/339 [00:01<00:00, 300.16it/s]Loading weights:  91%|█████████ | 308/339 [00:01<00:00, 289.46it/s]Loading weights: 100%|██████████| 339/339 [00:01<00:00, 255.70it/s]
+10/60 convs -> 80 samples
+20/60 convs -> 160 samples
+30/60 convs -> 240 samples
+40/60 convs -> 320 samples
+50/60 convs -> 400 samples
+60/60 convs -> 480 samples
+TRIGGER_LABELS_DONE samples=480
