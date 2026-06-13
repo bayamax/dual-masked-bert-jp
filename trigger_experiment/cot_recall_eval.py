@@ -29,10 +29,15 @@ def load(pattern):
     for f in sorted(glob.glob(pattern)):
         z = np.load(f)
         n = int(z["n_samples"])
+        keys = ("labels", "k", "gold", "nB", "q_question", "q_fire",
+                "q_fire_generic", "q_ctrl", "fire_mass", "ctrl_mass")
+        opt = ("gold_is_fact", "to_evict_recall")
         for j in range(n):
-            rows.append({k: z[f"{j}_{k}"] for k in
-                         ("labels", "k", "gold", "nB", "q_question", "q_fire",
-                          "q_fire_generic", "q_ctrl", "fire_mass", "ctrl_mass")})
+            r = {k: z[f"{j}_{k}"] for k in keys}
+            for k in opt:
+                if f"{j}_{k}" in z:
+                    r[k] = z[f"{j}_{k}"]
+            rows.append(r)
     return rows
 
 
@@ -125,8 +130,12 @@ def main():
     print("--- Q2 mid-CoT gate ---", flush=True)
     fm = np.array([float(r["fire_mass"]) for r in rows])
     cm = np.array([float(r["ctrl_mass"]) for r in rows])
-    print(f"  teacher attn->evicted: fire {fm.mean():.3f}  ctrl {cm.mean():.3f}  "
-          f"(fire>ctrl in {(fm > cm).mean()*100:.0f}% of samples)")
+    print(f"  teacher attn->evicted block: recall-pos {fm.mean():.3f}  nonrecall-pos "
+          f"{cm.mean():.3f}  (recall>nonrecall in {(fm > cm).mean()*100:.0f}%)")
+    if "gold_is_fact" in rows[0]:
+        gif = np.array([float(r["gold_is_fact"]) for r in rows])
+        print(f"  attention-gold == planted-fact block: {gif.mean()*100:.0f}% "
+              f"(does attention fly to the right place?)")
     Xf = np.array([r["q_fire"].reshape(-1) for r in tr], np.float32)
     Xc = np.array([r["q_ctrl"].reshape(-1) for r in tr], np.float32)
     X = np.vstack([Xf, Xc]); y = np.r_[np.ones(len(Xf)), np.zeros(len(Xc))]

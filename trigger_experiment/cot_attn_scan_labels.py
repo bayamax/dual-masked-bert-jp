@@ -90,25 +90,27 @@ def process(llm, tok, pooler, dev, seed, held=False):
     o = llm.model(input_ids=torch.tensor([suffix], device=dev),
                   past_key_values=cache, use_cache=True, output_attentions=True)
     att = o.attentions
-    T = len(suffix)
-    # attention to gold block, per answer position (sum heads+layers, BOS excluded)
-    to_gold = np.zeros(len(ans_ids), dtype=np.float32)
-    to_evict = np.zeros(len(ans_ids), dtype=np.float32)
+    # per answer position: attention mass to each evicted block (sum heads+layers,
+    # BOS excluded, row-normalized). This is the teacher signal that defines BOTH the
+    # recall position AND the target block.
     blockmass = np.zeros((len(ans_ids), nB), dtype=np.float32)
-    for lidx, li in enumerate(LAYERS):
+    to_evict = np.zeros(len(ans_ids), dtype=np.float32)
+    for li in LAYERS:
         a = att[li][0].float()                              # [Hq, T, Tctx]
         rows = a[:, a0:a1, :].sum(0)                        # [Lans, Tctx]
         rows[:, 0] = 0.0
         denom = rows.sum(-1, keepdim=True).clamp(min=1e-8)
-        g = rows[:, gspan[0]:gspan[1]].sum(-1) / denom[:, 0]
-        e = rows[:, :n_evict].sum(-1) / denom[:, 0]
-        to_gold += g.cpu().numpy()
-        to_evict += e.cpu().numpy()
+        to_evict += (rows[:, :n_evict].sum(-1) / denom[:, 0]).cpu().numpy()
         bm = rows[:, :n_evict].view(len(ans_ids), nB, BLOCK).sum(-1)
         blockmass += (bm / denom).cpu().numpy()
-    to_gold /= len(LAYERS); to_evict /= len(LAYERS)
-    recall_rel = int(to_gold.argmax())                     # attention-defined recall pos
-    nonrecall_rel = int(to_gold.argmin())
+    blockmass /= len(LAYERS); to_evict /= len(LAYERS)
+    # recall position = where attention concentrates most on a SINGLE far block
+    # (= "a token >512 back gets attention above all others"); gold = that block.
+    peak_per_pos = blockmass.max(axis=1)                    # [Lans]
+    recall_rel = int(peak_per_pos.argmax())
+    nonrecall_rel = int(peak_per_pos.argmin())
+    gold = int(blockmass[recall_rel].argmax())             # ATTENTION-defined gold block
+    gold_fact = (gspan[0] // BLOCK)                         # planted-fact block (cross-check)
     # retrieval label = block attention profile AT the recall position
     lab = blockmass[recall_rel]
     labels = np.tile((lab / max(lab.sum(), 1e-8))[None], (len(LAYERS), 1)).astype(np.float32)
@@ -135,10 +137,11 @@ def process(llm, tok, pooler, dev, seed, held=False):
     return [{"labels": labels, "k": kf, "gold": np.array(gold), "nB": np.array(nB),
              "q_question": q_question, "q_fire": q_recall,
              "q_fire_generic": q_recall, "q_ctrl": q_nonrecall,
-             "fire_mass": np.array(float(to_gold[recall_rel]), dtype=np.float32),
-             "ctrl_mass": np.array(float(to_gold[nonrecall_rel]), dtype=np.float32),
-             "peak_frac": np.array(float(to_gold.max() / max(to_evict[recall_rel], 1e-8)),
-                                   dtype=np.float32),
+             "fire_mass": np.array(float(blockmass[recall_rel].max()), dtype=np.float32),
+             "ctrl_mass": np.array(float(blockmass[nonrecall_rel].max()), dtype=np.float32),
+             "gold_fact": np.array(gold_fact),                # planted block (cross-check)
+             "gold_is_fact": np.array(int(gold == gold_fact)),
+             "to_evict_recall": np.array(float(to_evict[recall_rel]), dtype=np.float32),
              "seed": np.array(seed)}]
 
 
