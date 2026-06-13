@@ -79,7 +79,12 @@ def build_model():
         llm = AutoModelForCausalLM.from_pretrained(
             "fft_hf", dtype=torch.float32, attn_implementation="eager")
     llm = llm.eval().to(DEV)
-    return tok, llm, load_pooler().to(DEV).eval(), llm.get_input_embeddings()
+    bge = None
+    if os.environ.get("WITH_BGE", "1") == "1":
+        from sentence_transformers import SentenceTransformer
+        bge = SentenceTransformer("BAAI/bge-base-en-v1.5", device=DEV)
+        log("[bge] loaded BAAI/bge-base-en-v1.5")
+    return tok, llm, load_pooler().to(DEV).eval(), llm.get_input_embeddings(), bge
 
 
 def emb(embT, ids):
@@ -106,7 +111,7 @@ class Cap:
 
 
 @torch.no_grad()
-def process(llm, tok, pooler, embT, usr, cot, dims):
+def process(llm, tok, pooler, embT, usr, cot, dims, bge=None):
     Hq, Hkv, D = dims
     pre = tok.encode(f"<｜User｜>{usr}<｜Assistant｜><think>\n", add_special_tokens=False)
     cot_ids = tok.encode(cot, add_special_tokens=False)
@@ -152,17 +157,26 @@ def process(llm, tok, pooler, embT, usr, cot, dims):
         llm.model(inputs_embeds=emb(embT, window), past_key_values=c, use_cache=True)
     q_layers = [cap2.q[li][0].float().cpu().numpy().reshape(win_len, Hq, D) for li in LAYERS]
     qfeat = np.stack(q_layers, 1)                       # [win, L, Hq, D]
-    return {"qfeat": qfeat.astype(np.float16), "maxmass": maxmass, "goldblk": goldblk,
-            "blockmass": blockmass, "keys": keys, "nB": nB, "win_len": win_len}
+    out = {"qfeat": qfeat.astype(np.float16), "maxmass": maxmass, "goldblk": goldblk,
+           "blockmass": blockmass, "keys": keys, "nB": nB, "win_len": win_len,
+           "win_ids": window,
+           "block_ids": [seq[i * BLOCK:(i + 1) * BLOCK] for i in range(nB)]}
+    if bge is not None:
+        # BGE block embeddings (decode ids -> text -> encode). Computed on demand, NOT stored
+        # across turns — this is the "elegant" path: only ids persist, BGE runs at recall.
+        btexts = [tok.decode(seq[i * BLOCK:(i + 1) * BLOCK]) for i in range(nB)]
+        out["bge_k"] = bge.encode(btexts, normalize_embeddings=True,
+                                  show_progress_bar=False).astype(np.float16)  # [nB,bge]
+    return out
 
 
-def collect(pool, llm, tok, pooler, embT, dims, tag, t0):
+def collect(pool, llm, tok, pooler, embT, dims, tag, t0, bge=None):
     Xg, yg, grp = [], [], []        # gate features (flattened q), labels, item id
     IX = []                          # indexer rows (positives)
     gi = 0
     for n, (_, usr, cot) in enumerate(pool):
         try:
-            r = process(llm, tok, pooler, embT, usr, cot, dims)
+            r = process(llm, tok, pooler, embT, usr, cot, dims, bge=bge)
         except Exception as e:
             log(f"  {tag} item {n} failed: {e}"); continue
         if r is None:
@@ -177,10 +191,20 @@ def collect(pool, llm, tok, pooler, embT, dims, tag, t0):
         for p in list(pos) + list(neg):
             Xg.append(r["qfeat"][p].reshape(-1)); yg.append(int(mm[p] >= max(thr, 0.05)))
             grp.append(gi)
-        for p in pos:                                   # indexer positives
-            IX.append({"q": r["qfeat"][p].astype(np.float32), "k": r["keys"],
-                       "gold": int(r["goldblk"][p]), "nB": r["nB"],
-                       "labels": r["blockmass"][p][None, :].astype(np.float32)})
+        # BGE query for positives: encode the recent text reaching back (~last 64 tok)
+        bge_q = None
+        if bge is not None and len(pos):
+            qtexts = [tok.decode(r["win_ids"][max(0, p - 64):p + 1]) for p in pos]
+            bge_q = bge.encode(qtexts, normalize_embeddings=True,
+                               show_progress_bar=False).astype(np.float16)
+        for j, p in enumerate(pos):                     # indexer positives
+            row = {"q": r["qfeat"][p].astype(np.float32), "k": r["keys"],
+                   "gold": int(r["goldblk"][p]), "nB": r["nB"],
+                   "labels": r["blockmass"][p][None, :].astype(np.float32)}
+            if bge is not None:
+                row["bge_k"] = r["bge_k"].astype(np.float32)        # [nB,bge]
+                row["bge_q"] = bge_q[j].astype(np.float32)          # [bge]
+            IX.append(row)
         gi += 1
         if (n + 1) % 20 == 0:
             log(f"  {tag} {n+1}/{len(pool)} items={gi} gate_pts={len(yg)} "
@@ -218,6 +242,55 @@ def train_indexer(rows_tr, rows_te, dims, seeds=2, epochs=20):
     return best, bs
 
 
+import torch.nn as nn
+
+class BGEHead(nn.Module):
+    """Learned transform bridging the recall-position hidden query and on-demand BGE block
+    embeddings. Fixed ~few-hundred-k-param model (NOT per-turn state); only ids persist."""
+    def __init__(self, qdim, kdim, d=128):
+        super().__init__()
+        self.Wq = nn.Sequential(nn.Linear(qdim, d), nn.GELU(), nn.Linear(d, d))
+        self.Wk = nn.Sequential(nn.Linear(kdim, d), nn.GELU(), nn.Linear(d, d))
+    def forward(self, q, k):                # q:[qdim], k:[nB,kdim] -> [nB]
+        return self.Wq(q) @ self.Wk(k).T
+
+
+def raw_bge_top2(rows):
+    h = 0
+    for r in rows:
+        s = r["bge_k"] @ r["bge_q"]         # cosine (both normalized)
+        h += int(r["gold"]) in np.argsort(-s)[:2].tolist()
+    return h / max(len(rows), 1)
+
+
+def train_bge_head(rows_tr, rows_te, seeds=2, epochs=25):
+    qdim = rows_tr[0]["q"].reshape(-1).shape[0]; kdim = rows_tr[0]["bge_k"].shape[1]
+    def tens(r):
+        q = torch.tensor(r["q"].reshape(-1), device=DEV)
+        k = torch.tensor(r["bge_k"], dtype=torch.float32, device=DEV)
+        lab = torch.tensor(r["labels"].mean(0), device=DEV); lab = lab / max(lab.sum().item(), 1e-8)
+        return q, k, lab
+    def top2(m):
+        h = 0
+        with torch.no_grad():
+            for r in rows_te:
+                q, k, _ = tens(r)
+                h += int(r["gold"]) in m(q, k).topk(min(2, len(k))).indices.tolist()
+        return h / max(len(rows_te), 1)
+    best = -1
+    for sd in range(seeds):
+        torch.manual_seed(sd); m = BGEHead(qdim, kdim).to(DEV)
+        opt = torch.optim.Adam(m.parameters(), lr=2e-3); rng = np.random.RandomState(sd)
+        for _ in range(epochs):
+            rng.shuffle(rows_tr)
+            for r in rows_tr:
+                q, k, lab = tens(r)
+                loss = F.kl_div(F.log_softmax(m(q, k), 0), lab, reduction="sum")
+                opt.zero_grad(); loss.backward(); opt.step()
+        best = max(best, top2(m))
+    return best
+
+
 def snap(payload):
     json.dump(payload, open(os.path.join(OUT, "results.json"), "w"), indent=2)
 
@@ -227,7 +300,7 @@ def main():
     from sklearn.linear_model import LogisticRegression
     from sklearn.preprocessing import StandardScaler
     from sklearn.metrics import roc_auc_score
-    tok, llm, pooler, embT = build_model()
+    tok, llm, pooler, embT, bge = build_model()
     cfg = llm.config; Hq = cfg.num_attention_heads; Hkv = cfg.num_key_value_heads
     D = cfg.hidden_size // Hq; dims = (Hq, Hkv, D)
     log(f"[dims] Hq={Hq} Hkv={Hkv} D={D} feat={len(LAYERS)*Hq*D}")
@@ -236,8 +309,8 @@ def main():
     tr_pool, te_pool = pool[:N_TRAIN], pool[N_TRAIN:]   # item-disjoint
     log(f"[split] train_items={len(tr_pool)} held_items={len(te_pool)}")
 
-    Xtr, ytr, _, IXtr = collect(tr_pool, llm, tok, pooler, embT, dims, "TRAIN", t0)
-    Xte, yte, _, IXte = collect(te_pool, llm, tok, pooler, embT, dims, "HELD", t0)
+    Xtr, ytr, _, IXtr = collect(tr_pool, llm, tok, pooler, embT, dims, "TRAIN", t0, bge=bge)
+    Xte, yte, _, IXte = collect(te_pool, llm, tok, pooler, embT, dims, "HELD", t0, bge=bge)
     log(f"[gate data] train pts={len(ytr)} pos={int(ytr.sum())} | held pts={len(yte)} "
         f"pos={int(yte.sum())}")
 
@@ -277,6 +350,14 @@ def main():
         res["indexer"]["heldout_top2"] = round(t1, 4)
         res["indexer"]["raw_qk_heldout_top2"] = round(rawhit / len(IXte), 4)
         log(f"[INDEXER] heldout top-2 = {t1:.4f}  (raw-qk ref {rawhit/len(IXte):.4f})")
+        # ---- elegant BGE-on-demand arm: raw-BGE cosine vs LEARNED transform on BGE ----
+        if bge is not None and "bge_k" in IXte[0]:
+            raw_bge = raw_bge_top2(IXte)
+            bge_head = train_bge_head([dict(r) for r in IXtr], IXte)
+            res["bge"] = {"raw_bge_top2": round(raw_bge, 4),
+                          "learned_bge_head_top2": round(bge_head, 4),
+                          "note": "keys=BGE on-demand (no stored vectors); query=hidden state"}
+            log(f"[BGE] raw cosine top-2 = {raw_bge:.4f} | LEARNED transform top-2 = {bge_head:.4f}")
     res["final"] = True; snap(res)
     log("\n=== SUMMARY ===")
     log(f"  GATE heldout AUC: {res['gate'].get('heldout_auc')}  "
@@ -284,6 +365,9 @@ def main():
         f"held pos {res['gate']['held_pos']}/{res['gate']['held_pts']})")
     log(f"  INDEXER heldout top-2: {res['indexer'].get('heldout_top2')} "
         f"(raw-qk {res['indexer'].get('raw_qk_heldout_top2')}, pos {len(IXte)})")
+    if res.get("bge"):
+        log(f"  BGE (no stored vectors): raw cosine top-2 {res['bge']['raw_bge_top2']} "
+            f"-> LEARNED transform top-2 {res['bge']['learned_bge_head_top2']}")
     log(f"DONE t={time.time()-t0:.0f}s")
 
 
