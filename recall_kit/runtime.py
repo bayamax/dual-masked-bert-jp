@@ -63,16 +63,16 @@ class RecallRuntime:
         kept, window = seq_ids[:n_evict], seq_ids[n_evict:]
         block_ids = [seq_ids[i * BLOCK:(i + 1) * BLOCK] for i in range(nB)]
 
-        # contextual pooled block keys (one full-KV prefill, capture k_proj)
-        c0 = DynamicCache()
+        # contextual pooled block keys (one full-KV prefill, capture pre-RoPE k_proj).
+        # Match the training-time harvest exactly: full-model call, no cache.
         with _Cap(self.model, LAYERS, q=False, k=True) as cap:
-            self.model.model(input_ids=torch.tensor([seq_ids], device=self.device),
-                             past_key_values=c0, use_cache=True)
+            self.model(input_ids=torch.tensor([seq_ids], device=self.device),
+                       use_cache=False)
         kf = []
         for li in LAYERS:
             k = cap.k[li][0][:n_evict].view(nB, BLOCK, self.Hkv, self.D).float()
             kf.append(torch.cat([k.mean(1), k.amax(1)], -1).cpu())
-        keys = torch.stack(kf, 1).numpy()                  # [nB,L,Hkv,2D]
+        keys = torch.stack(kf, 1).half().float().numpy()   # [nB,L,Hkv,2D] (fp16 like train)
 
         # SP-compressed context -> pre-RoPE q at window positions
         c = DynamicCache()

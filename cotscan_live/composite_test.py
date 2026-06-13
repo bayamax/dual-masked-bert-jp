@@ -56,6 +56,14 @@ def main():
             log(f"  item {n} skipped: {e}"); continue
         if r is None or ctx is None or ctx.win_len != r["win_len"]:
             continue
+        if done == 0:                                   # one-time wiring sanity check
+            kd = float(np.abs(r["keys"].astype(np.float32) - ctx.keys.astype(np.float32)).max())
+            qd = float(np.abs(r["qfeat"].astype(np.float32) - ctx.qfeat.astype(np.float32)).max())
+            mmp = r["maxmass"]; thr0 = max(np.quantile(mmp, 1 - POS_FRAC), 0.05)
+            pp = np.where(mmp >= thr0)[0][:80]
+            hit_proc = np.mean([int(r["goldblk"][p]) in qk.rank(r["qfeat"][p], r["keys"])[:2] for p in pp])
+            hit_ctx = np.mean([int(r["goldblk"][p]) in qk.rank(ctx.qfeat[p], ctx.keys)[:2] for p in pp])
+            log(f"  [debug] key_maxdiff={kd:.4g} q_maxdiff={qd:.4g} | QK top2 process-keys={hit_proc:.3f} ctx-keys={hit_ctx:.3f}")
         mm = r["maxmass"]; goldblk = r["goldblk"]
         thr = max(np.quantile(mm, 1 - POS_FRAC), 0.05)
         realpos = mm >= thr
