@@ -1,0 +1,2 @@
+torch 2.12.0+cu126 cuda True
+CANARY_OK

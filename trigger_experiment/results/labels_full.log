@@ -1,0 +1,23 @@
+TRIGGER_LABELS_V1 dev=cuda layers=(8, 14, 20)
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<01:07,  5.04it/s]Loading weights:   1%|          | 2/339 [00:00<01:10,  4.81it/s]Loading weights:  16%|█▌        | 53/339 [00:00<00:02, 122.88it/s]Loading weights:  24%|██▍       | 83/339 [00:00<00:01, 167.43it/s]Loading weights:  36%|███▌      | 122/339 [00:00<00:00, 225.02it/s]Loading weights:  44%|████▍     | 149/339 [00:00<00:00, 236.46it/s]Loading weights:  54%|█████▍    | 183/339 [00:00<00:00, 264.45it/s]Loading weights:  63%|██████▎   | 215/339 [00:01<00:00, 279.50it/s]Loading weights:  72%|███████▏  | 245/339 [00:01<00:00, 283.70it/s]Loading weights:  82%|████████▏ | 277/339 [00:01<00:00, 293.71it/s]Loading weights:  91%|█████████ | 308/339 [00:01<00:00, 297.50it/s]Loading weights: 100%|██████████| 339/339 [00:01<00:00, 226.69it/s]
+10/200 convs -> 60 samples
+20/200 convs -> 120 samples
+30/200 convs -> 180 samples
+40/200 convs -> 240 samples
+50/200 convs -> 300 samples
+60/200 convs -> 360 samples
+70/200 convs -> 420 samples
+80/200 convs -> 480 samples
+90/200 convs -> 540 samples
+100/200 convs -> 600 samples
+110/200 convs -> 660 samples
+120/200 convs -> 720 samples
+130/200 convs -> 780 samples
+140/200 convs -> 840 samples
+150/200 convs -> 900 samples
+160/200 convs -> 960 samples
+170/200 convs -> 1020 samples
+180/200 convs -> 1080 samples
+190/200 convs -> 1140 samples
+200/200 convs -> 1200 samples
+TRIGGER_LABELS_DONE samples=1200
