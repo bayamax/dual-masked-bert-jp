@@ -1,0 +1,285 @@
+{
+ "needles": [
+  [
+   "the concert tickets cost {num4} cents each",
+   "concert ticket price"
+  ],
+  [
+   "the new bicycle weighs {kg} kilograms",
+   "bicycle weight"
+  ],
+  [
+   "the coffee maker was {num3} dollars on sale",
+   "coffee maker price"
+  ],
+  [
+   "the aquarium has {num2} different types of fish",
+   "types of fish"
+  ],
+  [
+   "the textbook costs {num4} pesos",
+   "textbook price"
+  ],
+  [
+   "the delivery truck can carry {kg} kilograms of cargo",
+   "truck capacity"
+  ],
+  [
+   "the gym membership fees are {num3} euros per month",
+   "gym membership price"
+  ],
+  [
+   "the smartphone weighs {kg} kilograms",
+   "smartphone weight"
+  ],
+  [
+   "a loaf of bread is {num2} dollars",
+   "bread price"
+  ],
+  [
+   "my favorite cheese costs {num4} rupees per kilogram",
+   "cheese price"
+  ],
+  [
+   "the hiking trail is {num3} kilometers long",
+   "trail distance"
+  ],
+  [
+   "the pizza delivery time is usually {num2} minutes",
+   "pizza delivery time"
+  ],
+  [
+   "this dress costs {num4} USD",
+   "dress price"
+  ],
+  [
+   "the recipe calls for {kg} kilograms of flour",
+   "flour amount"
+  ],
+  [
+   "the car rental fee is {num3} dollars per day",
+   "car rental price"
+  ],
+  [
+   "there are {num2} rooms in the new hotel",
+   "number of hotel rooms"
+  ],
+  [
+   "the fountain pen costs {num4} yen",
+   "pen price"
+  ],
+  [
+   "the tablet I bought weighs {kg} kilograms",
+   "tablet weight"
+  ],
+  [
+   "the monthly subscription is {num3} dollars",
+   "subscription price"
+  ],
+  [
+   "the chocolate cake was {num2} dollars at the bakery",
+   "cake price"
+  ],
+  [
+   "the art workshop costs {num4} rupees for the weekend",
+   "workshop price"
+  ],
+  [
+   "the suitcase has a capacity of {kg} kilograms",
+   "suitcase capacity"
+  ],
+  [
+   "the annual park pass fee is {num3} dollars",
+   "park pass fee"
+  ],
+  [
+   "the car's fuel tank holds {kg} liters",
+   "fuel tank capacity"
+  ],
+  [
+   "a bottle of wine is priced at {num2} euros",
+   "wine bottle price"
+  ],
+  [
+   "the board game costs {num3} dollars",
+   "board game price"
+  ],
+  [
+   "the salad weighs {kg} kilograms",
+   "salad weight"
+  ],
+  [
+   "the subscription box is {num4} yen monthly",
+   "subscription box fee"
+  ],
+  [
+   "the ice cream tub contains {num2} liters",
+   "ice cream tub volume"
+  ],
+  [
+   "the office chair costs {num3} dollars",
+   "office chair price"
+  ],
+  [
+   "the ticket for the movie was {num4} pesos",
+   "movie ticket price"
+  ]
+ ],
+ "items": [
+  {
+   "q": "If I buy five of them for my friends, what will that amount to in total?",
+   "lead": "So I multiply the concert ticket price by 5, which is ",
+   "mult": 5
+  },
+  {
+   "q": "If I take it for a ride that includes five laps around the park, how much will I be biking around in total weight?",
+   "lead": "So I multiply the bicycle weight by 5, which is ",
+   "mult": 5
+  },
+  {
+   "q": "If I decide to buy two of them as gifts, how much will I spend altogether?",
+   "lead": "So I multiply the coffee maker price by 2, which is ",
+   "mult": 2
+  },
+  {
+   "q": "If I want to create three tanks, how many fish types will I be exploring?",
+   "lead": "So I multiply the types of fish by 3, which is ",
+   "mult": 3
+  },
+  {
+   "q": "If I need to purchase four of them for my study group, how much will that come to in total?",
+   "lead": "So I multiply the textbook price by 4, which is ",
+   "mult": 4
+  },
+  {
+   "q": "If I need to send three loads, how much total cargo can the truck handle?",
+   "lead": "So I multiply the truck capacity by 3, which is ",
+   "mult": 3
+  },
+  {
+   "q": "If I stick with this for six months, what will my total expenses be?",
+   "lead": "So I multiply the gym membership price by 6, which is ",
+   "mult": 6
+  },
+  {
+   "q": "If I carry two of them around, how much will my load add up to?",
+   "lead": "So I multiply the smartphone weight by 2, which is ",
+   "mult": 2
+  },
+  {
+   "q": "If I buy three loaves for a gathering, how much will I spend?",
+   "lead": "So I multiply the bread price by 3, which is ",
+   "mult": 3
+  },
+  {
+   "q": "If I buy four kilograms for a party, how much will I be paying?",
+   "lead": "So I multiply the cheese price by 4, which is ",
+   "mult": 4
+  },
+  {
+   "q": "If I hike that trail twice this weekend, how far will I have traveled?",
+   "lead": "So I multiply the trail distance by 2, which is ",
+   "mult": 2
+  },
+  {
+   "q": "If I order from them twice a week for a month, how long will I wait in total?",
+   "lead": "So I multiply the pizza delivery time by 8, which is ",
+   "mult": 8
+  },
+  {
+   "q": "If I buy two of them, what will my total purchase be?",
+   "lead": "So I multiply the dress price by 2, which is ",
+   "mult": 2
+  },
+  {
+   "q": "If I decide to bake three batches of cookies, how much flour will I need altogether?",
+   "lead": "So I multiply the flour amount by 3, which is ",
+   "mult": 3
+  },
+  {
+   "q": "If I rent the car for four days, how much will I have to pay?",
+   "lead": "So I multiply the car rental price by 4, which is ",
+   "mult": 4
+  },
+  {
+   "q": "If I want to book three rooms for my family, how many rooms will that be?",
+   "lead": "So I multiply the number of hotel rooms by 3, which is ",
+   "mult": 3
+  },
+  {
+   "q": "If I plan to buy three of those pens as gifts, how much will it cost?",
+   "lead": "So I multiply the pen price by 3, which is ",
+   "mult": 3
+  },
+  {
+   "q": "If I carry that tablet along with three others, how much weight am I adding?",
+   "lead": "So I multiply the tablet weight by 4, which is ",
+   "mult": 4
+  },
+  {
+   "q": "If I subscribe for six months, how much will I owe at the end of that period?",
+   "lead": "So I multiply the subscription price by 6, which is ",
+   "mult": 6
+  },
+  {
+   "q": "If I purchase two cakes for a celebration, how much will the total cost be?",
+   "lead": "So I multiply the cake price by 2, which is ",
+   "mult": 2
+  },
+  {
+   "q": "If I enroll four friends along with me, what will the total fee be?",
+   "lead": "So I multiply the workshop price by 5, which is ",
+   "mult": 5
+  },
+  {
+   "q": "If I fill it with five times the maximum allowed weight, how heavy will it be?",
+   "lead": "So I multiply the suitcase capacity by 5, which is ",
+   "mult": 5
+  },
+  {
+   "q": "If I purchase passes for three of my family members, what will the total cost be?",
+   "lead": "So I multiply the park pass fee by 3, which is ",
+   "mult": 3
+  },
+  {
+   "q": "If I fill it up three times, how much fuel will I have used?",
+   "lead": "So I multiply the fuel tank capacity by 3, which is ",
+   "mult": 3
+  },
+  {
+   "q": "If I buy four bottles for the dinner party, how much will I have spent?",
+   "lead": "So I multiply the wine bottle price by 4, which is ",
+   "mult": 4
+  },
+  {
+   "q": "If I gift it to two friends, how much will I end up paying?",
+   "lead": "So I multiply the board game price by 2, which is ",
+   "mult": 2
+  },
+  {
+   "q": "If I prepare that salad for five people, how much will I serve in total weight?",
+   "lead": "So I multiply the salad weight by 5, which is ",
+   "mult": 5
+  },
+  {
+   "q": "If I keep the subscription for three months, what will it total?",
+   "lead": "So I multiply the subscription box fee by 3, which is ",
+   "mult": 3
+  },
+  {
+   "q": "If I buy three tubs, how much ice cream will I have?",
+   "lead": "So I multiply the ice cream tub volume by 3, which is ",
+   "mult": 3
+  },
+  {
+   "q": "If I buy two chairs for my home office, what will my total be?",
+   "lead": "So I multiply the office chair price by 2, which is ",
+   "mult": 2
+  },
+  {
+   "q": "If I take three friends along with me, how much will that cost overall?",
+   "lead": "So I multiply the movie ticket price by 4, which is ",
+   "mult": 4
+  }
+ ]
+}
