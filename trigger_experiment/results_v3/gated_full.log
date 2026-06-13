@@ -1,0 +1,53 @@
+loading model/pooler/bge ...
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   1%|          | 2/339 [00:00<00:17, 18.85it/s]Loading weights:  14%|█▍        | 48/339 [00:00<00:01, 179.49it/s]Loading weights:  23%|██▎       | 78/339 [00:00<00:01, 218.22it/s]Loading weights:  32%|███▏      | 110/339 [00:00<00:00, 248.50it/s]Loading weights:  40%|████      | 137/339 [00:00<00:00, 254.31it/s]Loading weights:  51%|█████▏    | 174/339 [00:00<00:00, 288.63it/s]Loading weights:  60%|██████    | 204/339 [00:00<00:00, 291.59it/s]Loading weights:  70%|██████▉   | 237/339 [00:00<00:00, 300.28it/s]Loading weights:  79%|███████▉  | 268/339 [00:01<00:00, 301.54it/s]Loading weights:  90%|████████▉ | 304/339 [00:01<00:00, 307.87it/s]Loading weights:  99%|█████████▉| 335/339 [00:01<00:00, 255.47it/s]Loading weights: 100%|██████████| 339/339 [00:01<00:00, 261.30it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 6870.59it/s]
+
+=== arm=always history=4324 tokens ===
+  [always] evict   fired=True  score=None OK  (  96s) What was the wifi password at the mountain cabin
+  [always] evict   fired=True  score=None OK  (  96s) What is Dr. Imai's office extension?
+  [always] evict   fired=True  score=None OK  (  98s) How much did the rover prototype weigh?
+  [always] evict   fired=True  score=None OK  (  98s) What is my cousin's fishing boat called?
+  [always] evict   fired=True  score=None MISS ( 109s) Which parking spot did we end up in at the venue
+  [always] evict   fired=True  score=None OK  (  96s) How much did the limited edition sake cost?
+  [always] evict   fired=True  score=None MISS (  89s) What time does the night train to Aomori leave?
+  [always] evict   fired=True  score=None OK  (  95s) What model is the projector in conference room A
+  [always] evict   fired=True  score=None OK  ( 103s) How many grams of flour does grandma's bread rec
+  [always] evict   fired=True  score=None OK  (  83s) At which trail marker did we turn back?
+  [always] window  fired=True  score=None MISS (  93s) What is my gym locker code this month?
+  [always] window  fired=True  score=None MISS (  92s) What time is my dentist appointment on Thursday?
+  [always] window  fired=True  score=None OK  (  94s) What is my new bike lock combination?
+  [always] window  fired=True  score=None OK  (  96s) What does the package tracking number end in?
+  [always] generic fired=True  score=None OK  ( 175s) Can you suggest a quick dinner idea for tonight?
+  [always] generic fired=True  score=None OK  ( 120s) What is a good way to stay focused in the aftern
+  [always] generic fired=True  score=None OK  (  99s) Could you recommend a light exercise before bed?
+  [always] generic fired=True  score=None OK  (  86s) What snack goes well with green tea?
+  [always] generic fired=True  score=None OK  (  85s) Any tips for falling asleep faster?
+  [always] generic fired=True  score=None OK  (  92s) How should I store fresh basil so it lasts?
+
+=== arm=gated history=4324 tokens ===
+  [gated] evict   fired=True  score=5.63 OK  (  92s) What was the wifi password at the mountain cabin
+  [gated] evict   fired=True  score=6.21 OK  (  94s) What is Dr. Imai's office extension?
+  [gated] evict   fired=True  score=5.29 OK  (  91s) How much did the rover prototype weigh?
+  [gated] evict   fired=True  score=4.58 MISS (  89s) What is my cousin's fishing boat called?
+  [gated] evict   fired=True  score=4.95 MISS (  94s) Which parking spot did we end up in at the venue
+  [gated] evict   fired=True  score=4.89 OK  (  95s) How much did the limited edition sake cost?
+  [gated] evict   fired=True  score=4.17 MISS (  98s) What time does the night train to Aomori leave?
+  [gated] evict   fired=True  score=8.61 OK  ( 121s) What model is the projector in conference room A
+  [gated] evict   fired=True  score=5.37 OK  (  94s) How many grams of flour does grandma's bread rec
+  [gated] evict   fired=True  score=5.01 OK  ( 138s) At which trail marker did we turn back?
+  [gated] window  fired=False score=-7.99 MISS ( 143s) What is my gym locker code this month?
+  [gated] window  fired=False score=-6.05 MISS (  93s) What time is my dentist appointment on Thursday?
+  [gated] window  fired=False score=-5.5 OK  (  99s) What is my new bike lock combination?
+  [gated] window  fired=True  score=-2.17 OK  (  99s) What does the package tracking number end in?
+  [gated] generic fired=False score=-4.91 OK  (  93s) Can you suggest a quick dinner idea for tonight?
+  [gated] generic fired=False score=-6.75 OK  (  93s) What is a good way to stay focused in the aftern
+  [gated] generic fired=False score=-4.27 OK  (  98s) Could you recommend a light exercise before bed?
+  [gated] generic fired=True  score=-2.25 OK  ( 107s) What snack goes well with green tea?
+  [gated] generic fired=False score=-6.46 OK  (  90s) Any tips for falling asleep faster?
+  [gated] generic fired=False score=-5.03 OK  (  78s) How should I store fresh basil so it lasts?
+
+=== SUMMARY ===
+  always evict acc 8/10 fired 10/10 | window acc 2/4 fired 4/4 | generic fired 6/6
+  gated  evict acc 7/10 fired 10/10 | window acc 2/4 fired 1/4 | generic fired 1/6
+NEEDLE_GATED_DONE

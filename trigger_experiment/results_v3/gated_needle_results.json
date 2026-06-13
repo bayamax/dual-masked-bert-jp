@@ -4,7 +4,7 @@
    "qtype": "evict",
    "q": "What was the wifi password at the mountain cabin?",
    "val": "9182",
-   "ans": "The WiFi password at the mountain cabin was trout-9182.",
+   "ans": "The wifi password at the mountain cabin was trout-9182. Took us forever to find it.",
    "ok": true,
    "fired": true,
    "score": null
@@ -13,7 +13,7 @@
    "qtype": "evict",
    "q": "What is Dr. Imai's office extension?",
    "val": "4408",
-   "ans": "Dr. Imai's office extension is located at the 4th floor of the Science Building, Room 408. The exact address is **4408 Science Building, Room 408**. For more de",
+   "ans": "Dr. Imai's office extension is located at Room 4408 of the Science Building. For the most accurate and up-to-date information, please visit the official website",
    "ok": true,
    "fired": true,
    "score": null
@@ -22,7 +22,70 @@
    "qtype": "evict",
    "q": "How much did the rover prototype weigh?",
    "val": "18.4",
-   "ans": "The weight of the rover prototype is approximately 18.4 kilograms. This weight is typical for a small robotic vehicle designed for exploration purposes, conside",
+   "ans": "The weight of the rover prototype is approximately 18.4 kilograms. This weight is typical for a small, lightweight robotic vehicle designed for exploration purp",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "evict",
+   "q": "What is my cousin's fishing boat called?",
+   "val": "yume",
+   "ans": "It seems like your cousin's fishing boat is called \"The Yume-Maru.\" This is a creative name that combines elements of fishing and the Yume-Maru fishing boat, wh",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "evict",
+   "q": "Which parking spot did we end up in at the venue?",
+   "val": "37",
+   "ans": "The parking spot we ended up in at the venue is **123 Park Avenue**. This is a common parking spot for many attendees, offering a mix of convenience and ample s",
+   "ok": false,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "evict",
+   "q": "How much did the limited edition sake cost?",
+   "val": "6800",
+   "ans": "The limited edition sake was priced at 6800 yen, which is notably more expensive than the standard sake. This price reflects the effort and investment required ",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "evict",
+   "q": "What time does the night train to Aomori leave?",
+   "val": "23:46",
+   "ans": "The night train to Aomori leaves at 10:30 PM.",
+   "ok": false,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "evict",
+   "q": "What model is the projector in conference room A?",
+   "val": "310",
+   "ans": "The projector in conference room A is the XV-310, which is a high-quality projector capable of producing vibrant and clear images. It is designed for profession",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "evict",
+   "q": "How many grams of flour does grandma's bread recipe need?",
+   "val": "320",
+   "ans": "Grandma's bread recipe requires **320 grams of flour**.",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "evict",
+   "q": "At which trail marker did we turn back?",
+   "val": "58",
+   "ans": "The trail marker where we turned back is **58**.",
    "ok": true,
    "fired": true,
    "score": null
@@ -31,8 +94,35 @@
    "qtype": "window",
    "q": "What is my gym locker code this month?",
    "val": "44-19-72",
-   "ans": "It seems like you're asking about your gym locker code for the month. Unfortunately, I don't have access to specific locker codes for individuals. However, if y",
+   "ans": "It seems like you've provided a list of information you've shared with me. However, I don't have access to your personal details, including your gym locker code",
    "ok": false,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "window",
+   "q": "What time is my dentist appointment on Thursday?",
+   "val": "15:40",
+   "ans": "It seems like you've been keeping track of your appointments and have provided some details. However, without specific information about your dentist appointmen",
+   "ok": false,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "window",
+   "q": "What is my new bike lock combination?",
+   "val": "8351",
+   "ans": "My new bike lock combination is 8351.",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "window",
+   "q": "What does the package tracking number end in?",
+   "val": "77041",
+   "ans": "The package tracking number ends in 77041.",
+   "ok": true,
    "fired": true,
    "score": null
   },
@@ -40,7 +130,52 @@
    "qtype": "generic",
    "q": "Can you suggest a quick dinner idea for tonight?",
    "val": null,
-   "ans": "Certainly! Here's a quick dinner idea for tonight:\n\n**Grilled Salmon with Garlic Sauce and Garlic Bread**\n\n1. **Grilled Salmon**: Slice salmon thinly and season",
+   "ans": "Certainly! Here's a quick dinner idea for tonight:\n\n### **Grilled Chicken and Veggie Stir-Fry**\n\n**Ingredients:**\n- 2 cups (250g) chicken breast\n- 1/2 cup (125g",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "generic",
+   "q": "What is a good way to stay focused in the afternoon?",
+   "val": null,
+   "ans": "\u4fdd\u6301\u4e13\u6ce8\u7684\u65b9\u6cd5\u5305\u62ec\uff1a\n\n1. **\u8bbe\u5b9a\u660e\u786e\u7684\u76ee\u6807**\uff1a\u660e\u786e\u81ea\u5df1\u9700\u8981\u5b8c\u6210\u7684\u4efb\u52a1\uff0c\u907f\u514d\u5206\u5fc3\u3002\n2. **\u4f7f\u7528\u4e13\u6ce8\u5de5\u5177**\uff1a\u5982\u756a\u8304\u5de5\u4f5c\u6cd5\uff0c\u5c06\u4e00\u5929\u5206\u621025\u5206\u949f\u4e13\u6ce8\u548c15\u5206\u949f\u4f11\u606f\u3002\n3. **\u6df1\u547c\u5438**",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "generic",
+   "q": "Could you recommend a light exercise before bed?",
+   "val": null,
+   "ans": "Of course! A good light exercise before bed can help you relax and recharge. Here are a few ideas:\n\n1. **Light Walk**: Take a short, easy walk around your room.",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "generic",
+   "q": "What snack goes well with green tea?",
+   "val": null,
+   "ans": "A great green tea snack could be a green tea smoothie. Here's a simple recipe:\n\n**Green Tea Smoothie**  \n- 1 cup green tea  \n- 1/2 cup almond milk  \n- 1/4 cup u",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "generic",
+   "q": "Any tips for falling asleep faster?",
+   "val": null,
+   "ans": "Here are some tips to help you fall asleep faster:\n\n1. **Avoid Screen Time**: Limit your time on your phone, computer, or TV. Sleep is essential for brain healt",
+   "ok": true,
+   "fired": true,
+   "score": null
+  },
+  {
+   "qtype": "generic",
+   "q": "How should I store fresh basil so it lasts?",
+   "val": null,
+   "ans": "To store fresh basil effectively, consider the following tips:\n\n1. **Natural Humidity**: Ensure the basil is kept in a place with natural humidity to maintain i",
    "ok": true,
    "fired": true,
    "score": null
@@ -54,43 +189,178 @@
    "ans": "The wifi password at the mountain cabin was trout-9182. Took us forever to find it.",
    "ok": true,
    "fired": true,
-   "score": 5.38
+   "score": 5.63
   },
   {
    "qtype": "evict",
    "q": "What is Dr. Imai's office extension?",
    "val": "4408",
-   "ans": "Dr. Imai's office extension is located at Room 4408 of the Science Building. For more detailed information, please visit the official website of the university'",
+   "ans": "Dr. Imai's office extension is located at Room 4408 of the Science Building. If you need to visit her, please arrive by 11:00 AM to ensure your appointment is c",
    "ok": true,
    "fired": true,
-   "score": 6.71
+   "score": 6.21
   },
   {
    "qtype": "evict",
    "q": "How much did the rover prototype weigh?",
    "val": "18.4",
-   "ans": "The weight of the rover prototype is approximately 18.4 kilograms. This weight is typical for a small robotic vehicle designed for exploration purposes, conside",
+   "ans": "The weight of the rover prototype is approximately 18.4 kilograms. This weight is typical for a small, lightweight rover designed for exploration on the surface",
    "ok": true,
    "fired": true,
-   "score": 6.1
+   "score": 5.29
+  },
+  {
+   "qtype": "evict",
+   "q": "What is my cousin's fishing boat called?",
+   "val": "yume",
+   "ans": "It seems like you're asking about your cousin's fishing boat. Unfortunately, I don't have information on that. However, I can tell you that fishing boats are ty",
+   "ok": false,
+   "fired": true,
+   "score": 4.58
+  },
+  {
+   "qtype": "evict",
+   "q": "Which parking spot did we end up in at the venue?",
+   "val": "37",
+   "ans": "The parking spot we ended up in at the venue is **123 Park Avenue**. This is a standard parking spot for major events and venues, ensuring ample space for atten",
+   "ok": false,
+   "fired": true,
+   "score": 4.95
+  },
+  {
+   "qtype": "evict",
+   "q": "How much did the limited edition sake cost?",
+   "val": "6800",
+   "ans": "The limited edition sake was priced at 6800 yen, which is notably higher than the original price of 4000 yen. This price difference reflects the premium nature ",
+   "ok": true,
+   "fired": true,
+   "score": 4.89
+  },
+  {
+   "qtype": "evict",
+   "q": "What time does the night train to Aomori leave?",
+   "val": "23:46",
+   "ans": "The night train to Aomori departs at 10:00 PM.",
+   "ok": false,
+   "fired": true,
+   "score": 4.17
+  },
+  {
+   "qtype": "evict",
+   "q": "What model is the projector in conference room A?",
+   "val": "310",
+   "ans": "The projector in conference room A is the XV-310.",
+   "ok": true,
+   "fired": true,
+   "score": 8.61
+  },
+  {
+   "qtype": "evict",
+   "q": "How many grams of flour does grandma's bread recipe need?",
+   "val": "320",
+   "ans": "Grandma's bread recipe requires **320 grams of flour**.",
+   "ok": true,
+   "fired": true,
+   "score": 5.37
+  },
+  {
+   "qtype": "evict",
+   "q": "At which trail marker did we turn back?",
+   "val": "58",
+   "ans": "We turned back at trail marker 58 because of the fog.",
+   "ok": true,
+   "fired": true,
+   "score": 5.01
   },
   {
    "qtype": "window",
    "q": "What is my gym locker code this month?",
    "val": "44-19-72",
-   "ans": "It seems like you're asking about your gym locker code for the month. Unfortunately, I don't have access to specific locker codes for individuals. However, if y",
+   "ans": "It seems like you've provided a series of questions and answers about your life, including your gym locker code, dentist appointment, and other details. However",
    "ok": false,
+   "fired": false,
+   "score": -7.99
+  },
+  {
+   "qtype": "window",
+   "q": "What time is my dentist appointment on Thursday?",
+   "val": "15:40",
+   "ans": "It seems there might be a mix-up in the information you provided. Could you clarify which dentist's appointment you're referring to? If you're referring to the ",
+   "ok": false,
+   "fired": false,
+   "score": -6.05
+  },
+  {
+   "qtype": "window",
+   "q": "What is my new bike lock combination?",
+   "val": "8351",
+   "ans": "My new bike lock combination is 8351.",
+   "ok": true,
+   "fired": false,
+   "score": -5.5
+  },
+  {
+   "qtype": "window",
+   "q": "What does the package tracking number end in?",
+   "val": "77041",
+   "ans": "The package tracking number ends in 77041.",
+   "ok": true,
    "fired": true,
-   "score": -2.43
+   "score": -2.17
   },
   {
    "qtype": "generic",
    "q": "Can you suggest a quick dinner idea for tonight?",
    "val": null,
-   "ans": "Certainly! Here's a quick dinner idea for tonight:\n\n**Grilled Salmon with Garlic Sauce and Garlic Bread**\n\n1. **Grilled Salmon**: Slice salmon thinly and season",
+   "ans": "Certainly! Here's a quick dinner idea for tonight:\n\n**Grilled Salmon with Garlic Sauce and Garlic Bread**  \n- **Ingredients**: Grilled salmon, garlic, olive oil",
    "ok": true,
    "fired": false,
-   "score": -5.08
+   "score": -4.91
+  },
+  {
+   "qtype": "generic",
+   "q": "What is a good way to stay focused in the afternoon?",
+   "val": null,
+   "ans": "\u4fdd\u6301\u4e13\u6ce8\u7684\u7b56\u7565\u5305\u62ec\uff1a\n\n1. **\u8bbe\u5b9a\u660e\u786e\u7684\u76ee\u6807**\uff1a\u660e\u786e\u81ea\u5df1\u9700\u8981\u5b8c\u6210\u7684\u4efb\u52a1\uff0c\u907f\u514d\u5206\u5fc3\u3002\n2. **\u4f7f\u7528\u4e13\u6ce8\u5de5\u5177**\uff1a\u5982\u756a\u8304\u5de5\u4f5c\u6cd5\uff0c\u5c06\u4e00\u5929\u5206\u621025\u5206\u949f\u4e13\u6ce8\u548c15\u5206\u949f\u4f11\u606f\u3002\n3. **\u6df1\u547c\u5438",
+   "ok": true,
+   "fired": false,
+   "score": -6.75
+  },
+  {
+   "qtype": "generic",
+   "q": "Could you recommend a light exercise before bed?",
+   "val": null,
+   "ans": "Of course! A good light exercise before bed can help you relax and recharge. Here are a few ideas:\n\n1. **Light Walk**: Take a short, easy walk around your room ",
+   "ok": true,
+   "fired": false,
+   "score": -4.27
+  },
+  {
+   "qtype": "generic",
+   "q": "What snack goes well with green tea?",
+   "val": null,
+   "ans": "A great green tea mix could be a mix of green tea and a sweetener like honey or a herbal tea like green tea with honey. Alternatively, a simple mix of green tea",
+   "ok": true,
+   "fired": true,
+   "score": -2.25
+  },
+  {
+   "qtype": "generic",
+   "q": "Any tips for falling asleep faster?",
+   "val": null,
+   "ans": "Here are some tips to help you fall asleep faster:\n\n1. **Stay Hydrated**: Drinking plenty of water can improve sleep quality and speed.\n\n2. **Relaxation Techniq",
+   "ok": true,
+   "fired": false,
+   "score": -6.46
+  },
+  {
+   "qtype": "generic",
+   "q": "How should I store fresh basil so it lasts?",
+   "val": null,
+   "ans": "To store fresh basil effectively, follow these steps:\n\n1. **Cover with a Plastic Cover**: Use a plastic container to protect the basil from moisture and pests. ",
+   "ok": true,
+   "fired": false,
+   "score": -5.03
   }
  ]
 }
