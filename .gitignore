@@ -7,3 +7,4 @@ wandb/
 trigger_experiment/results_recallq/recall_query_labels_*.npz
 trigger_experiment/results_cotrecall/cot_recall_labels_*.npz
 trigger_experiment/results_cotnatural/cot_recall_natural_*.npz
+trigger_experiment/results_cotscan/cot_recall_labels_*.npz

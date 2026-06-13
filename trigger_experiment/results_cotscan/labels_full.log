@@ -1,0 +1,27 @@
+COTSCAN_LABELS_V1 dev=cuda layers=(8, 14, 20)
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   1%|          | 4/339 [00:00<00:08, 39.07it/s]Loading weights:  14%|█▍        | 48/339 [00:00<00:01, 271.60it/s]Loading weights:  23%|██▎       | 78/339 [00:00<00:00, 283.70it/s]Loading weights:  33%|███▎      | 112/339 [00:00<00:00, 303.32it/s]Loading weights:  43%|████▎     | 147/339 [00:00<00:00, 319.10it/s]Loading weights:  53%|█████▎    | 179/339 [00:00<00:00, 314.55it/s]Loading weights:  62%|██████▏   | 211/339 [00:00<00:00, 247.75it/s]Loading weights:  71%|███████   | 241/339 [00:00<00:00, 261.52it/s]Loading weights:  79%|███████▉  | 269/339 [00:00<00:00, 265.68it/s]Loading weights:  90%|████████▉ | 304/339 [00:01<00:00, 288.62it/s]Loading weights: 100%|██████████| 339/339 [00:01<00:00, 282.73it/s]
+10/240 -> 10 samples
+20/240 -> 20 samples
+30/240 -> 30 samples
+40/240 -> 40 samples
+50/240 -> 50 samples
+60/240 -> 60 samples
+70/240 -> 70 samples
+80/240 -> 80 samples
+90/240 -> 90 samples
+100/240 -> 100 samples
+110/240 -> 110 samples
+120/240 -> 120 samples
+130/240 -> 130 samples
+140/240 -> 140 samples
+150/240 -> 150 samples
+160/240 -> 160 samples
+170/240 -> 170 samples
+180/240 -> 180 samples
+190/240 -> 190 samples
+200/240 -> 200 samples
+210/240 -> 210 samples
+220/240 -> 220 samples
+230/240 -> 230 samples
+240/240 -> 240 samples
+COTSCAN_LABELS_DONE samples=240
