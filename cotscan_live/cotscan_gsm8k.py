@@ -78,7 +78,7 @@ def emb(embT, ids):
 
 
 @torch.no_grad()
-def solve(tok, llm, pooler, embT, problem, arm):
+def solve(tok, llm, pooler, embT, problem, arm, gate=None):
     """Greedy CoT solve where `problem` is buried in the evicted archive."""
     THINK_OPEN = tok.encode("<think>\n", add_special_tokens=False)
     eos = tok.eos_token_id
@@ -101,10 +101,31 @@ def solve(tok, llm, pooler, embT, problem, arm):
 
     rec_emb = None; fi = new = 0; in_think = True; done = False; n_recall = 0
     acc_score = {}                                  # MID_ACC: cumulative block scores
+    pinned = False; gate_scores = []; first_fire = None  # GATE arm bookkeeping
 
     def qids():
         tail = gen[turn_start:]
         return tail[-48:] if len(tail) >= 4 else tok.encode(aug, add_special_tokens=False)
+
+    # GATE arm: per-position recall gate (TRIGGER_V3 head applied IN the generation loop,
+    # COTSCAN残作業#1). Hook q_proj at layers 8/14/20, keep the latest position's pre-RoPE
+    # query; the gate fires only when that frontier query crosses the head's threshold —
+    # then we inject the problem block ONCE and PIN it (no per-step refresh, per the GSM8K
+    # v3 finding that re-injection itself destabilizes).
+    gq = {}; hooks = []
+    if arm == "GATE" and gate is not None:
+        for li in LAYERS:
+            def mk(li):
+                def fn(_m, _i, o):
+                    gq[li] = o.detach()[0, -1].float().cpu().numpy().ravel()
+                return fn
+            hooks.append(llm.model.layers[li].self_attn.q_proj.register_forward_hook(mk(li)))
+
+    def gate_score():
+        if any(li not in gq for li in LAYERS):
+            return None
+        f = np.concatenate([gq[li] for li in LAYERS])
+        return float(((f - gate["mean"]) / gate["scale"]) @ gate["coef"] + gate["b"])
 
     while not done:
         c0 = len(gen); R = min(c0, RW); nd = c0 - R
@@ -147,6 +168,19 @@ def solve(tok, llm, pooler, embT, problem, arm):
                     for i in keep:
                         ids += archive.blocks[i]["ids"]
                     rec_emb = emb(embT, ids); n_recall += 1
+        elif arm == "GATE":
+            # fire only when the frontier hidden state says "I need evicted info"; then
+            # inject the problem block once (instruction query = the reliable key) and pin.
+            if not pinned and (archive.blocks or len(archive.buf) >= 16):
+                s = gate_score()
+                if s is not None:
+                    gate_scores.append(round(s, 2))
+                    if s > gate["thresh"]:
+                        rid = archive.retrieve(tok.encode(aug, add_special_tokens=False),
+                                               k=RECALL_K)
+                        if rid:
+                            rec_emb = emb(embT, rid); n_recall += 1
+                            pinned = True; first_fire = len(gen) - turn_start
 
         parts = []
         if kept:
@@ -194,11 +228,18 @@ def solve(tok, llm, pooler, embT, problem, arm):
             last = llm(inputs_embeds=emb(embT, [t]), past_key_values=cache,
                        use_cache=True).logits[:, -1, :].float()
         body = tok.decode(gen[turn_start:]).split("<｜Assistant｜>", 1)[-1]
+    for h in hooks:
+        h.remove()
     ans = body.split("</think>")[-1].strip()
     if "Final answer:" in ans:
         ans = ans.split("Final answer:")[-1]
-    return {"pred": final_number(ans), "n_recall": n_recall,
-            "tokens": len(gen) - turn_start, "answer": ans[:200]}
+    out = {"pred": final_number(ans), "n_recall": n_recall,
+           "tokens": len(gen) - turn_start, "answer": ans[:200]}
+    if arm == "GATE":
+        out.update({"fired": pinned, "first_fire_tok": first_fire,
+                    "gate_max": max(gate_scores) if gate_scores else None,
+                    "gate_thresh": gate["thresh"], "n_gate_checks": len(gate_scores)})
+    return out
 
 
 def main():
@@ -214,13 +255,23 @@ def main():
         probs.append({"q": ex["question"], "gold": norm_num(g.group(1)) if g else ""})
 
     tok, llm, pooler, embT = build_model()
+    gate = None
+    if "GATE" in ARMS:
+        gp = os.environ.get("GATE_HEAD", "gate/trigger_head_v3_gate.npz")
+        z = np.load(gp)
+        gate = {"coef": z["coef"].astype(np.float32).ravel(),
+                "b": float(np.ravel(z["intercept"])[0]),
+                "mean": z["mean"].astype(np.float32), "scale": z["scale"].astype(np.float32),
+                "thresh": float(os.environ.get("GATE_THRESH", z["thresh"])
+                                if "thresh" in z.files else os.environ.get("GATE_THRESH", 0.0))}
+        log(f"[gate] loaded {gp} thresh={gate['thresh']} dim={gate['coef'].size}")
     results = []
     agg = {a: 0 for a in ARMS}
     for i, p in enumerate(probs):
         rec = {"i": i, "gold": p["gold"], "arms": {}}
         line = f"[{i:2}] gold={p['gold']:>6} "
         for arm in ARMS:
-            r = solve(tok, llm, pooler, embT, p["q"], arm)
+            r = solve(tok, llm, pooler, embT, p["q"], arm, gate=gate)
             ok = r["pred"] == p["gold"] and p["gold"] != ""
             agg[arm] += int(ok)
             rec["arms"][arm] = {**r, "correct": ok}

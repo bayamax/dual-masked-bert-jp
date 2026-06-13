@@ -15,10 +15,12 @@ import os, shutil
 from huggingface_hub import hf_hub_download
 R="baya1116/hypernet-sp-distill"; tok=os.environ["HF_TOKEN"]
 for p in ["hypernet_sp/block_recall.py","hypernet_sp/attn_export3_torch.py",
-          "hypernet_sp/attn_scenarios.py","build_fft_hf.py",
-          "fft_out/student.pt","fft_out/pooler.pt"]:
+          "hypernet_sp/attn_scenarios.py","hypernet_sp/gate/trigger_head_v3_gate.npz",
+          "build_fft_hf.py","fft_out/student.pt","fft_out/pooler.pt"]:
     f=hf_hub_download(R,p,token=tok)
-    dst=p if p.startswith("fft_out/") else os.path.basename(p)
+    if p.startswith("fft_out/"): dst=p
+    elif "/gate/" in p: dst="gate/"+os.path.basename(p)
+    else: dst=os.path.basename(p)
     os.makedirs(os.path.dirname(dst) or ".",exist_ok=True); shutil.copy(f,dst)
     print("got",dst,os.path.getsize(dst))
 print("DOWNLOAD_DONE")
