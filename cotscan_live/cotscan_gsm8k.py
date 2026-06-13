@@ -122,6 +122,13 @@ def solve(tok, llm, pooler, embT, problem, arm):
                 rid = archive.retrieve(qids(), k=RECALL_K)
                 if rid:
                     rec_emb = emb(embT, rid); n_recall += 1
+        elif arm == "MID_Q":
+            # ablation: re-inject EVERY rebuild (like MID) but keep the GOOD query (the
+            # instruction, like TURN). Isolates "frequent re-injection" from "CoT-tail query".
+            if archive.blocks or len(archive.buf) >= 16:
+                rid = archive.retrieve(tok.encode(aug, add_special_tokens=False), k=RECALL_K)
+                if rid:
+                    rec_emb = emb(embT, rid); n_recall += 1
         elif arm == "MID_ACC":
             # per-position but ACCUMULATE: each rebuild adds the current tail's top-k block
             # scores; the injected context is the union of the top blocks by cumulative
