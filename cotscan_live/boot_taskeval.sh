@@ -25,9 +25,19 @@ for p in ["hypernet_sp/attn_export3_torch.py","hypernet_sp/attn_scenarios.py",
     print("got",dst,os.path.getsize(dst))
 print("HF_DOWNLOAD_DONE")
 PY
-for f in cot_recall_labels.py cot_recall_natural.py cot_recall_eval.py recall_query_labels.py cot_questions.json; do
-  curl -sfL "$GH/$f" -o "$f" && echo "got $f ($(wc -c <$f)B)" || { echo "FATAL fetch $f"; }
-done
+python - <<PY
+import urllib.request
+GH="$GH"
+for f in ["cot_recall_labels.py","cot_recall_natural.py","cot_recall_eval.py",
+          "recall_query_labels.py","cot_questions.json"]:
+    data=urllib.request.urlopen(f"{GH}/{f}",timeout=60).read()
+    open(f,"wb").write(data); print("got",f,len(data))
+PY
+# the ypclnu code targets transformers 5.x (dtype=); our pinned 4.53 wants torch_dtype=
+sed -i 's/, dtype=torch\.float32/, torch_dtype=torch.float32/g' \
+    cot_recall_natural.py cot_recall_labels.py recall_query_labels.py cot_recall_eval.py 2>/dev/null
+grep -l "torch_dtype" cot_recall_natural.py && echo "PATCHED dtype kwarg"
+
 echo "$TRAIN_PY_B64" | base64 -d > train_components.py
 echo "$TASK_PY_B64"  | base64 -d > cotscan_task_eval.py
 wc -l train_components.py cotscan_task_eval.py
