@@ -56,38 +56,37 @@ FILLER = (
 def pad(n):  # ~n repeats of filler to bury the fact
     return (FILLER * n)
 
+# gold      = the string whose presence in the final answer = task success.
+# operand   = the planted, SP-evicted value that recall must bring back (== gold for
+#             direct; the un-named factor for deferred). operand recovery anywhere in the
+#             turn output isolates "did recall work" from "did the model then compute".
 BATTERY = [
     {
-        "id": "ref_code_direct",
-        "kind": "direct",
-        "doc": "Note: the internal reference code for the Zephyr account is 7731-Q. "
-               + pad(9),
+        "id": "ref_code_direct", "kind": "direct",
+        "doc": "Note: the internal reference code for the Zephyr account is 7731-Q. " + pad(9),
         "q": "What is the internal reference code for the Zephyr account? "
              "Answer with the exact code.",
-        "gold": "7731-Q",
+        "operand": "7731-Q", "gold": "7731-Q",
     },
     {
-        "id": "price_direct",
-        "kind": "direct",
+        "id": "price_direct", "kind": "direct",
         "doc": "Record: the calibrated unit price of part KX-204 is 3829 yen. " + pad(9),
         "q": "What is the calibrated unit price of part KX-204? Give the exact number.",
-        "gold": "3829",
+        "operand": "3829", "gold": "3829",
     },
     {
-        "id": "dimension_deferred",
-        "kind": "deferred",
+        "id": "dimension_deferred", "kind": "deferred",
         "doc": "Spec: the beam segment length is 412 cm. " + pad(9),
         "q": "A bracket spans exactly three beam segments end to end. Reason step by step "
              "and give the total length in cm.",
-        "gold": "1236",   # 412 * 3 ; value only needed mid-CoT
+        "operand": "412", "gold": "1236",   # 412 * 3 ; operand only needed mid-CoT
     },
     {
-        "id": "count_deferred",
-        "kind": "deferred",
+        "id": "count_deferred", "kind": "deferred",
         "doc": "Inventory: each sealed crate holds 168 units. " + pad(9),
         "q": "We shipped five sealed crates. Work it out step by step: how many units "
              "in total?",
-        "gold": "840",    # 168 * 5
+        "operand": "168", "gold": "840",    # 168 * 5
     },
 ]
 
@@ -121,8 +120,24 @@ def gold_block_index(archive, tok, gold):
     return -1
 
 
+def _topk_idx(scores, k):
+    return set(sorted(range(len(scores)), key=lambda i: -scores[i])[:k])
+
+
+def _record_fire(fires, glen, archive, gi, k):
+    sc = getattr(archive, "_last_scores", []) or []
+    top = max(range(len(sc)), key=lambda i: sc[i]) if sc else -1
+    if 0 <= gi < len(sc):
+        rank = 1 + sum(1 for s in sc if s > sc[gi])          # 1 = best
+        in_topk = gi in _topk_idx(sc, k)
+        gscore = round(sc[gi], 3)
+    else:
+        rank, in_topk, gscore = None, False, None             # gold not a sealed block
+    fires.append((glen, top, round(sc[top], 3) if sc else None, gscore, rank, in_topk))
+
+
 @torch.no_grad()
-def run_turn(tok, llm, pooler, embT, doc, aug, gold, arm):
+def run_turn(tok, llm, pooler, embT, doc, aug, gold, operand, arm):
     """One real CoT turn under `arm`. Returns dict with answer + recall diagnostics.
 
     Faithful to app_session_torch._gen_once: every C tokens we crop the cache back to the
@@ -155,7 +170,8 @@ def run_turn(tok, llm, pooler, embT, doc, aug, gold, arm):
 
     rec_emb = None
     rec_ids = []
-    fires = []            # per rebuild: (gen_len, top_block_idx, top_score, gold_score, hit)
+    # per rebuild: (gen_len, top_block, top_score, gold_score, gold_rank, gold_in_topk)
+    fires = []
     fi = new = 0
     in_think = True
     done = False
@@ -183,20 +199,14 @@ def run_turn(tok, llm, pooler, embT, doc, aug, gold, arm):
                 rid = archive.retrieve(recall_query_ids("TURN"), k=RECALL_K)
                 if rid:
                     rec_ids = rid; rec_emb = emb(embT, rid)
-                    sc = getattr(archive, "_last_scores", [])
-                    top = max(range(len(sc)), key=lambda i: sc[i]) if sc else -1
-                    fires.append((len(gen), top, round(sc[top], 3) if sc else None,
-                                  round(sc[gi], 3) if 0 <= gi < len(sc) else None, top == gi))
+                    _record_fire(fires, len(gen), archive, gi, RECALL_K)
         elif arm == "MID":
             # per-position: refresh recall EVERY rebuild from the current CoT tail.
             if archive.blocks or len(archive.buf) >= 16:
                 rid = archive.retrieve(recall_query_ids("MID"), k=RECALL_K)
-                sc = getattr(archive, "_last_scores", [])
-                top = max(range(len(sc)), key=lambda i: sc[i]) if sc else -1
                 if rid:
                     rec_ids = rid; rec_emb = emb(embT, rid)
-                fires.append((len(gen), top, round(sc[top], 3) if sc else None,
-                              round(sc[gi], 3) if 0 <= gi < len(sc) else None, top == gi))
+                _record_fire(fires, len(gen), archive, gi, RECALL_K)
 
         # --- rebuild block and step C tokens ---------------------------------------
         parts = []
@@ -235,12 +245,15 @@ def run_turn(tok, llm, pooler, embT, doc, aug, gold, arm):
 
     body = tok.decode(gen[turn_start:]).split("<｜Assistant｜>", 1)[-1]
     ans = body.split("</think>")[-1].strip() if "</think>" in body else body.strip()
-    hit = gold in body                       # value recovered anywhere in the turn output
-    ans_hit = gold in ans                    # value in the post-think answer
-    ret_ok = any(f[4] for f in fires)        # correct block was ever top-retrieved
     return {
-        "arm": arm, "hit": hit, "ans_hit": ans_hit, "gold": gold,
-        "gold_block": gi, "n_blocks": len(archive.blocks), "retrieval_ok": ret_ok,
+        "arm": arm,
+        "operand_recovered": operand in body,   # did recall bring the evicted value back?
+        "gold_in_answer": gold in ans,          # task success (final answer)
+        "gold_anywhere": gold in body,
+        "retrieval_ok": any(f[5] for f in fires),   # gold block within injected top-k
+        "gold_best_rank": min([f[4] for f in fires if f[4] is not None], default=None),
+        "operand": operand, "gold": gold,
+        "gold_block": gi, "n_blocks": len(archive.blocks),
         "fires": fires, "rec_ids_decoded": tok.decode(rec_ids)[:120] if rec_ids else "",
         "answer": ans[:400], "body_tokens": len(gen) - turn_start,
     }
@@ -257,10 +270,12 @@ def main():
         log(f"\n=== scenario {sc['id']} ({sc['kind']}) gold={sc['gold']} ===")
         per = {"id": sc["id"], "kind": sc["kind"], "gold": sc["gold"], "arms": {}}
         for arm in arms:
-            r = run_turn(tok, llm, pooler, embT, sc["doc"], sc["q"], sc["gold"], arm)
+            r = run_turn(tok, llm, pooler, embT, sc["doc"], sc["q"], sc["gold"],
+                         sc["operand"], arm)
             per["arms"][arm] = r
-            log(f"  [{arm:4}] hit={r['hit']} ans_hit={r['ans_hit']} "
-                f"retrieval_ok={r['retrieval_ok']} gold_block={r['gold_block']}/"
+            log(f"  [{arm:4}] operand_recovered={r['operand_recovered']} "
+                f"gold_in_answer={r['gold_in_answer']} retrieval_ok={r['retrieval_ok']} "
+                f"gold_best_rank={r['gold_best_rank']} gold_block={r['gold_block']}/"
                 f"{r['n_blocks']} fires={len(r['fires'])}")
             log(f"         ans: {r['answer'][:160]!r}")
             # checkpoint after every arm so the HF-side log shows live progress
@@ -276,18 +291,18 @@ def main():
 
 def summarize(results):
     arms = ["OFF", "TURN", "MID"]
-    agg = {a: {"hit": 0, "ans_hit": 0, "retrieval_ok": 0} for a in arms}
+    agg = {a: {"operand": 0, "gold": 0, "ret": 0} for a in arms}
     n = len(results)
     for r in results:
         for a in arms:
             ar = r["arms"].get(a)
             if not ar:
                 continue
-            agg[a]["hit"] += int(ar["hit"])
-            agg[a]["ans_hit"] += int(ar["ans_hit"])
-            agg[a]["retrieval_ok"] += int(ar["retrieval_ok"])
-    return {a: f"value_in_answer {agg[a]['ans_hit']}/{n} | value_anywhere {agg[a]['hit']}/{n}"
-               f" | correct_block_retrieved {agg[a]['retrieval_ok']}/{n}" for a in arms}
+            agg[a]["operand"] += int(ar["operand_recovered"])
+            agg[a]["gold"] += int(ar["gold_in_answer"])
+            agg[a]["ret"] += int(ar["retrieval_ok"])
+    return {a: f"operand_recovered {agg[a]['operand']}/{n} | task_correct {agg[a]['gold']}/{n}"
+               f" | gold_block_in_topk {agg[a]['ret']}/{n}" for a in arms}
 
 
 def results_snapshot(out_dir, results, t0, summary=None, final=False):
