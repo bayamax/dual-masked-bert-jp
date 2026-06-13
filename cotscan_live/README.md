@@ -147,7 +147,33 @@ MID と MID_ACC が同値 → **「置換 vs 蓄積」は本質ではない**。
 COTSCAN_SPEC 自身の「実 CoT では発火位置が変わりうるので生成ループ実装後に再検証」という
 留保の、具体的な中身。
 
-### 全成果物(HF `trigger_experiment/`)
+## ゲートを使った忠実版 `GATE`(残作業 #1 の本筋)— `results_gsm8k_v4_gate.json`
+
+「naïve MID はゲートを使っていない」という指摘を受け、出荷ゲート
+`gate/trigger_head_v3_gate.npz`(4608-dim ロジスティック, 層8/14/20 の pre-RoPE q)を
+**生成ループ内の各フロンティア位置に適用**し、**閾値 -2.6 を超えた瞬間だけ**問題文ブロックを
+1 回注入してピン留めする `GATE` アームを実装(`q_proj` フック)。
+
+| arm | 正答 | ゲート発火 |
+|---|---|---|
+| TURN(ターン頭1回・固定) | 9/25 (36%) | — |
+| MID(無ゲート・毎回) | 4/25 (16%) | — |
+| **GATE(発火時のみ・ピン)** | **0/25 (0%)** | **5/25 のみ・大半 max score -10.3 ≪ -2.6** |
+
+### 発見:出荷ゲートは per-position に転用できない
+
+GATE はほぼ発火せず実質 OFF。原因は **`trigger_head_v3_gate` が“ターン単位”のゲート**で、
+本番レイアウト `[BOS][SP][窓][質問]` の**質問位置の pre-RoPE クエリ(質問トークン平均)**で
+学習されている点。これを**生成中の 1 トークン位置**に当てると特徴が**分布外**になり、
+スコアが ~-10.3 に張り付いて発火しない。
+
+→ 結論:**この出荷ゲートの正しい使い所はターン頭**(質問で発火判定 → turn-start recall =
+実質 TURN/36%。Addendum の設計どおり)。**COTSCAN の per-position 化には、COTSCAN 実験が
+アテンション・ラベルで専用学習した「引き戻し位置」プローブ(AUC 1.0)が必要**で、それは
+出荷ゲートとは別物・未公開(GitHub `trigger_experiment` の `cot_attn_scan_labels.py` /
+`cot_recall_eval.py`)。faithful な per-position ゲート評価にはそのプローブの再現学習が要る。
+
+## 全成果物(HF `trigger_experiment/`)
 - `results_cotscan_live{,_v2}/` — 4 シナリオ小スモーク(v2 が確定版)
 - `results_gsm8k_v1/` — OFF/TURN/MID(N=25)
 - `results_gsm8k_v2/` — TURN/MID/MID_ACC(N=25)

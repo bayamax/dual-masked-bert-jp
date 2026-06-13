@@ -15,6 +15,7 @@ Decoding is GREEDY (deterministic) so arm differences are attributable to recall
 Scoring = exact match of the final integer against the GSM8K gold answer.
 """
 import os, re, json, time
+import numpy as np
 import torch, torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 try:
