@@ -1,0 +1,155 @@
+{
+ "n": 5,
+ "summary": {
+  "FULL": {
+   "acc": "3/5 = 60.0%",
+   "agree_full": "5/5 = 100.0%"
+  },
+  "SP": {
+   "acc": "2/5 = 40.0%",
+   "agree_full": "2/5 = 40.0%"
+  },
+  "SP_RECALL": {
+   "acc": "2/5 = 40.0%",
+   "agree_full": "1/5 = 20.0%"
+  }
+ },
+ "results": [
+  {
+   "i": 0,
+   "gold": "450",
+   "arms": {
+    "FULL": {
+     "pred": "40",
+     "correct": false,
+     "tokens": 2648,
+     "kept": 0,
+     "n_fire": 0
+    },
+    "SP": {
+     "pred": "750",
+     "correct": false,
+     "tokens": 2648,
+     "kept": 1600,
+     "n_fire": 0
+    },
+    "SP_RECALL": {
+     "pred": "750",
+     "correct": false,
+     "tokens": 2648,
+     "kept": 1600,
+     "n_fire": 2
+    }
+   }
+  },
+  {
+   "i": 1,
+   "gold": "10000",
+   "arms": {
+    "FULL": {
+     "pred": "10000",
+     "correct": true,
+     "tokens": 2535,
+     "kept": 0,
+     "n_fire": 0
+    },
+    "SP": {
+     "pred": "1e-22",
+     "correct": false,
+     "tokens": 2535,
+     "kept": 1472,
+     "n_fire": 0
+    },
+    "SP_RECALL": {
+     "pred": "1e-22",
+     "correct": false,
+     "tokens": 2535,
+     "kept": 1472,
+     "n_fire": 0
+    }
+   }
+  },
+  {
+   "i": 2,
+   "gold": "12",
+   "arms": {
+    "FULL": {
+     "pred": "12",
+     "correct": true,
+     "tokens": 2550,
+     "kept": 0,
+     "n_fire": 0
+    },
+    "SP": {
+     "pred": "12",
+     "correct": true,
+     "tokens": 2550,
+     "kept": 1472,
+     "n_fire": 0
+    },
+    "SP_RECALL": {
+     "pred": "12",
+     "correct": true,
+     "tokens": 2550,
+     "kept": 1472,
+     "n_fire": 3
+    }
+   }
+  },
+  {
+   "i": 3,
+   "gold": "4",
+   "arms": {
+    "FULL": {
+     "pred": "4",
+     "correct": true,
+     "tokens": 2425,
+     "kept": 0,
+     "n_fire": 0
+    },
+    "SP": {
+     "pred": "4",
+     "correct": true,
+     "tokens": 2718,
+     "kept": 1664,
+     "n_fire": 0
+    },
+    "SP_RECALL": {
+     "pred": "2",
+     "correct": false,
+     "tokens": 2718,
+     "kept": 1664,
+     "n_fire": 2
+    }
+   }
+  },
+  {
+   "i": 4,
+   "gold": "440",
+   "arms": {
+    "FULL": {
+     "pred": "11",
+     "correct": false,
+     "tokens": 2564,
+     "kept": 0,
+     "n_fire": 0
+    },
+    "SP": {
+     "pred": "80",
+     "correct": false,
+     "tokens": 2564,
+     "kept": 1536,
+     "n_fire": 0
+    },
+    "SP_RECALL": {
+     "pred": "440",
+     "correct": true,
+     "tokens": 2448,
+     "kept": 1408,
+     "n_fire": 4
+    }
+   }
+  }
+ ],
+ "final": true
+}
