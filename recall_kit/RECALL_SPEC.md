@@ -137,3 +137,57 @@ for p in range(ctx.win_len):
 - 発火時の巻き戻し(rewind)・閾値の運用最適化(recall↑)、MLPゲート(AUC 0.950→0.961)の採用。
 - 再注入フォーマットの改善(逐語ブロック→問題文の完全復元等)で長尺の圧縮損失(60→40)を埋める。
 - `RecallRuntime` の本番 / MLX 移植(`HANDOFF_PORTING.md` のパリティ手順)。
+
+---
+
+## 7. 全成果物の所在(ありか)一覧
+
+HF リポジトリ: **`baya1116/hypernet-sp-distill`**(URL は `https://huggingface.co/baya1116/hypernet-sp-distill/tree/main/<path>`)
+git: **`bayamax/dual-masked-bert-jp`** ブランチ **`claude/hypernet-sp-spec-review-qrafn9`**
+
+### 7.1 モデル一式(これ一式で即動く)
+| 物 | 所在 |
+|---|---|
+| 完全バンドル | HF `recall_runtime/` |
+| ベースLLM(HF形式) | HF `recall_runtime/fft_hf/` |
+| SP pooler | HF `recall_runtime/pooler.pt` |
+| 検知ゲート / QK想起 / BGE想起 重み | HF `recall_runtime/components/{gate.npz, indexer.npz, bge_head.npz}` |
+| パッケージ | HF `recall_runtime/recall_kit/` |
+| 依存 | HF `recall_runtime/deps/` |
+| 本書 | HF `recall_runtime/RECALL_SPEC.md` |
+
+### 7.2 学習済み重みの原本+テスト
+| 物 | 所在 |
+|---|---|
+| gate / indexer / bge_head + 単体・複合レポート + fixtures | HF `trigger_experiment/recall_kit_v4/artifacts/` |
+| パッケージ src(同上の出所) | HF `trigger_experiment/recall_kit_v4/src/` |
+| ベース重み(原本) | HF `fft_out/student.pt`(3.55GB), `fft_out/pooler.pt`(302MB) |
+
+### 7.3 検証結果(主要)
+| 検証 | 所在 |
+|---|---|
+| 検知AUC 0.958 + 学習QK top-2 0.9995(Dolphin heldout) | HF `trigger_experiment/results_dolphin/` |
+| BGE比較(raw 0.286 → 学習 0.9997) | HF `trigger_experiment/results_dolphin_bge/` |
+| 探索(ゲート動作点 / MLP 0.961 / 後方スキャン) | HF `trigger_experiment/results_explore/` |
+| full-KV 66.7% | HF `trigger_experiment/results_gsm_fullkv/` |
+| SP@rw512 60% / SP@rw1024 66.7% | HF `trigger_experiment/results_gsm_sp512/`, `results_gsm_sp1024b/` |
+| 長尺 FULL/SP/SP_RECALL(60/40/40) | HF `trigger_experiment/results_dolphin_solveB/` |
+| 引き戻しの中身(trace) | HF `trigger_experiment/results_dolphin_trace/` |
+| 新ゲート×raw-QK の GSM8K(OFF0/TURN31/GATE17) | HF `trigger_experiment/results_gsm_gate/` |
+| 初期GSM8K知見(素朴per-positionは有害) | HF `trigger_experiment/results_gsm8k_v1..v4/`(git: `cotscan_live/results_gsm8k_v*.json`) |
+
+> 補助・中間ラン(`results_gsm_new*`, `results_gsm_rw1024`, `results_cotscan_live*` 等)も
+> 同 `trigger_experiment/` 配下に残置(filler 等のアーティファクト確認用)。
+
+### 7.4 コード(git ブランチ)
+| 物 | 所在(git) |
+|---|---|
+| パッケージ + 本書 | `recall_kit/`(gate.py / retriever.py / runtime.py / __init__.py / README.md / RECALL_SPEC.md) |
+| 実験スクリプト一式 | `cotscan_live/`(dolphin_scan.py 学習 / build_package.py / composite_test.py / explore.py / gsm8k_sp.py / gsm8k_fullkv.py / cotscan_gsm8k.py / dolphin_solve.py 等)+ 各 boot_*.sh + 結果 JSON |
+
+### 7.5 元仕様・前提(本書の出発点)
+| 物 | 所在 |
+|---|---|
+| COTSCAN / Addendum 仕様 | HF `hypernet_sp/COTSCAN_SPEC.md`, `hypernet_sp/APP_SPEC_ADDENDUM.md` |
+| Phase B 想起インデクサ(既存) | HF `hypernet_sp/phaseb/phaseb_indexer.npz` ほか |
+| COTSCAN 実験コード(自然CoT等) | git ブランチ `claude/huggingface-model-status-ypclnu` の `trigger_experiment/`(cot_recall_natural.py 等)+ `RESULTS.md` |
