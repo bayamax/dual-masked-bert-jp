@@ -117,7 +117,10 @@ def main():
     correct = 0; compressed = 0; results = []
     for i in range(N):
         g = GOLD_RE.search(ds[i]["answer"]); gold = norm(g.group(1)) if g else ""
-        pred, ntok, mk = solve(tok, llm, pooler, embT, ds[i]["question"])
+        try:
+            pred, ntok, mk = solve(tok, llm, pooler, embT, ds[i]["question"])
+        except Exception as e:
+            log(f"  item {i} failed: {e}"); pred, ntok, mk = "", 0, 0
         ok = pred == gold and gold != ""
         correct += int(ok); compressed += int(mk > 0)
         results.append({"i": i, "gold": gold, "pred": pred, "correct": ok, "tokens": ntok, "kept": mk})
