@@ -87,6 +87,42 @@ def emb(embT, ids):
     return torch.zeros(1, 0, embT.weight.shape[1], dtype=embT.weight.dtype, device=DEV)
 
 
+import torch.nn as nn
+
+
+class BGEHead(nn.Module):
+    def __init__(self, qdim, kdim, d=128):
+        super().__init__()
+        self.Wq = nn.Sequential(nn.Linear(qdim, d), nn.GELU(), nn.Linear(d, d))
+        self.Wk = nn.Sequential(nn.Linear(kdim, d), nn.GELU(), nn.Linear(d, d))
+    def forward(self, q, k):
+        return self.Wq(q) @ self.Wk(k).T
+
+
+BGE_MODEL = None
+BGE_HEAD = None
+
+
+def retrieve_bge(tok, archive, gq, k):
+    """ON-DEMAND BGE retrieval: query = the gate's hidden q (free), keys = BGE-encoded block
+    TEXT computed on the fly from stored IDs only (no persisted vectors). bge_head bridges them."""
+    cands = list(archive.blocks)
+    if len(archive.buf) >= 16:
+        cands = cands + [{"ids": list(archive.buf)}]
+    if not cands or any(li not in gq for li in LAYERS):
+        return []
+    texts = [tok.decode(b["ids"]) for b in cands]
+    K = BGE_MODEL.encode(texts, normalize_embeddings=True, show_progress_bar=False).astype(np.float32)
+    q = np.concatenate([gq[li] for li in LAYERS]).astype(np.float32)
+    with torch.no_grad():
+        s = BGE_HEAD(torch.tensor(q, device=DEV), torch.tensor(K, device=DEV))
+    top = s.topk(min(k, len(cands))).indices.tolist()
+    out = []
+    for i in sorted(top):
+        out.extend(cands[i]["ids"])
+    return out
+
+
 def retrieve_idx(archive, gq, indexer, dims, k):
     Hq, Hkv, D = dims
     cands = list(archive.blocks)
@@ -150,6 +186,8 @@ def reply(tok, llm, pooler, embT, gate, indexer, dims, feed, arm, thresh):
             if s is not None and s > thresh:
                 if arm == "RC_idx":
                     rid = retrieve_idx(archive, gq, indexer, dims, RECALL_K)
+                elif arm == "RC_bge":
+                    rid = retrieve_bge(tok, archive, gq, RECALL_K)
                 else:
                     rid = archive.retrieve(gen[-48:] if len(gen) >= 4 else feed, k=RECALL_K)
                 if rid:
@@ -230,6 +268,15 @@ def main():
     indexer.load_state_dict({"Aq": torch.tensor(zi["Aq"]), "Bk": torch.tensor(zi["Bk"]),
                              "w": torch.tensor(zi["w"])})
     indexer.eval()
+    global BGE_MODEL, BGE_HEAD
+    if any(a.split("@")[0] == "RC_bge" for a in ARMS):
+        from sentence_transformers import SentenceTransformer
+        BGE_MODEL = SentenceTransformer("BAAI/bge-base-en-v1.5", device=DEV)
+        zb = np.load("bge_head.npz")
+        BGE_HEAD = BGEHead(int(zb["qdim"]), int(zb["kdim"]), int(zb["d"])).to(DEV)
+        BGE_HEAD.load_state_dict({k: torch.tensor(zb[k]) for k in zb.files if k not in ("qdim","kdim","d")})
+        BGE_HEAD.eval()
+        log("[bge] loaded BAAI/bge-base-en-v1.5 + bge_head")
     log(f"[gen] N={N} RW={RW} thresh={THRESH} arms={ARMS}")
     agg = {a: {"qc": 0, "qn": 0, "rc": 0, "cf": 0, "ct": 0} for a in ARMS}
     results = []
