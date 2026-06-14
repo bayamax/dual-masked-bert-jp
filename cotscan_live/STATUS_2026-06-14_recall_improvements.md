@@ -63,7 +63,18 @@ Threshold sweep (raw-QK): **−1.5 is the knee** — recall/retrieval stay at 10
 casual-fire halves; higher thresholds only cost recall. Per-turn casual-fire stays high because
 it aggregates ~2–3 decision points/turn; per-position held false-fire is far lower (3–5%).
 
-> v3 generation confirmation: _(pending run — will update)_
+**v3 generation confirmation (N=8, gate `recall_contrastive_v3`):**
+
+| gate v3, raw-QK | recall | retrieved | casual false-fire (per turn) |
+|---|---|---|---|
+| thresh −2.0 | **88%** | 88% | 62% |
+| thresh −1.2 | 75% | 75% | **38%** |
+
+Honest read: it's a recall/precision **tradeoff**. The data-side work (contrastive + generation
+-distribution negatives) cut *held-out per-position* false-fire ~4× (11%→3%, gen-dist 10%→5%), but
+*per-turn generation* false-fire stays high at max recall because it aggregates ~2–3 decision
+points/turn. At 88% recall it's ~62%; dropping to 75% recall gets it to 38%. **The remaining lever
+is a runtime mitigation, not more gate data** — see Open items.
 
 ## Live chat demo (Claude as the human)
 
@@ -82,9 +93,14 @@ failure mode (answering from the visible window instead of the evicted fact) and
 
 ## Open items
 
-- Per-turn casual false-fire in generation is the last lever. Beyond v3's data fix, cheap runtime
-  mitigations: fire-once-per-turn / hysteresis (require consecutive fires), or a relevance gate on
-  the retrieval score before injecting.
+- **Per-turn casual false-fire (~62% at 88% recall) is the #1 remaining issue and is best fixed at
+  RUNTIME, not with more gate data** (data-side has saturated: held per-position false-fire is
+  already 3–5%). Cheap, high-leverage mitigations to try next:
+  - fire-once-per-turn (cap injections at 1 per assistant turn);
+  - hysteresis (require the gate to clear threshold on N consecutive checks before injecting);
+  - relevance gate: only inject if the top retrieved block's QK score clears an absolute bar
+    (during casual turns nothing is truly relevant, so this suppresses spurious injections);
+  - accept the tradeoff knob: thresh −1.2 → 75% recall / 38% false-fire if precision matters more.
 - CoT-quality is covered by held metrics (cot detection AUC ~0.90 preserved, indexer cot top-2
   0.996); the 1.5B's own reasoning loop — not recall — remains the accuracy ceiling on GSM8K/Dolphin.
 
