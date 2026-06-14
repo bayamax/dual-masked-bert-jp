@@ -70,7 +70,7 @@ def solve(tok, llm, pooler, embT, gate, problem, arm):
     gen, kept, absorbed = [], [], 0
     fi = new = 0; done = False; max_kept = 0; n_fire = 0
     archive = BlockArchive(llm, tok, layers=LAYERS, block=BLOCK, mode="qk") if arm == "SP_RECALL" else None
-    rec_emb = None
+    rec_emb = None; trace = []
     gq = {}; hooks = []
     if arm == "SP_RECALL":
         for li in LAYERS:
@@ -105,6 +105,9 @@ def solve(tok, llm, pooler, embT, gate, problem, arm):
                 rid = archive.retrieve(tail, k=RECALL_K)
                 if rid:
                     rec_emb = emb(embT, rid); n_fire += 1
+                    trace.append({"at_tok": len(gen), "score": round(s,2),
+                                  "pulled": tok.decode(rid)[:170],
+                                  "cot_here": tok.decode(gen[-26:])})
         parts = []
         if kept and not full:
             parts.append(pooler(emb(embT, kept).float()).to(embT.weight.dtype))
@@ -133,7 +136,8 @@ def solve(tok, llm, pooler, embT, gate, problem, arm):
     for h in hooks:
         h.remove()
     body = tok.decode(gen)
-    return final_num(body), {"tokens": len(gen), "kept": max_kept, "n_fire": n_fire}
+    return final_num(body), {"tokens": len(gen), "kept": max_kept, "n_fire": n_fire,
+            "body": body[:1800], "trace": trace}
 
 
 def pick(tok, n):
