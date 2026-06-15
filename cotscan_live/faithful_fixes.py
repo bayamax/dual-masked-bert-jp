@@ -65,12 +65,39 @@ FIX2_NEW = r'''                self.mem.remember_session(f"Earlier computed resu
             answer = re.sub(r"\\[\[\]()]|\${1,2}", "", answer).strip()
         return answer, src, chunks'''
 
+# ---- FIX #3: with no steering the bare 1.5B refused benign chitchat ("I just adopted two
+# kittens" -> "I can't assist with that request") and emitted garbage name lists. Make the
+# never-evicted MQ profile prefix ALWAYS carry a short, declarative assistant persona (even
+# with zero saved facts) so chitchat stays warm and on-task. Verified: refusal gone, names coherent.
+FIX3_OLD = '''        if not self.profile or not self.mem.persistent:
+            return self.tok.encode("") or [self.tok.bos_token_id]
+        facts = [f for f in self.mem.persistent[-8:]
+                 if not mc._is_question(f) and len(f.split()) <= 30]
+        text = "(About the user: " + " ".join(facts) + ")\\n"
+        return self.tok.encode(text)'''
+FIX3_NEW = '''        if not self.profile:
+            return self.tok.encode("") or [self.tok.bos_token_id]
+        # ambient persona is ALWAYS present (even with no saved facts): without any steering
+        # the bare 1.5B refused benign chitchat ("I just adopted two kittens" -> "I can't
+        # assist with that request") and degenerated name lists. A short declarative persona
+        # in the never-evicted MQ prefix keeps chitchat warm and on-task. Never question-shaped.
+        persona = ("You are a warm, friendly personal assistant. You chat naturally and "
+                   "helpfully, and you never refuse a harmless message.")
+        text = persona
+        if self.mem.persistent:
+            facts = [f for f in self.mem.persistent[-8:]
+                     if not mc._is_question(f) and len(f.split()) <= 30]
+            if facts:
+                text += " (About the user: " + " ".join(facts) + ")"
+        return self.tok.encode(text + "\\n") or [self.tok.bos_token_id]'''
+
 
 def main():
     if not os.path.exists(APP):
         print("faithful_run/app_session_torch.py missing — run faithful_setup.py first"); sys.exit(1)
     patch(APP, FIX1_OLD, FIX1_NEW, "FIX1 casual-not-fact")
     patch(APP, FIX2_OLD, FIX2_NEW, "FIX2 strip-latex-boxed")
+    patch(APP, FIX3_OLD, FIX3_NEW, "FIX3 ambient-persona")
 
 
 if __name__ == "__main__":
