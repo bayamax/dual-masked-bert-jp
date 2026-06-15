@@ -1,0 +1,23 @@
+[web-path] model=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+[web-path] loaded 2s | known=16 web=16 casual=8
+[harvest] features (all known+web+casual) ...
+[gate] OOF AUC=0.926 | thr=2.563 (max OOF-known=2.56)
+  OOF known scores=[-3.990000009536743, -4.070000171661377, -0.47999998927116394, -1.5399999618530273, -1.9199999570846558, -0.8600000143051147, -3.359999895095825, -2.4000000953674316, -4.380000114440918, 2.559999942779541, -2.069999933242798, -2.180000066757202, -4.079999923706055, -0.15000000596046448, -3.7899999618530273, -2.240000009536743]
+  OOF web scores  =[1.9800000190734863, 1.5700000524520874, 4.369999885559082, 0.7300000190734863, -0.20999999344348907, 1.5800000429153442, 1.6399999856948853, 3.130000114440918, 5.860000133514404, 2.119999885559082, 3.380000114440918, 2.859999895095825, 3.5899999141693115, 2.1500000953674316, 3.309999942779541, -2.430000066757202]
+  casual scores   =[-2.869999885559082, -1.7400000095367432, -3.1700000762939453, -4.420000076293945, -3.049999952316284, -1.5199999809265137, -3.8299999237060547, -1.9600000381469727]
+[fire@OOF/held] web=7/16 (want high) | known=0/16 casual=0/8 (want 0)
+  [web] noinj=False inj=True | In what year was the Treaty of Velmaran si
+  [web] noinj=False inj=True | What is the capital of the nation of Brind
+  [web] noinj=False inj=True | In what year was the Vorlith Institute of 
+  [web] noinj=False inj=True | Who won the Galvin Prize in 2019?
+  [web] noinj=False inj=True | How tall is Mount Drennakar?
+  [web] noinj=True inj=True | What language is spoken in the kingdom of 
+  [web] noinj=False inj=True | What is the currency of the federation of 
+  [web] noinj=False inj=True | How many members sit on the Council of Thr
+
+=== WEB PATH (operational) ===
+  OOF AUC=0.9258
+  fire@thr(0-known-ff)  web=7/16  known=0/16  casual=0/8
+  web end-task  inject=1.0  vs  no-inject=0.125
+  known acc (no inject) = 0.667
+DONE t=809.6s

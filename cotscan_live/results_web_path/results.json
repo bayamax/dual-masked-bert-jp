@@ -1,0 +1,77 @@
+{
+ "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+ "feat_dim": 4608,
+ "oof_auc": 0.9258,
+ "threshold_zero_known_ff": 2.5634,
+ "fire": {
+  "web": "7/16",
+  "known": "0/16",
+  "casual": "0/8"
+ },
+ "web_endtask": {
+  "inject_acc": 1.0,
+  "noinject_acc": 0.125,
+  "n": 8,
+  "rows": [
+   {
+    "q": "In what year was the Treaty of Velmaran signed?",
+    "gold": "1847",
+    "noinject_hit": false,
+    "inject_hit": true,
+    "inject_out": "Okay, so I need to figure out the year the Treaty of Velmaran was signed. I remember that it's a significant event in history, probably related to the Spanish-American War. The user provided some info"
+   },
+   {
+    "q": "What is the capital of the nation of Brindolia?",
+    "gold": "hostrand",
+    "noinject_hit": false,
+    "inject_hit": true,
+    "inject_out": "Okay, so I need to figure out the capital of the nation Brindolia. Let me start by recalling what I know about the user's previous question. They asked about the capital of Brindolia, and I provided t"
+   },
+   {
+    "q": "In what year was the Vorlith Institute of Technology founded?",
+    "gold": "1921",
+    "noinject_hit": false,
+    "inject_hit": true,
+    "inject_out": "Okay, so I need to figure out the year the Vorlith Institute of Technology was founded. I remember that the user provided a reference information that says it was founded in 1921. But I should probabl"
+   },
+   {
+    "q": "Who won the Galvin Prize in 2019?",
+    "gold": "voss",
+    "noinject_hit": false,
+    "inject_hit": true,
+    "inject_out": "Okay, so I need to figure out who won the 2019 Galvin Prize. I remember that the prize is awarded in optics, and the person is Dr. Helena Voss. But I'm not entirely sure about the details. Let me thin"
+   },
+   {
+    "q": "How tall is Mount Drennakar?",
+    "gold": "4,812",
+    "noinject_hit": false,
+    "inject_hit": true,
+    "inject_out": "Okay, so I need to figure out how tall Mount Drennakar is. The information given is that it's 4,812 meters above sea level. Hmm, I'm not entirely sure where that number comes from, but I think it's a "
+   },
+   {
+    "q": "What language is spoken in the kingdom of Ulventhia?",
+    "gold": "ulven",
+    "noinject_hit": true,
+    "inject_hit": true,
+    "inject_out": "Okay, so I need to figure out what language is spoken in the kingdom of Ulventhia. The reference information given is that the people there speak a language called Ulven. Hmm, I wonder if that's the s"
+   },
+   {
+    "q": "What is the currency of the federation of Mooncrest?",
+    "gold": "lunar",
+    "noinject_hit": false,
+    "inject_hit": true,
+    "inject_out": "Okay, so I need to figure out what the currency of the federation of Mooncrest is. I remember that the user provided some information earlier, but I should probably start from scratch to make sure I g"
+   },
+   {
+    "q": "How many members sit on the Council of Threll?",
+    "gold": "nine",
+    "noinject_hit": false,
+    "inject_hit": true,
+    "inject_out": "Okay, so I need to figure out how many members are on the Council of Threll. The user provided some information that the Council of Threll has nine voting members. Hmm, that seems straightforward, but"
+   }
+  ]
+ },
+ "known_acc_noinject": 0.667,
+ "known_n": 6,
+ "elapsed_s": 809.6
+}
