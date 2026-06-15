@@ -32,7 +32,8 @@ python - <<'PY'
 import os, shutil
 from huggingface_hub import hf_hub_download
 R = "baya1116/hypernet-sp-distill"; tok = os.environ["HF_TOKEN"]
-deps = ["hypernet_sp/block_recall.py", "hypernet_sp/attn_export3_torch.py", "build_fft_hf.py",
+deps = ["hypernet_sp/block_recall.py", "hypernet_sp/attn_export3_torch.py",
+        "hypernet_sp/attn_scenarios.py", "build_fft_hf.py",
         "fft_out/student.pt", "fft_out/pooler.pt",
         "trigger_experiment/ondevice_recall/bge_head.npz",
         "trigger_experiment/ondevice_recall/gate.npz"]
