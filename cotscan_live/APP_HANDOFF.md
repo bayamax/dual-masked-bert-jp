@@ -113,9 +113,10 @@ Scoring (q = the 4608 gate feature from §3):
 score = ((q - mean) / scale) · coef + intercept
 fire  = score > THRESH
 ```
-**Operating threshold for generation**: use **THRESH ≈ −1.5 to −2.0** (recall-favoring; −2.0
-gave 88% chat recall). The baked-in `thresh` (−2.82) is the held-out 90%-recall point. Lower =
-more recall + more false fires; higher = fewer fires + less recall. See §7 for the trade.
+**Operating threshold**: fp32 generation → **THRESH ≈ −1.5 to −2.0** (−2.0 gave 88% chat recall).
+**4-bit (on-device) → THRESH ≈ −3.5** (see §9 — heads unchanged, only the threshold shifts). The
+baked-in `thresh` (−2.82) is the fp32 held-out 90%-recall point. Lower = more recall + more false
+fires; higher = fewer fires + less recall. Calibrate per build (see §9).
 
 ---
 
@@ -158,8 +159,44 @@ held-out, and == raw-QK in generation). Query side is the LLM hidden q, NOT a BG
 - Gate detection AUC: cot ≈ 0.90, chat ≈ 0.93 (maintained vs Dolphin-only chat 0.888).
 - Retrieval (held-out): BGE+bridge top-2 0.9997; learned QK indexer 0.998 (but worse in
   generation, 75%); raw BGE cosine 0.29 (don't use).
+- **4-bit (on-device)**: same heads, threshold −3.5 → recall 100% / retrieval 100% (vs 44% at the
+  fp32 threshold −2.0). Heads need NO retraining; only the threshold shifts. See §7b.
 
 ---
+
+## 7b. 4-bit quantization (on-device) — VERIFIED, important
+
+The 1.5B runs in 4-bit (nf4) on device. We tested whether the fp32-trained heads survive.
+
+**Result: the heads are quantization-robust. DO NOT retrain them for 4-bit.**
+- Held-out, scoring the **fp32 heads on 4-bit q features** (labels from fp32 attention, features
+  from the 4-bit model): **gate AUC cot 0.975 / chat 0.975**, **BGE bridge top-2 1.0**. Refitting
+  on 4-bit features was slightly *worse* (gate ~0.92, BGE 0.95) — so keep the fp32 heads.
+- The ONLY thing that shifts under 4-bit is the gate's **score scale** (the logistic
+  `decision_function` output drops), so the fp32 threshold fires too rarely. The *separation*
+  (AUC) is intact — it's purely an operating-point shift.
+
+**The single required change for 4-bit: lower the gate threshold ≈ −2.0 → −3.5.** Verified in
+generation (N=3, fp32 gate, 4-bit model, only threshold varied):
+
+| gate threshold | recall | retrieved | casual-fire |
+|---|---|---|---|
+| −2.0 (fp32 value) | 44% | 67% | 67% |
+| **−3.5 (use this at 4-bit)** | **100%** | **100%** | 67% |
+| −5.0 | 100% | 100% | 100% (over-fires) |
+
+So: **same `gate.npz` and `bge_head.npz`, threshold ≈ −3.5 at 4-bit.** Best practice: don't
+hardcode — at startup, run ~10 short needle dialogues through the 4-bit model, take the gate score
+distribution at known recall positions, and set the threshold to the ~10th percentile (target ~90%
+recall). raw BGE cosine stays 0.29 (bridge still required).
+
+**Residual caveat**: in 4-bit, `recall < retrieved` (the right block is injected but the value is
+not always copied). That gap is the **4-bit base model's copy ability**, not the recall mechanism
+(retrieval hits 100% at −3.5). If it matters, mitigate on the base model (e.g. keep a few layers /
+the lm_head at higher precision), not on the heads.
+
+(The `recall_q4/` folder on HF holds the 4-bit *refit* experiment + these numbers; the recommended
+heads remain the fp32 ones in `ondevice_recall/`.)
 
 ## 7. On-device notes
 
