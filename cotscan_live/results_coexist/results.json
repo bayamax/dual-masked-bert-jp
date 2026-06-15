@@ -1,0 +1,241 @@
+{
+ "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+ "win_turns": 4,
+ "recall_thr": -4.8687,
+ "web_thr": -3.1218,
+ "fire_matrix": {
+  "recall": {
+   "recall_fire": "4/4",
+   "web_fire": "1/4"
+  },
+  "web": {
+   "recall_fire": "2/3",
+   "web_fire": "3/3"
+  },
+  "both": {
+   "recall_fire": "3/3",
+   "web_fire": "3/3"
+  },
+  "known": {
+   "recall_fire": "0/2",
+   "web_fire": "2/2"
+  },
+  "casual": {
+   "recall_fire": "0/2",
+   "web_fire": "1/2"
+  }
+ },
+ "endtask_all_golds_hit": {
+  "recall": "2/4",
+  "web": "3/3",
+  "both": "3/3",
+  "known": "2/2"
+ },
+ "rows": [
+  {
+   "type": "recall",
+   "recall_fire": true,
+   "recall_s": 4.98,
+   "web_fire": false,
+   "web_s": -3.52,
+   "golds": [
+    "atlas03"
+   ],
+   "golds_hit": [
+    "atlas03"
+   ],
+   "all_hit": true,
+   "out": "Alright, so I'm trying to figure out what the server name is. The user mentioned that earlier in the conversation, the server name was \"atlas03.\" Now, they're a"
+  },
+  {
+   "type": "recall",
+   "recall_fire": true,
+   "recall_s": 5.23,
+   "web_fire": false,
+   "web_s": -3.71,
+   "golds": [
+    "47000 dollars"
+   ],
+   "golds_hit": [],
+   "all_hit": false,
+   "out": "Alright, so the user is asking about the budget cap for their guitar lessons. I remember in the previous conversation, they mentioned that the budget cap is $47"
+  },
+  {
+   "type": "recall",
+   "recall_fire": true,
+   "recall_s": 5.22,
+   "web_fire": true,
+   "web_s": -3.03,
+   "golds": [
+    "88231"
+   ],
+   "golds_hit": [],
+   "all_hit": false,
+   "out": "Alright, let me try to figure this out. The user initially mentioned that the traffic was an nightmare, so they were probably feeling stressed or worried. Then "
+  },
+  {
+   "type": "recall",
+   "recall_fire": true,
+   "recall_s": 5.12,
+   "web_fire": false,
+   "web_s": -3.47,
+   "golds": [
+    "Bluefin"
+   ],
+   "golds_hit": [
+    "Bluefin"
+   ],
+   "all_hit": true,
+   "out": "Alright, let me try to figure this out. The user initially mentioned they might take a short trip next month and was looking for a good reason. Then, they share"
+  },
+  {
+   "type": "web",
+   "recall_fire": true,
+   "recall_s": -4.76,
+   "web_fire": true,
+   "web_s": 1.23,
+   "golds": [
+    "nine"
+   ],
+   "golds_hit": [
+    "nine"
+   ],
+   "all_hit": true,
+   "out": "Okay, so I need to figure out how many members are on the Council of Threll. The user provided a reference that says it has nine voting members. Hmm, that seems"
+  },
+  {
+   "type": "web",
+   "recall_fire": false,
+   "recall_s": -4.96,
+   "web_fire": true,
+   "web_s": 1.05,
+   "golds": [
+    "ulven"
+   ],
+   "golds_hit": [
+    "ulven"
+   ],
+   "all_hit": true,
+   "out": "Okay, so I need to figure out what language is spoken in the kingdom of Ulventhia. The user provided some reference information that says the people of Ulventhi"
+  },
+  {
+   "type": "web",
+   "recall_fire": true,
+   "recall_s": -4.76,
+   "web_fire": true,
+   "web_s": -2.9,
+   "golds": [
+    "4,812"
+   ],
+   "golds_hit": [
+    "4,812"
+   ],
+   "all_hit": true,
+   "out": "I need to determine the height of Mount Drennakar. According to the provided reference information, Mount Drennakar is 4,812 meters tall.\n\nTo find the height, I"
+  },
+  {
+   "type": "both",
+   "recall_fire": true,
+   "recall_s": 4.52,
+   "web_fire": true,
+   "web_s": -1.63,
+   "golds": [
+    "7382",
+    "1847"
+   ],
+   "golds_hit": [
+    "7382",
+    "1847"
+   ],
+   "all_hit": true,
+   "out": "Alright, let me try to figure this out. The user mentioned that the vault code is 7382 and that the Treaty of Velmaran was signed in 1847. They also provided so"
+  },
+  {
+   "type": "both",
+   "recall_fire": true,
+   "recall_s": 4.32,
+   "web_fire": true,
+   "web_s": -0.78,
+   "golds": [
+    "514",
+    "1921"
+   ],
+   "golds_hit": [
+    "514",
+    "1921"
+   ],
+   "all_hit": true,
+   "out": "Alright, let me try to figure this out. The user mentioned that the locker number is 514 and that the Vorlith Institute of Technology was founded in 1921. They "
+  },
+  {
+   "type": "both",
+   "recall_fire": true,
+   "recall_s": 4.87,
+   "web_fire": true,
+   "web_s": -1.71,
+   "golds": [
+    "6207",
+    "hostrand"
+   ],
+   "golds_hit": [
+    "6207",
+    "hostrand"
+   ],
+   "all_hit": true,
+   "out": "Alright, let me try to figure this out. The user has been talking about their experiences with different places, specifically mentioning a new coffee place and "
+  },
+  {
+   "type": "known",
+   "recall_fire": false,
+   "recall_s": -5.26,
+   "web_fire": true,
+   "web_s": -1.88,
+   "golds": [
+    "pacific"
+   ],
+   "golds_hit": [
+    "pacific"
+   ],
+   "all_hit": true,
+   "out": "Okay, so I need to figure out what the largest ocean on Earth is. Hmm, I remember hearing that the Pacific Ocean is the biggest, but I'm not entirely sure. Let "
+  },
+  {
+   "type": "known",
+   "recall_fire": false,
+   "recall_s": -5.2,
+   "web_fire": true,
+   "web_s": -2.78,
+   "golds": [
+    "tokyo"
+   ],
+   "golds_hit": [
+    "tokyo"
+   ],
+   "all_hit": true,
+   "out": "Okay, so I need to figure out the capital of Japan. I remember that Japan is a big country, and capitals are usually the main cities, but I'm not exactly sure w"
+  },
+  {
+   "type": "casual",
+   "recall_fire": false,
+   "recall_s": -5.46,
+   "web_fire": true,
+   "web_s": -2.96,
+   "golds": [],
+   "golds_hit": [],
+   "all_hit": true,
+   "out": ""
+  },
+  {
+   "type": "casual",
+   "recall_fire": false,
+   "recall_s": -5.36,
+   "web_fire": false,
+   "web_s": -3.36,
+   "golds": [],
+   "golds_hit": [],
+   "all_hit": true,
+   "out": ""
+  }
+ ],
+ "elapsed_s": 442.7
+}
