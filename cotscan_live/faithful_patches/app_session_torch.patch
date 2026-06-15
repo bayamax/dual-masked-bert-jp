@@ -1,0 +1,177 @@
+--- a/app_session_torch.py
++++ b/app_session_torch.py
+@@ -72,12 +72,21 @@
+         """Compact user profile placed in the NEVER-EVICTED MQ prefix, so every turn —
+         chitchat included — knows who it is talking to. Declarative one-liner built from
+         persisted facts (recency-capped); never question-shaped (defect #3d)."""
+-        if not self.profile or not self.mem.persistent:
++        if not self.profile:
+             return self.tok.encode("") or [self.tok.bos_token_id]
+-        facts = [f for f in self.mem.persistent[-8:]
+-                 if not mc._is_question(f) and len(f.split()) <= 30]
+-        text = "(About the user: " + " ".join(facts) + ")\n"
+-        return self.tok.encode(text)
++        # ambient persona is ALWAYS present (even with no saved facts): without any steering
++        # the bare 1.5B refused benign chitchat ("I just adopted two kittens" -> "I can't
++        # assist with that request") and degenerated name lists. A short declarative persona
++        # in the never-evicted MQ prefix keeps chitchat warm and on-task. Never question-shaped.
++        persona = ("You are a warm, friendly personal assistant. You chat naturally and "
++                   "helpfully, and you never refuse a harmless message.")
++        text = persona
++        if self.mem.persistent:
++            facts = [f for f in self.mem.persistent[-8:]
++                     if not mc._is_question(f) and len(f.split()) <= 30]
++            if facts:
++                text += " (About the user: " + " ".join(facts) + ")"
++        return self.tok.encode(text + "\n") or [self.tok.bos_token_id]
+ 
+     def save_state(self, path):
+         """Persist the conversation stream so the NEXT session starts with the previous
+@@ -311,82 +320,48 @@
+             (self.mem.persist if store == "persist" else self.mem.remember_session)(user_msg)
+             self._stitch(user_msg, "Got it — saved.")
+             return "Got it — saved.", None, []
+-        intent = self.intent_of(user_msg)
+-        compute_like = intent in ("math", "command")
+-        # store-request phrased as a QUESTION ("Can you remember that my locker code is
+-        # 8042?"): interrogative shape routes it to recall, whose empty-retrieval honest
+-        # miss would answer "you haven't told me yet" to the very message telling us.
+-        # A persist verb + an assertable value = a save, whatever the punctuation.
++        # --- UNIFIED gated on-demand path (the 6-way intent router is removed) ----------
++        # No exclusive intent classifier. Every turn GENERATES; memory and web are gated by
++        # RETRIEVABILITY: BGE-search memory (the recall gate — chunks come back only above
++        # the relevance floor) and, on a miss, a web search (the web gate). Inject only what
++        # actually clears the floor; otherwise just answer from the model + persona. This is
++        # the "gated on-demand BGE recall + web" design replacing fact-ack / honest-miss /
++        # lookup->web-refuse / math-exclusive branching.
+         head = " ".join(user_msg.split()[:8])
++        is_math = looks_mathy(user_msg)
++        compute_like = is_math
++        spans = self.specific_spans(user_msg)
++        # explicit save COMMAND (not a routed class): persist + instant ack, no generation.
+         if mc.wants_persist(head) and len(user_msg.split()) <= 30 \
+-                and mc._FACTLIKE.search(user_msg) and self.specific_spans(user_msg):
+-            self.mem.persist(user_msg)
+-            self.mem.pin(user_msg)
+-            self._stitch(user_msg, "Got it — saved.")
+-            return "Got it — saved.", None, []
+-        if intent not in ("recall", "lookup") and self.specific_spans(user_msg):
+-            self.mem.pin(user_msg)
+-        if intent == "fact":
+-            # facts bypass generation (OPERATING.md): log + instant ack. Generating here
+-            # wastes a full turn AND pollutes the conversation stream — the composite
+-            # battery showed the previous fact's ramble bleeding into the next chitchat.
+-            if store == "persist" or mc.wants_persist(user_msg):
+-                self.mem.persist(user_msg)
+-            else:
+-                self.mem.remember_session(user_msg)
++                and mc._FACTLIKE.search(user_msg) and spans:
++            self.mem.persist(user_msg); self.mem.pin(user_msg)
+             self._stitch(user_msg, "Got it — saved.")
+             return "Got it — saved.", None, []
+-        if intent == "recall":
+-            src, chunks = self.mem.retrieve_personal(user_msg)
+-            if not chunks:
+-                # honest miss. Free generation here CONFABULATES (composite v2 B3: asked for
+-                # a never-stated wifi password, the model invented "password123"). A recall
+-                # is a lookup into the user's saved facts; an empty lookup has exactly one
+-                # truthful answer, and it costs zero tokens.
+-                ans = "I don't have that saved — you haven't told me yet."
+-                self._stitch(user_msg, ans)
+-                return (ans, None, [])
+-        elif intent == "lookup":
+-            # known-fact first (strict): a personal question that surface-classifies as a
+-            # world lookup ('Where does my sister live?', 'Where does Daniel live?') must
+-            # quote what the user told us, not hit the web (composite v3 B3/B4).
+-            src, chunks = self.mem.retrieve_known(user_msg)
+-            if not chunks:
+-                wm_only = [p for p in self.mem.pins if p not in self.mem.session]
+-                mp = mc._sem_matches(user_msg, wm_only, self.bge, min_sim=0.5) if wm_only else None
+-                if mp:
+-                    src, chunks = "WM·pins", mp
+-                else:
+-                    q = expand_web_query(user_msg, self.mem.pins, self.mem.session)
+-                    src, chunks = self._web_retrieve(q)
+-                    # rank/conf with the EXPANDED query: it carries the anchor value, so
+-                    # the chunk sharing it wins the closest-note pick and can clear the
+-                    # confidence bar (live oil test: unexpanded ranking chose the Brent
+-                    # chunk over the queried \$86.78 WTI one)
+-                    self._rank_query = q if q != user_msg else None
+-                    if not chunks:
+-                        # 26: offline/failed lookup must NOT fall through to free
+-                        # generation — the 1.5B invents figures ("Mount Fuji is 2,0900
+-                        # meters", full demo). A lookup means CHECKED knowledge; if we
+-                        # cannot check, say so.
+-                        ans = ("I can't look that up right now (no web access). "
+-                               "Ask me again when I'm back online.")
+-                        self._stitch(user_msg, ans)
+-                        return (ans, None, [])
+-        elif intent == "command" and (self.mem.session or self.mem.pins):
+-            log = self.mem.session[-self.mem.LOGCAP:]
+-            # a pin is redundant when a log line EXTENDS it ('<question> — result: 24'
+-            # startswith '<question>'): re-injecting the bare question next to its answered
+-            # form is what tangled the follow-up math turn in the composite battery.
+-            chunks = log + [c for c in self.mem.pins if not any(l.startswith(c) for l in log)]
+-            src = "L1·same-session" + ("+WM·pins" if self.mem.pins else "")
+-        elif intent == "math" and any(p != user_msg for p in self.mem.pins):
++        # recall gate: only QUESTIONS query memory. A declarative statement ("my budget is
++        # 47000", "the weather's been lovely") must not be treated as a retrieval query —
++        # that took the closest-note path and replied with an unrelated saved note. Retrieve
++        # from PRIOR memory BEFORE logging this turn (else it self-matches and echoes input).
++        src, chunks = (self.mem.retrieve_personal(user_msg)
++                       if mc._is_question(user_msg) else (None, []))
++        # a compute turn pulls recent values/results ONLY when it back-references them
++        # ("add 10 to that", "what's the total now") — a self-contained "18 times 7" must not
++        # drag in unrelated pins (the weather line made the model digress mid-arithmetic).
++        backref = re.search(r"\b(that|those|this|it|them|the (total|result|sum|answer|amount)|"
++                            r"previous|earlier|above|so far|now)\b", user_msg, re.I)
++        if is_math and backref and not chunks and any(p != user_msg for p in self.mem.pins):
+             prev = [p for p in self.mem.pins if p != user_msg and not mc._is_question(p)]
+             log = [l for l in self.mem.session[-self.mem.LOGCAP:] if not mc._is_question(l)]
+             chunks = log + [c for c in prev if not any(l.startswith(c) for l in log)]
+-            src = "WM·pins" + ("+L1" if log else "")
+-        else:
+-            src, chunks = None, []
++            src = ("WM·pins" + ("+L1" if log else "")) if chunks else None
++        # web gate: a knowledge question with no memory hit and web available -> search.
++        if not chunks and self.web is not None and not is_math and mc._is_question(user_msg):
++            q = expand_web_query(user_msg, self.mem.pins, self.mem.session)
++            src, chunks = self._web_retrieve(q)
++            self._rank_query = q if q != user_msg else None
++        # NOW log + pin the current turn (for FUTURE recall), after retrieval.
++        if spans:
++            self.mem.pin(user_msg)
++        (self.mem.persist if store == "persist" else self.mem.remember_session)(user_msg)
+         if chunks and compute_like:
+             # keep compute injections SHORT and question-first. The verbatim MLX template
+             # (context first + a meta-instruction about she/it/corrections) made the 1.5B
+@@ -487,17 +462,14 @@
+                 answer = fixed
+         if quote_recall:
+             self._stitch(user_msg, answer)             # isolated quote leaves a trace too
+-            if intent == "lookup" and src and src.startswith("L3") \
++            if src and src.startswith("L3") \
+                     and mc._answer_ok(answer, chunks, user_msg):
+                 # 23: web results were remembered NOWHERE (compute results self-log via
+                 # #3b, lookups didn't — asymmetry). "Can you verify the number?" right
+                 # after a successful oil-price lookup hit the honest-miss wall. Log the
+                 # grounded answer declaratively so follow-ups can reference it.
+                 self.mem.remember_session(f"Earlier looked up: {answer[:160]}")
+-        if store == "persist":
+-            self.mem.persist(user_msg)
+-        elif store == "session" and intent == "fact":
+-            self.mem.remember_session(user_msg)
++        # (the turn was already logged to memory at the top of turn(); no re-save here)
+         if compute_like and mc._answer_ok(answer, [], user_msg):
+             # self-log the RESULT of a compute turn. The follow-up battery showed why: the
+             # log carries the previous QUESTION but not its answer, so "I pay with $50,
+@@ -518,4 +490,9 @@
+                 self.mem.session = [l for l in self.mem.session
+                                     if not l.startswith("Earlier computed result:")]
+                 self.mem.remember_session(f"Earlier computed result: {val}.")
++        # display normalization: the model emits math results as raw LaTeX (\boxed{1566.67});
++        # surface the bare value/text to the user instead of leaking markup.
++        if answer:
++            answer = re.sub(r"\\boxed\s*\{([^}]*)\}", r"\1", answer)
++            answer = re.sub(r"\\[\[\]()]|\${1,2}", "", answer).strip()
+         return answer, src, chunks

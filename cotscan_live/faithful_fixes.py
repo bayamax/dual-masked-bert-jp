@@ -1,103 +1,48 @@
 """faithful_fixes.py — app-quality fixes to the canonical runtime, applied to faithful_run/
-after faithful_setup.py. Each fix is an idempotent string replacement on the upstream file
-(faithful_run is gitignored; this script is the tracked record of the changes + rationale).
+after faithful_setup.py. The fixes were discovered by conversing with the live AppSession.turn()
+(see conv*.log transcripts) and are captured as a unified diff in faithful_patches/ so the whole
+set reproduces from the upstream file in one apply. faithful_run is gitignored; this script +
+the patch are the tracked record.
 
 Run:  python3 faithful_setup.py && python3 faithful_fixes.py
-Discovered by conversing with the live AppSession.turn() (see conv*.log transcripts).
+
+Changes in faithful_patches/app_session_torch.patch:
+  FIX3  ambient assistant persona ALWAYS in the MQ prefix (even with no saved facts) — the bare
+        1.5B refused benign chitchat ("I just adopted two kittens" -> "I can't assist") and
+        emitted garbage name lists; persona keeps chitchat warm/on-task.
+  FIX2  strip raw LaTeX from user-facing answers (\\boxed{1566.67} -> 1566.67).
+  FIX4  REMOVE the 6-way intent router (fact-ack / recall / lookup->web / command / math /
+        chitchat). Unify to one generative turn with GATED on-demand retrieval:
+          - recall gate: BGE-search memory on QUESTIONS only (relevance floor = the gate),
+            retrieved BEFORE logging the turn (else it self-matches and echoes the user);
+          - web gate: a knowledge question with no memory hit + web available -> web search;
+          - otherwise just generate (so "capital of France" is answered from parametric
+            knowledge instead of refusing offline);
+          - compute context is pulled only when the math turn back-references it ("add 10 to
+            that"), so a self-contained "18 times 7" doesn't drag in unrelated pins.
+        (This subsumes the earlier casual-not-fact fix: casual statements now generate.)
 """
-import os, sys
-RUN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "faithful_run")
+import os, sys, subprocess
+HERE = os.path.dirname(os.path.abspath(__file__))
+RUN = os.path.join(HERE, "faithful_run")
 APP = os.path.join(RUN, "app_session_torch.py")
-
-
-def patch(path, old, new, tag):
-    s = open(path).read()
-    if new in s:
-        print(f"[skip] {tag}: already applied"); return
-    if old not in s:
-        print(f"[WARN] {tag}: anchor not found — upstream changed?"); return
-    open(path, "w").write(s.replace(old, new, 1))
-    print(f"[ok]   {tag}")
-
-
-# ---- FIX #1: casual chat misrouted as "fact" -> canned "Got it — saved." instead of a reply.
-# The intent clf over-fires "fact" on first-person narrative ("work has been hectic", "the
-# weather's been nice", "tried a new ramen place"). Only ack-save when there is something to
-# save (explicit persist request or a specificity-probe value); else fall through to chitchat.
-FIX1_OLD = '''        if intent == "fact":
-            # facts bypass generation (OPERATING.md): log + instant ack. Generating here
-            # wastes a full turn AND pollutes the conversation stream — the composite
-            # battery showed the previous fact's ramble bleeding into the next chitchat.
-            if store == "persist" or mc.wants_persist(user_msg):
-                self.mem.persist(user_msg)
-            else:
-                self.mem.remember_session(user_msg)
-            self._stitch(user_msg, "Got it — saved.")
-            return "Got it — saved.", None, []'''
-FIX1_NEW = '''        if intent == "fact":
-            # facts bypass generation (OPERATING.md): log + instant ack. BUT the intent clf
-            # over-fires "fact" on casual first-person narrative ("work has been hectic",
-            # "the weather's been nice", "tried a new ramen place") -> every chitchat turn
-            # got a canned "Got it — saved." instead of a reply. Only treat it as a savable
-            # fact when there is something to save: an explicit persist request or a
-            # specificity-probe value (JL412, 47000, a proper noun). Otherwise fall through
-            # to a normal chitchat reply (still logged to session for recall context).
-            if store == "persist" or mc.wants_persist(user_msg) or self.specific_spans(user_msg):
-                if store == "persist" or mc.wants_persist(user_msg):
-                    self.mem.persist(user_msg)
-                else:
-                    self.mem.remember_session(user_msg)
-                self._stitch(user_msg, "Got it — saved.")
-                return "Got it — saved.", None, []
-            self.mem.remember_session(user_msg)
-            intent = "chitchat"'''
-
-# ---- FIX #2: math answers leak raw LaTeX (\boxed{1566.67}) to the user. Normalize the
-# returned answer for display: unwrap \boxed{X} -> X and drop stray \[ \] \( \) $ markup.
-# Minimal anchor on the final return so it reproduces on a fresh download.
-FIX2_OLD = '''                self.mem.remember_session(f"Earlier computed result: {val}.")
-        return answer, src, chunks'''
-FIX2_NEW = r'''                self.mem.remember_session(f"Earlier computed result: {val}.")
-        # display normalization: the model emits math results as raw LaTeX (\boxed{1566.67});
-        # surface the bare value/text to the user instead of leaking markup.
-        if answer:
-            answer = re.sub(r"\\boxed\s*\{([^}]*)\}", r"\1", answer)
-            answer = re.sub(r"\\[\[\]()]|\${1,2}", "", answer).strip()
-        return answer, src, chunks'''
-
-# ---- FIX #3: with no steering the bare 1.5B refused benign chitchat ("I just adopted two
-# kittens" -> "I can't assist with that request") and emitted garbage name lists. Make the
-# never-evicted MQ profile prefix ALWAYS carry a short, declarative assistant persona (even
-# with zero saved facts) so chitchat stays warm and on-task. Verified: refusal gone, names coherent.
-FIX3_OLD = '''        if not self.profile or not self.mem.persistent:
-            return self.tok.encode("") or [self.tok.bos_token_id]
-        facts = [f for f in self.mem.persistent[-8:]
-                 if not mc._is_question(f) and len(f.split()) <= 30]
-        text = "(About the user: " + " ".join(facts) + ")\\n"
-        return self.tok.encode(text)'''
-FIX3_NEW = '''        if not self.profile:
-            return self.tok.encode("") or [self.tok.bos_token_id]
-        # ambient persona is ALWAYS present (even with no saved facts): without any steering
-        # the bare 1.5B refused benign chitchat ("I just adopted two kittens" -> "I can't
-        # assist with that request") and degenerated name lists. A short declarative persona
-        # in the never-evicted MQ prefix keeps chitchat warm and on-task. Never question-shaped.
-        persona = ("You are a warm, friendly personal assistant. You chat naturally and "
-                   "helpfully, and you never refuse a harmless message.")
-        text = persona
-        if self.mem.persistent:
-            facts = [f for f in self.mem.persistent[-8:]
-                     if not mc._is_question(f) and len(f.split()) <= 30]
-            if facts:
-                text += " (About the user: " + " ".join(facts) + ")"
-        return self.tok.encode(text + "\\n") or [self.tok.bos_token_id]'''
+PATCH = os.path.join(HERE, "faithful_patches", "app_session_torch.patch")
 
 
 def main():
     if not os.path.exists(APP):
         print("faithful_run/app_session_torch.py missing — run faithful_setup.py first"); sys.exit(1)
-    patch(APP, FIX1_OLD, FIX1_NEW, "FIX1 casual-not-fact")
-    patch(APP, FIX2_OLD, FIX2_NEW, "FIX2 strip-latex-boxed")
-    patch(APP, FIX3_OLD, FIX3_NEW, "FIX3 ambient-persona")
+    # idempotent: --forward skips hunks already applied; check reverse-apply to detect "done".
+    done = subprocess.run(["patch", "-R", "-s", "-f", "--dry-run", APP, PATCH],
+                          capture_output=True, text=True).returncode == 0
+    if done:
+        print("[skip] app_session_torch.py already patched"); return
+    r = subprocess.run(["patch", "-s", "--forward", APP, PATCH], capture_output=True, text=True)
+    if r.returncode == 0:
+        print("[ok]   applied faithful_patches/app_session_torch.patch")
+    else:
+        print("[FAIL] patch did not apply cleanly — upstream may have changed:")
+        print(r.stdout, r.stderr); sys.exit(1)
 
 
 if __name__ == "__main__":
