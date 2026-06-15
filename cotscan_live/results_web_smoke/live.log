@@ -1,0 +1,17 @@
+[web-smoke] model=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B layers=(8, 14, 20)
+[web-smoke] loaded in 34s | known=24 web=24
+  harvested 8/24 t=4s dim=4608
+  harvested 16/24 t=9s dim=4608
+  harvested 24/24 t=13s dim=4608
+  harvested 8/24 t=3s dim=4608
+  harvested 16/24 t=6s dim=4608
+  harvested 24/24 t=10s dim=4608
+[onset(last-token)] AUC(oof)=0.9792 perfold=0.992 confusion(TN,FP/FN,TP)=[[21, 3], [1, 23]]
+[mean-pooled] AUC(oof)=0.9983 perfold=1.0 confusion(TN,FP/FN,TP)=[[24, 0], [1, 23]]
+
+=== WEB TRIGGER SMOKE ===
+  feat_dim=4608 (3 layers x q_proj)
+  onset      AUC=0.9792
+  mean-pooled AUC=0.9983
+  AUC ~0.5 => trigger dead; >>0.5 => web trigger is driveable
+DONE t=57.7s

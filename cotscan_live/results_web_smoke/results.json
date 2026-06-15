@@ -1,0 +1,44 @@
+{
+ "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+ "layers": [
+  8,
+  14,
+  20
+ ],
+ "feat_dim": 4608,
+ "onset": {
+  "tag": "onset(last-token)",
+  "auc_oof": 0.9792,
+  "auc_perfold_mean": 0.992,
+  "confusion_[[TN,FP],[FN,TP]]": [
+   [
+    21,
+    3
+   ],
+   [
+    1,
+    23
+   ]
+  ],
+  "n_known": 24,
+  "n_web": 24
+ },
+ "mean_pooled": {
+  "tag": "mean-pooled",
+  "auc_oof": 0.9983,
+  "auc_perfold_mean": 1.0,
+  "confusion_[[TN,FP],[FN,TP]]": [
+   [
+    24,
+    0
+   ],
+   [
+    1,
+    23
+   ]
+  ],
+  "n_known": 24,
+  "n_web": 24
+ },
+ "elapsed_s": 57.7
+}
