@@ -1,0 +1,18 @@
+{
+ "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+ "web_thr": -0.7554,
+ "fire": {
+  "web_held": "8/8",
+  "known_held": "1/6",
+  "casual_held": "0/5",
+  "gsm8k_held": "0/10",
+  "dolphin_held": "0/3"
+ },
+ "negatives_in_training": [
+  "known",
+  "casual",
+  "gsm8k",
+  "dolphin"
+ ],
+ "elapsed_s": 47.3
+}

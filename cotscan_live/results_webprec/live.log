@@ -1,3 +1,18 @@
 [webprec] loaded 2s
 [data] known=14 casual=10 web=16 gsm=24 dolphin=8
 [harvest] features ...
+[gate] web thr=-0.76 (97th pct of held negatives, n=24)
+  fire web      : 8/8  (want high)  scores~[0.2,4.3]
+  fire known    : 1/6  (want 0)  scores~[-2.7,-0.5]
+  fire casual   : 0/5  (want 0)  scores~[-4.2,-2.8]
+  fire gsm8k    : 0/10  (want 0)  scores~[-6.6,-5.4]
+  fire dolphin  : 0/3  (want 0)  scores~[-6.0,-5.4]
+
+=== WEB PRECISION under reasoning/chat negatives (coexistence tuning) ===
+  web_held      : 8/8
+  known_held    : 1/6
+  casual_held   : 0/5
+  gsm8k_held    : 0/10
+  dolphin_held  : 0/3
+  GOAL: web_held high; known/casual/gsm8k/dolphin = 0  => web stays silent on reasoning => safe to coexist with recall
+DONE t=47.3s
