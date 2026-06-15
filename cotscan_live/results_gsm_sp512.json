@@ -1,0 +1,250 @@
+{
+ "n": 30,
+ "correct": 18,
+ "acc": 0.6,
+ "rw": 512,
+ "compressed_count": 19,
+ "results": [
+  {
+   "i": 0,
+   "gold": "18",
+   "pred": "18",
+   "correct": true,
+   "tokens": 430,
+   "kept": 0
+  },
+  {
+   "i": 1,
+   "gold": "3",
+   "pred": "3",
+   "correct": true,
+   "tokens": 302,
+   "kept": 0
+  },
+  {
+   "i": 2,
+   "gold": "70000",
+   "pred": "200000",
+   "correct": false,
+   "tokens": 606,
+   "kept": 64
+  },
+  {
+   "i": 3,
+   "gold": "540",
+   "pred": "180",
+   "correct": false,
+   "tokens": 280,
+   "kept": 0
+  },
+  {
+   "i": 4,
+   "gold": "20",
+   "pred": "20",
+   "correct": true,
+   "tokens": 487,
+   "kept": 0
+  },
+  {
+   "i": 5,
+   "gold": "64",
+   "pred": "64",
+   "correct": true,
+   "tokens": 600,
+   "kept": 64
+  },
+  {
+   "i": 6,
+   "gold": "260",
+   "pred": "260",
+   "correct": true,
+   "tokens": 591,
+   "kept": 64
+  },
+  {
+   "i": 7,
+   "gold": "160",
+   "pred": "120",
+   "correct": false,
+   "tokens": 616,
+   "kept": 64
+  },
+  {
+   "i": 8,
+   "gold": "45",
+   "pred": "150",
+   "correct": false,
+   "tokens": 650,
+   "kept": 64
+  },
+  {
+   "i": 9,
+   "gold": "460",
+   "pred": "460",
+   "correct": true,
+   "tokens": 605,
+   "kept": 64
+  },
+  {
+   "i": 10,
+   "gold": "366",
+   "pred": "366",
+   "correct": true,
+   "tokens": 607,
+   "kept": 64
+  },
+  {
+   "i": 11,
+   "gold": "694",
+   "pred": "694",
+   "correct": true,
+   "tokens": 485,
+   "kept": 0
+  },
+  {
+   "i": 12,
+   "gold": "13",
+   "pred": "12",
+   "correct": false,
+   "tokens": 612,
+   "kept": 64
+  },
+  {
+   "i": 13,
+   "gold": "18",
+   "pred": "18",
+   "correct": true,
+   "tokens": 602,
+   "kept": 64
+  },
+  {
+   "i": 14,
+   "gold": "60",
+   "pred": "20",
+   "correct": false,
+   "tokens": 587,
+   "kept": 64
+  },
+  {
+   "i": 15,
+   "gold": "125",
+   "pred": "1000",
+   "correct": false,
+   "tokens": 641,
+   "kept": 64
+  },
+  {
+   "i": 16,
+   "gold": "230",
+   "pred": "230",
+   "correct": true,
+   "tokens": 601,
+   "kept": 64
+  },
+  {
+   "i": 17,
+   "gold": "57500",
+   "pred": "57500",
+   "correct": true,
+   "tokens": 606,
+   "kept": 64
+  },
+  {
+   "i": 18,
+   "gold": "7",
+   "pred": "7",
+   "correct": true,
+   "tokens": 572,
+   "kept": 0
+  },
+  {
+   "i": 19,
+   "gold": "6",
+   "pred": "6",
+   "correct": true,
+   "tokens": 609,
+   "kept": 64
+  },
+  {
+   "i": 20,
+   "gold": "15",
+   "pred": "3",
+   "correct": false,
+   "tokens": 612,
+   "kept": 64
+  },
+  {
+   "i": 21,
+   "gold": "14",
+   "pred": "14",
+   "correct": true,
+   "tokens": 593,
+   "kept": 64
+  },
+  {
+   "i": 22,
+   "gold": "7",
+   "pred": "7",
+   "correct": true,
+   "tokens": 441,
+   "kept": 0
+  },
+  {
+   "i": 23,
+   "gold": "8",
+   "pred": "8",
+   "correct": true,
+   "tokens": 583,
+   "kept": 0
+  },
+  {
+   "i": 24,
+   "gold": "26",
+   "pred": "26",
+   "correct": true,
+   "tokens": 583,
+   "kept": 0
+  },
+  {
+   "i": 25,
+   "gold": "2",
+   "pred": "7",
+   "correct": false,
+   "tokens": 615,
+   "kept": 64
+  },
+  {
+   "i": 26,
+   "gold": "243",
+   "pred": "243",
+   "correct": true,
+   "tokens": 451,
+   "kept": 0
+  },
+  {
+   "i": 27,
+   "gold": "16",
+   "pred": "240",
+   "correct": false,
+   "tokens": 625,
+   "kept": 64
+  },
+  {
+   "i": 28,
+   "gold": "25",
+   "pred": "1",
+   "correct": false,
+   "tokens": 616,
+   "kept": 64
+  },
+  {
+   "i": 29,
+   "gold": "104",
+   "pred": "94",
+   "correct": false,
+   "tokens": 388,
+   "kept": 0
+  }
+ ],
+ "final": true
+}

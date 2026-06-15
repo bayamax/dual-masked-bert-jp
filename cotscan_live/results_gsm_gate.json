@@ -1,0 +1,953 @@
+{
+  "elapsed_s": 1131.4,
+  "device": "cuda",
+  "N": 30,
+  "done": 29,
+  "decode": "greedy",
+  "running_acc": {
+    "OFF": 0,
+    "TURN": 9,
+    "GATE": 5
+  },
+  "config": {
+    "rw": 512,
+    "C": 64,
+    "cap": 512,
+    "recall_k": 2,
+    "layers": [
+      8,
+      14,
+      20
+    ]
+  },
+  "results": [
+    {
+      "i": 0,
+      "gold": "18",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "20",
+          "n_recall": 1,
+          "tokens": 559,
+          "answer": " 20 dollars per day.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "16",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 16 dollars.",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.85,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 1,
+      "gold": "3",
+      "arms": {
+        "OFF": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "5",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 5 boxes.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "fired": false,
+          "first_fire_tok": null,
+          "gate_max": -0.34,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 8,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 2,
+      "gold": "70000",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "70000",
+          "n_recall": 1,
+          "tokens": 559,
+          "answer": " 70,000",
+          "correct": true
+        },
+        "GATE": {
+          "pred": "40000",
+          "n_recall": 1,
+          "tokens": 559,
+          "answer": " 40,000",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.88,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 3,
+      "gold": "540",
+      "arms": {
+        "OFF": {
+          "pred": "28",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 28 girls.",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "540",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 540 meters.",
+          "correct": true
+        },
+        "GATE": {
+          "pred": "28",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 28 girls.",
+          "fired": false,
+          "first_fire_tok": null,
+          "gate_max": -0.34,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 8,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 4,
+      "gold": "20",
+      "arms": {
+        "OFF": {
+          "pred": "1200",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 1200",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "20",
+          "n_recall": 1,
+          "tokens": 570,
+          "answer": " 120 cups of feed are needed for 20 chickens over a week.",
+          "correct": true
+        },
+        "GATE": {
+          "pred": "1200",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 1200",
+          "fired": false,
+          "first_fire_tok": null,
+          "gate_max": -2.54,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 8,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 5,
+      "gold": "64",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "80",
+          "n_recall": 1,
+          "tokens": 566,
+          "answer": " 16 glasses at $5 each, totaling $80.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "5000",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 5000",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.88,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 6,
+      "gold": "260",
+      "arms": {
+        "OFF": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 100 sheep.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "140",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 140",
+          "fired": true,
+          "first_fire_tok": 192,
+          "gate_max": 0.75,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 3,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 7,
+      "gold": "160",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 100 minutes.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "120",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 120 minutes",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.85,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 8,
+      "gold": "45",
+      "arms": {
+        "OFF": {
+          "pred": "1200",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 1200",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "1.5",
+          "n_recall": 1,
+          "tokens": 567,
+          "answer": " 1.5D hours, where D is the one-way distance.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "1200",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 1200",
+          "fired": false,
+          "first_fire_tok": null,
+          "gate_max": -2.54,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 8,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 9,
+      "gold": "460",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "460",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 460",
+          "correct": true
+        },
+        "GATE": {
+          "pred": "460",
+          "n_recall": 1,
+          "tokens": 559,
+          "answer": " 460.00",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.87,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": true
+        }
+      }
+    },
+    {
+      "i": 10,
+      "gold": "366",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "162",
+          "n_recall": 1,
+          "tokens": 561,
+          "answer": " 162 downloads over three months.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "120",
+          "n_recall": 1,
+          "tokens": 564,
+          "answer": " 120 downloads in total over the three months.",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.87,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 11,
+      "gold": "694",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "120",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 120.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "694",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 694",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.84,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": true
+        }
+      }
+    },
+    {
+      "i": 12,
+      "gold": "13",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "12",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 12 years.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "21",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 21 years.",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.84,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 13,
+      "gold": "18",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "21",
+          "n_recall": 1,
+          "tokens": 555,
+          "answer": " 21",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "12",
+          "n_recall": 1,
+          "tokens": 555,
+          "answer": " 12",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.88,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 14,
+      "gold": "60",
+      "arms": {
+        "OFF": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "25",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 25%",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 100%",
+          "fired": true,
+          "first_fire_tok": 192,
+          "gate_max": 0.75,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 3,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 15,
+      "gold": "125",
+      "arms": {
+        "OFF": {
+          "pred": "1200",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 1200",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "125",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 125",
+          "correct": true
+        },
+        "GATE": {
+          "pred": "7",
+          "n_recall": 1,
+          "tokens": 577,
+          "answer": "  $5,000 in the 5% investment and $5,000 in the 7%",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.68,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 16,
+      "gold": "230",
+      "arms": {
+        "OFF": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 100 miles.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "2",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 2 hours.",
+          "fired": true,
+          "first_fire_tok": 192,
+          "gate_max": 0.75,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 3,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 17,
+      "gold": "57500",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "15",
+          "n_recall": 1,
+          "tokens": 562,
+          "answer": " 15 boys and 15 girls.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 100 visitors.",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.88,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 18,
+      "gold": "7",
+      "arms": {
+        "OFF": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "28",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 28 girls.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "fired": false,
+          "first_fire_tok": null,
+          "gate_max": -0.34,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 8,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 19,
+      "gold": "6",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "6",
+          "n_recall": 1,
+          "tokens": 555,
+          "answer": " 6 mph",
+          "correct": true
+        },
+        "GATE": {
+          "pred": "4",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 4 miles per hour.",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.85,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 20,
+      "gold": "15",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 100%",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "15",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 15 liters",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.85,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": true
+        }
+      }
+    },
+    {
+      "i": 21,
+      "gold": "14",
+      "arms": {
+        "OFF": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "14",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 14 years.",
+          "correct": true
+        },
+        "GATE": {
+          "pred": "1.5",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 1.5 days",
+          "fired": true,
+          "first_fire_tok": 192,
+          "gate_max": 0.75,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 3,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 22,
+      "gold": "7",
+      "arms": {
+        "OFF": {
+          "pred": "28",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 28 girls.",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "7",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 7 DVDs.",
+          "correct": true
+        },
+        "GATE": {
+          "pred": "10",
+          "n_recall": 1,
+          "tokens": 577,
+          "answer": " 10 staff members are needed to refresh the cafeteria menu, repave the parking lot, update the visitor badge policy,",
+          "fired": true,
+          "first_fire_tok": 192,
+          "gate_max": 0.75,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 3,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 23,
+      "gold": "8",
+      "arms": {
+        "OFF": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "12",
+          "n_recall": 1,
+          "tokens": 562,
+          "answer": " 18 boys and 12 girls.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "4",
+          "n_recall": 1,
+          "tokens": 555,
+          "answer": " 4 hours",
+          "fired": true,
+          "first_fire_tok": 192,
+          "gate_max": 0.75,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 3,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 24,
+      "gold": "26",
+      "arms": {
+        "OFF": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "26",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 26.00",
+          "correct": true
+        },
+        "GATE": {
+          "pred": "28",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 28 girls",
+          "fired": true,
+          "first_fire_tok": 192,
+          "gate_max": 0.75,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 3,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 25,
+      "gold": "2",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "1",
+          "n_recall": 1,
+          "tokens": 577,
+          "answer": " 2\n\nStep-by-step explanation:\n\n1. **Calculate the total cost of non-pizza items:**\n   - Chicken",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "4",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 4 boxes of pizza.",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.85,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 26,
+      "gold": "243",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "322.5",
+          "n_recall": 1,
+          "tokens": 568,
+          "answer": " 322.50\n\n<|end_of_thought|>",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "243",
+          "n_recall": 1,
+          "tokens": 559,
+          "answer": " 243.00",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.85,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": true
+        }
+      }
+    },
+    {
+      "i": 27,
+      "gold": "16",
+      "arms": {
+        "OFF": {
+          "pred": "50",
+          "n_recall": 0,
+          "tokens": 555,
+          "answer": " 50",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "4",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 4 cartons.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "16",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 16.00",
+          "fired": true,
+          "first_fire_tok": 64,
+          "gate_max": 2.87,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 1,
+          "correct": true
+        }
+      }
+    },
+    {
+      "i": 28,
+      "gold": "25",
+      "arms": {
+        "OFF": {
+          "pred": "2.4",
+          "n_recall": 0,
+          "tokens": 557,
+          "answer": " 2.4 hours",
+          "correct": false
+        },
+        "TURN": {
+          "pred": "5",
+          "n_recall": 1,
+          "tokens": 571,
+          "answer": " 500 pages / 100 pages per toner = 5 times.",
+          "correct": false
+        },
+        "GATE": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 100%",
+          "fired": true,
+          "first_fire_tok": 192,
+          "gate_max": 0.75,
+          "gate_thresh": 0.0,
+          "n_gate_checks": 3,
+          "correct": false
+        }
+      }
+    }
+  ]
+}

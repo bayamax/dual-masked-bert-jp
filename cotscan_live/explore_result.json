@@ -1,0 +1,53 @@
+{
+  "data": {
+    "gate_pts_held": 22589,
+    "pos_held": 3227,
+    "idx_held": 3227
+  },
+  "A_gate_operating_point": {
+    "auc": 0.9537,
+    "best_f1": {
+      "f1": 0.725,
+      "precision": 0.674,
+      "recall": 0.785,
+      "thresh": 0.696
+    },
+    "recall_at_p0.9": 0.359,
+    "precision_at_r0.9": 0.526,
+    "shipped_threshold": {
+      "thresh": 4.04,
+      "precision": 0.866,
+      "recall": 0.469
+    }
+  },
+  "B_gate_model_search": {
+    "logistic_auc": 0.95,
+    "mlp256_auc": 0.9607,
+    "mlp512_auc": 0.9604
+  },
+  "C_backward_scan": {
+    "tau=-32.12": {
+      "reach_rate": 0.755,
+      "avg_blocks_scanned": 7.18
+    },
+    "tau=-31.70": {
+      "reach_rate": 0.616,
+      "avg_blocks_scanned": 7.22
+    },
+    "tau=-31.32": {
+      "reach_rate": 0.445,
+      "avg_blocks_scanned": 7.22
+    },
+    "gold_recency_rank": {
+      "mean": 6.49,
+      "median": 7,
+      "frac_in_recent_3": 0.001,
+      "frac_in_recent_8": 0.747
+    }
+  },
+  "D_bge_small": {
+    "note": "skipped (block texts not in IX rows); base bge_head is canonical"
+  },
+  "final": true,
+  "elapsed_s": 340.4
+}

@@ -1,0 +1,31 @@
+{
+  "elapsed_s": 202.1,
+  "config": {
+    "n_train": 300,
+    "n_held": 100,
+    "cot": [
+      1000,
+      1600
+    ],
+    "pos_frac": 0.08
+  },
+  "gate": {
+    "train_pts": 79569,
+    "train_pos": 11367,
+    "held_pts": 27657,
+    "held_pos": 3951,
+    "heldout_auc": 0.9584
+  },
+  "indexer": {
+    "train_pos": 11367,
+    "held_pos": 3951,
+    "heldout_top2": 0.9995,
+    "raw_qk_heldout_top2": 0.8069
+  },
+  "bge": {
+    "raw_bge_top2": 0.2855,
+    "learned_bge_head_top2": 0.9997,
+    "note": "keys=BGE on-demand (no stored vectors); query=hidden state"
+  },
+  "final": true
+}

@@ -1,0 +1,21 @@
+{
+  "tests": {
+    "gate_loads_and_separates": {
+      "pass": true,
+      "detail": "fixture AUC=0.942 (pos 2.48 vs neg -8.68)"
+    },
+    "qk_indexer_top2": {
+      "pass": true,
+      "detail": "top-2=1.000 on 120 held positives"
+    },
+    "bge_head_top2": {
+      "pass": true,
+      "detail": "top-2=1.000 (learned transform on BGE)"
+    },
+    "bge_encode_path": {
+      "pass": true,
+      "detail": "BGE encodes to (2, 768)"
+    }
+  },
+  "passed": true
+}

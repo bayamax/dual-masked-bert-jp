@@ -1,0 +1,477 @@
+{
+  "elapsed_s": 123.6,
+  "device": "cuda",
+  "seed": 0,
+  "config": {
+    "rw": 512,
+    "C": 64,
+    "cap": 400,
+    "temp": 0.6,
+    "recall_k": 2,
+    "layers": [
+      8,
+      14,
+      20
+    ]
+  },
+  "results": [
+    {
+      "id": "ref_code_direct",
+      "kind": "direct",
+      "gold": "7731-Q",
+      "arms": {
+        "OFF": {
+          "arm": "OFF",
+          "operand_recovered": false,
+          "gold_in_answer": false,
+          "gold_anywhere": false,
+          "retrieval_ok": false,
+          "gold_best_rank": null,
+          "operand": "7731-Q",
+          "gold": "7731-Q",
+          "gold_block": 0,
+          "n_blocks": 4,
+          "fires": [],
+          "rec_ids_decoded": "",
+          "answer": "<think>\nAlright, let's tackle this. The user is asking for the internal reference code for the Zephyr account. They provided a long list of items related to the Zephyr account. I need to find out which of these are internal and which are administrative. \n\nFirst, I'll list out the items again to see which are internal. From the previous conversation, the internal items were:\n\n- Quarterly logistics ",
+          "body_tokens": 422
+        },
+        "TURN": {
+          "arm": "TURN",
+          "operand_recovered": true,
+          "gold_in_answer": true,
+          "gold_anywhere": true,
+          "retrieval_ok": true,
+          "gold_best_rank": 2,
+          "operand": "7731-Q",
+          "gold": "7731-Q",
+          "gold_block": 0,
+          "n_blocks": 4,
+          "fires": [
+            [
+              714,
+              1,
+              7.448,
+              6.734,
+              2,
+              true
+            ]
+          ],
+          "rec_ids_decoded": "Note: the internal reference code for the Zephyr account is 7731-Q. The quarterly logistics review covered routine wareh",
+          "answer": "<think>\nOkay, so I need to figure out the internal reference code for the Zephyr account. Let me start by recalling what I know about Zephyr. It's an account used for tracking inventory and logistics processes. The user mentioned that the internal reference code was 7731-Q. But wait, that seems odd. Maybe I should verify if that's correct.\n\nFirst, I remember that in accounting systems, internal re",
+          "body_tokens": 422
+        },
+        "MID": {
+          "arm": "MID",
+          "operand_recovered": true,
+          "gold_in_answer": false,
+          "gold_anywhere": true,
+          "retrieval_ok": true,
+          "gold_best_rank": 2,
+          "operand": "7731-Q",
+          "gold": "7731-Q",
+          "gold_block": 0,
+          "n_blocks": 2,
+          "fires": [
+            [
+              714,
+              1,
+              7.448,
+              6.734,
+              2,
+              true
+            ],
+            [
+              778,
+              1,
+              7.501,
+              6.787,
+              2,
+              true
+            ],
+            [
+              842,
+              1,
+              6.994,
+              6.385,
+              3,
+              false
+            ]
+          ],
+          "rec_ids_decoded": "ill timing, recycling pickup days, the lobby plant rotation, printer toner restocking, and the annual team photo. None o",
+          "answer": "",
+          "body_tokens": 171
+        }
+      }
+    },
+    {
+      "id": "price_direct",
+      "kind": "direct",
+      "gold": "3829",
+      "arms": {
+        "OFF": {
+          "arm": "OFF",
+          "operand_recovered": false,
+          "gold_in_answer": false,
+          "gold_anywhere": false,
+          "retrieval_ok": false,
+          "gold_best_rank": null,
+          "operand": "3829",
+          "gold": "3829",
+          "gold_block": 0,
+          "n_blocks": 4,
+          "fires": [],
+          "rec_ids_decoded": "",
+          "answer": "<think>\nOkay, so I need to find the calibrated unit price of part KX-204. Hmm, I'm not entirely sure where to start. Let me think. First, I guess I should look up the product details. Maybe I can check the official website or the manufacturer's website. But wait, sometimes parts have specific standards or requirements. I should check the manufacturer's specifications. \n\nWait, part KX-204 might be ",
+          "body_tokens": 423
+        },
+        "TURN": {
+          "arm": "TURN",
+          "operand_recovered": false,
+          "gold_in_answer": false,
+          "gold_anywhere": false,
+          "retrieval_ok": true,
+          "gold_best_rank": 2,
+          "operand": "3829",
+          "gold": "3829",
+          "gold_block": 0,
+          "n_blocks": 4,
+          "fires": [
+            [
+              716,
+              1,
+              6.812,
+              6.776,
+              2,
+              true
+            ]
+          ],
+          "rec_ids_decoded": "Record: the calibrated unit price of part KX-204 is 3829 yen. The quarterly logistics review covered routine warehouse t",
+          "answer": "<think>\nOkay, so I need to figure out the exact unit price of part KX-204 after it's been calibrated. Let me start by recalling what I remember about calibration. Calibrated unit prices are typically the standardized or adjusted prices that account for any differences due to measurement errors or other factors. The user mentioned that the quarterly logistics review included several routine checks,",
+          "body_tokens": 423
+        },
+        "MID": {
+          "arm": "MID",
+          "operand_recovered": true,
+          "gold_in_answer": true,
+          "gold_anywhere": true,
+          "retrieval_ok": true,
+          "gold_best_rank": 2,
+          "operand": "3829",
+          "gold": "3829",
+          "gold_block": 0,
+          "n_blocks": 4,
+          "fires": [
+            [
+              716,
+              1,
+              6.812,
+              6.776,
+              2,
+              true
+            ],
+            [
+              780,
+              1,
+              6.844,
+              6.825,
+              2,
+              true
+            ],
+            [
+              844,
+              1,
+              6.194,
+              6.193,
+              2,
+              true
+            ],
+            [
+              908,
+              1,
+              6.74,
+              6.713,
+              2,
+              true
+            ],
+            [
+              972,
+              1,
+              7.214,
+              7.154,
+              2,
+              true
+            ],
+            [
+              1036,
+              1,
+              6.628,
+              6.543,
+              2,
+              true
+            ],
+            [
+              1100,
+              4,
+              6.394,
+              6.362,
+              2,
+              true
+            ]
+          ],
+          "rec_ids_decoded": "Record: the calibrated unit price of part KX-204 is 3829 yen. The quarterly logistics review covered routine warehouse t",
+          "answer": "<think>\nOkay, so I need to figure out the exact unit price of part KX-204 before any adjustments were made. Let me start by recalling the information I have. The problem mentions that the current unit price of KX-204 is 3829 yen. But there's a quarterly logistics review that includes several administrative notes. The user wants the exact number before any adjustments, so I need to look for the ori",
+          "body_tokens": 423
+        }
+      }
+    },
+    {
+      "id": "dimension_deferred",
+      "kind": "deferred",
+      "gold": "1236",
+      "arms": {
+        "OFF": {
+          "arm": "OFF",
+          "operand_recovered": false,
+          "gold_in_answer": false,
+          "gold_anywhere": false,
+          "retrieval_ok": false,
+          "gold_best_rank": null,
+          "operand": "412",
+          "gold": "1236",
+          "gold_block": -1,
+          "n_blocks": 4,
+          "fires": [],
+          "rec_ids_decoded": "",
+          "answer": "<think>\nOkay, let me try to figure out this problem. So, the question is about calculating the total length of a bracket that spans exactly three beam segments end to end. The final answer needs to be in centimeters. Hmm, but wait, the problem statement is a bit confusing. It says the bracket spans three beam segments end to end. But beam segments are parts of beams, right? Each beam segment is a ",
+          "body_tokens": 426
+        },
+        "TURN": {
+          "arm": "TURN",
+          "operand_recovered": true,
+          "gold_in_answer": true,
+          "gold_anywhere": true,
+          "retrieval_ok": false,
+          "gold_best_rank": null,
+          "operand": "412",
+          "gold": "1236",
+          "gold_block": -1,
+          "n_blocks": 4,
+          "fires": [
+            [
+              707,
+              1,
+              6.788,
+              null,
+              null,
+              false
+            ]
+          ],
+          "rec_ids_decoded": "Spec: the beam segment length is 412 cm. The quarterly logistics review covered routine warehouse throughput, staff rota",
+          "answer": "<think>\nOkay, let's tackle this problem step by step. The user is asking about the length of a \"bracket span\" in a warehouse, which is defined as exactly three beam segments end to end. Each beam segment is 412 cm. They want the total length in centimeters. \n\nFirst, I need to make sure I understand what a \"bracket span\" is. The term \"bracket span\" isn't something I'm familiar with, so I should con",
+          "body_tokens": 426
+        },
+        "MID": {
+          "arm": "MID",
+          "operand_recovered": true,
+          "gold_in_answer": true,
+          "gold_anywhere": true,
+          "retrieval_ok": false,
+          "gold_best_rank": null,
+          "operand": "412",
+          "gold": "1236",
+          "gold_block": -1,
+          "n_blocks": 4,
+          "fires": [
+            [
+              707,
+              1,
+              6.788,
+              null,
+              null,
+              false
+            ],
+            [
+              771,
+              1,
+              6.865,
+              null,
+              null,
+              false
+            ],
+            [
+              835,
+              1,
+              6.434,
+              null,
+              null,
+              false
+            ],
+            [
+              899,
+              1,
+              6.391,
+              null,
+              null,
+              false
+            ],
+            [
+              963,
+              1,
+              6.428,
+              null,
+              null,
+              false
+            ],
+            [
+              1027,
+              1,
+              6.577,
+              null,
+              null,
+              false
+            ],
+            [
+              1091,
+              1,
+              6.414,
+              null,
+              null,
+              false
+            ]
+          ],
+          "rec_ids_decoded": " the lobby plant rotation, printer toner restocking, and the annual team photo. None of these items changed any account ",
+          "answer": "<think>\nOkay, so I need to figure out the length of a bracket that spans exactly three beam segments end to end. Each beam segment is 412 cm long. Let me break this down step by step.\n\nFirst, I know that each beam segment is 412 cm. So if the bracket covers three of them, then I just need to multiply the length of one segment by three. That makes sense because if each segment is 412 cm, adding thr",
+          "body_tokens": 426
+        }
+      }
+    },
+    {
+      "id": "count_deferred",
+      "kind": "deferred",
+      "gold": "840",
+      "arms": {
+        "OFF": {
+          "arm": "OFF",
+          "operand_recovered": false,
+          "gold_in_answer": false,
+          "gold_anywhere": false,
+          "retrieval_ok": false,
+          "gold_best_rank": null,
+          "operand": "168",
+          "gold": "840",
+          "gold_block": -1,
+          "n_blocks": 4,
+          "fires": [],
+          "rec_ids_decoded": "",
+          "answer": "<think>\nOkay, so the user is asking me to explain how to ship five sealed crates. They want a step-by-step breakdown of the process. Let me start by understanding the context. They mentioned \"sealed crates,\" which might be boxes or containers that are filled with goods and sealed so that there's no risk of contamination. The key here is shipping these boxes securely to prevent any damage or loss.\n",
+          "body_tokens": 422
+        },
+        "TURN": {
+          "arm": "TURN",
+          "operand_recovered": true,
+          "gold_in_answer": true,
+          "gold_anywhere": true,
+          "retrieval_ok": false,
+          "gold_best_rank": null,
+          "operand": "168",
+          "gold": "840",
+          "gold_block": -1,
+          "n_blocks": 4,
+          "fires": [
+            [
+              706,
+              1,
+              7.925,
+              null,
+              null,
+              false
+            ]
+          ],
+          "rec_ids_decoded": "Inventory: each sealed crate holds 168 units. The quarterly logistics review covered routine warehouse throughput, staff",
+          "answer": "<think>\nOkay, so the user is asking about shipping five sealed crates that each hold 168 units. They want to know how many units in total. Let me break this down. First, the user is probably a logistics worker or part of a team responsible for inventory management. They might be checking their records or calculating the total units shipped to make sure they didn't overfill or underfill any contain",
+          "body_tokens": 422
+        },
+        "MID": {
+          "arm": "MID",
+          "operand_recovered": true,
+          "gold_in_answer": true,
+          "gold_anywhere": true,
+          "retrieval_ok": false,
+          "gold_best_rank": null,
+          "operand": "168",
+          "gold": "840",
+          "gold_block": -1,
+          "n_blocks": 4,
+          "fires": [
+            [
+              706,
+              1,
+              7.925,
+              null,
+              null,
+              false
+            ],
+            [
+              770,
+              1,
+              7.854,
+              null,
+              null,
+              false
+            ],
+            [
+              834,
+              1,
+              7.796,
+              null,
+              null,
+              false
+            ],
+            [
+              898,
+              1,
+              7.567,
+              null,
+              null,
+              false
+            ],
+            [
+              962,
+              1,
+              7.468,
+              null,
+              null,
+              false
+            ],
+            [
+              1026,
+              1,
+              7.395,
+              null,
+              null,
+              false
+            ],
+            [
+              1090,
+              1,
+              7.596,
+              null,
+              null,
+              false
+            ]
+          ],
+          "rec_ids_decoded": "Inventory: each sealed crate holds 168 units. The quarterly logistics review covered routine warehouse throughput, staff",
+          "answer": "<think>\nOkay, so the user is asking about the total number of units shipped five sealed crates. Let me start by recalling the previous conversation. They mentioned that the user is trying to figure out the total units from the logistics review notes. The notes included terms like \"quarterly logistics review,\" \"routine warehouse throughput,\" \"menu refresh,\" \"parking lot repaving,\" \"visitor badge po",
+          "body_tokens": 422
+        }
+      }
+    }
+  ],
+  "summary": {
+    "OFF": "operand_recovered 0/4 | task_correct 0/4 | gold_block_in_topk 0/4",
+    "TURN": "operand_recovered 3/4 | task_correct 3/4 | gold_block_in_topk 2/4",
+    "MID": "operand_recovered 4/4 | task_correct 3/4 | gold_block_in_topk 2/4"
+  },
+  "final": true
+}

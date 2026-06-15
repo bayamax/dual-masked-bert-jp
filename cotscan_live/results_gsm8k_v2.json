@@ -1,0 +1,706 @@
+{
+  "elapsed_s": 1045.7,
+  "device": "cuda",
+  "N": 25,
+  "done": 25,
+  "decode": "greedy",
+  "running_acc": {
+    "TURN": 9,
+    "MID": 4,
+    "MID_ACC": 4
+  },
+  "config": {
+    "rw": 512,
+    "C": 64,
+    "cap": 512,
+    "recall_k": 2,
+    "layers": [
+      8,
+      14,
+      20
+    ]
+  },
+  "results": [
+    {
+      "i": 0,
+      "gold": "18",
+      "arms": {
+        "TURN": {
+          "pred": "20",
+          "n_recall": 1,
+          "tokens": 559,
+          "answer": " 20 dollars per day.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "26",
+          "n_recall": 9,
+          "tokens": 558,
+          "answer": " 26.00",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "120",
+          "n_recall": 9,
+          "tokens": 556,
+          "answer": " 120",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 1,
+      "gold": "3",
+      "arms": {
+        "TURN": {
+          "pred": "5",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 5 boxes.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "3",
+          "n_recall": 9,
+          "tokens": 566,
+          "answer": " 7 workers are needed to complete the task in 3 hours.",
+          "correct": true
+        },
+        "MID_ACC": {
+          "pred": "200",
+          "n_recall": 8,
+          "tokens": 570,
+          "answer": " 50 tons of toner are needed for a 200-page document.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 2,
+      "gold": "70000",
+      "arms": {
+        "TURN": {
+          "pred": "70000",
+          "n_recall": 1,
+          "tokens": 559,
+          "answer": " 70,000",
+          "correct": true
+        },
+        "MID": {
+          "pred": "70000",
+          "n_recall": 9,
+          "tokens": 559,
+          "answer": " 70,000",
+          "correct": true
+        },
+        "MID_ACC": {
+          "pred": "70000",
+          "n_recall": 9,
+          "tokens": 559,
+          "answer": " 70,000",
+          "correct": true
+        }
+      }
+    },
+    {
+      "i": 3,
+      "gold": "540",
+      "arms": {
+        "TURN": {
+          "pred": "540",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 540 meters.",
+          "correct": true
+        },
+        "MID": {
+          "pred": "3",
+          "n_recall": 9,
+          "tokens": 558,
+          "answer": " 2 and 3.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "540",
+          "n_recall": 8,
+          "tokens": 560,
+          "answer": " 540 meters per week.",
+          "correct": true
+        }
+      }
+    },
+    {
+      "i": 4,
+      "gold": "20",
+      "arms": {
+        "TURN": {
+          "pred": "20",
+          "n_recall": 1,
+          "tokens": 570,
+          "answer": " 120 cups of feed are needed for 20 chickens over a week.",
+          "correct": true
+        },
+        "MID": {
+          "pred": "99999999999999991611392",
+          "n_recall": 9,
+          "tokens": 577,
+          "answer": " 100000000000000000000000",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "9",
+          "n_recall": 9,
+          "tokens": 556,
+          "answer": " 9 cups.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 5,
+      "gold": "64",
+      "arms": {
+        "TURN": {
+          "pred": "80",
+          "n_recall": 1,
+          "tokens": 566,
+          "answer": " 16 glasses at $5 each, totaling $80.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "1",
+          "n_recall": 9,
+          "tokens": 577,
+          "answer": " 1234567890 × 987654321 = 1",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "80",
+          "n_recall": 9,
+          "tokens": 555,
+          "answer": " 80",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 6,
+      "gold": "260",
+      "arms": {
+        "TURN": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 100 sheep.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "260",
+          "n_recall": 9,
+          "tokens": 556,
+          "answer": " 260",
+          "correct": true
+        },
+        "MID_ACC": {
+          "pred": "320",
+          "n_recall": 9,
+          "tokens": 560,
+          "answer": " 320 sheep in total.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 7,
+      "gold": "160",
+      "arms": {
+        "TURN": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 100 minutes.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "1",
+          "n_recall": 9,
+          "tokens": 577,
+          "answer": " 1234567890 × 987654321 = 1",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "",
+          "n_recall": 8,
+          "tokens": 511,
+          "answer": "Sure! Please provide the specific math problem you'd like me to solve, and I'll walk you through the solution step by step.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 8,
+      "gold": "45",
+      "arms": {
+        "TURN": {
+          "pred": "1.5",
+          "n_recall": 1,
+          "tokens": 567,
+          "answer": " 1.5D hours, where D is the one-way distance.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "1234567890",
+          "n_recall": 9,
+          "tokens": 563,
+          "answer": " 1234567890",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "105",
+          "n_recall": 9,
+          "tokens": 557,
+          "answer": " 105 miles",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 9,
+      "gold": "460",
+      "arms": {
+        "TURN": {
+          "pred": "460",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 460",
+          "correct": true
+        },
+        "MID": {
+          "pred": "460",
+          "n_recall": 9,
+          "tokens": 556,
+          "answer": " 460",
+          "correct": true
+        },
+        "MID_ACC": {
+          "pred": "460",
+          "n_recall": 9,
+          "tokens": 556,
+          "answer": " 460",
+          "correct": true
+        }
+      }
+    },
+    {
+      "i": 10,
+      "gold": "366",
+      "arms": {
+        "TURN": {
+          "pred": "162",
+          "n_recall": 1,
+          "tokens": 561,
+          "answer": " 162 downloads over three months.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "162",
+          "n_recall": 9,
+          "tokens": 562,
+          "answer": " 162 downloads in the third month.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "282",
+          "n_recall": 9,
+          "tokens": 561,
+          "answer": " 282 downloads over three months.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 11,
+      "gold": "694",
+      "arms": {
+        "TURN": {
+          "pred": "120",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 120.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "12",
+          "n_recall": 9,
+          "tokens": 557,
+          "answer": " 12 workers.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "1200",
+          "n_recall": 9,
+          "tokens": 557,
+          "answer": " 1200",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 12,
+      "gold": "13",
+      "arms": {
+        "TURN": {
+          "pred": "12",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 12 years.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "1",
+          "n_recall": 9,
+          "tokens": 556,
+          "answer": " 1 liter.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "12",
+          "n_recall": 9,
+          "tokens": 557,
+          "answer": " 12 years.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 13,
+      "gold": "18",
+      "arms": {
+        "TURN": {
+          "pred": "21",
+          "n_recall": 1,
+          "tokens": 555,
+          "answer": " 21",
+          "correct": false
+        },
+        "MID": {
+          "pred": "2",
+          "n_recall": 9,
+          "tokens": 577,
+          "answer": " 18\n\nStep-by-step explanation:\n\n1. Let V be the initial number of vacuum cleaners.\n2. Sold",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "2",
+          "n_recall": 9,
+          "tokens": 577,
+          "answer": " 18\n\nStep-by-step explanation:\n\n1. Let V be the original number of vacuum cleaners.\n2. Sold",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 14,
+      "gold": "60",
+      "arms": {
+        "TURN": {
+          "pred": "25",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 25%",
+          "correct": false
+        },
+        "MID": {
+          "pred": "1200",
+          "n_recall": 9,
+          "tokens": 557,
+          "answer": " 1200",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "60",
+          "n_recall": 9,
+          "tokens": 566,
+          "answer": " 60% of the entire students enrolled in hip-hop dance.",
+          "correct": true
+        }
+      }
+    },
+    {
+      "i": 15,
+      "gold": "125",
+      "arms": {
+        "TURN": {
+          "pred": "125",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 125",
+          "correct": true
+        },
+        "MID": {
+          "pred": "160",
+          "n_recall": 9,
+          "tokens": 556,
+          "answer": " 160",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "221",
+          "n_recall": 9,
+          "tokens": 577,
+          "answer": " 125 + 96 = $221.00\n\n<|end_of_thought|>",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 16,
+      "gold": "230",
+      "arms": {
+        "TURN": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 100 miles.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "100",
+          "n_recall": 9,
+          "tokens": 558,
+          "answer": " 100 miles.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "100",
+          "n_recall": 9,
+          "tokens": 558,
+          "answer": " 100 miles.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 17,
+      "gold": "57500",
+      "arms": {
+        "TURN": {
+          "pred": "15",
+          "n_recall": 1,
+          "tokens": 562,
+          "answer": " 15 boys and 15 girls.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "25",
+          "n_recall": 9,
+          "tokens": 566,
+          "answer": " 25 cars can be parked in the repaved parking lot.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "96",
+          "n_recall": 9,
+          "tokens": 555,
+          "answer": " 96",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 18,
+      "gold": "7",
+      "arms": {
+        "TURN": {
+          "pred": "28",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 28 girls.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "28",
+          "n_recall": 9,
+          "tokens": 557,
+          "answer": " 28 girls.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "28",
+          "n_recall": 8,
+          "tokens": 557,
+          "answer": " 28 girls.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 19,
+      "gold": "6",
+      "arms": {
+        "TURN": {
+          "pred": "6",
+          "n_recall": 1,
+          "tokens": 555,
+          "answer": " 6 mph",
+          "correct": true
+        },
+        "MID": {
+          "pred": "4",
+          "n_recall": 9,
+          "tokens": 555,
+          "answer": " 4 mph",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "10",
+          "n_recall": 9,
+          "tokens": 559,
+          "answer": " 10 miles per hour.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 20,
+      "gold": "15",
+      "arms": {
+        "TURN": {
+          "pred": "100",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 100%",
+          "correct": false
+        },
+        "MID": {
+          "pred": "1",
+          "n_recall": 9,
+          "tokens": 577,
+          "answer": " 1234567890 × 987654321 = 1",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "3",
+          "n_recall": 9,
+          "tokens": 558,
+          "answer": " 49/3 liters",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 21,
+      "gold": "14",
+      "arms": {
+        "TURN": {
+          "pred": "14",
+          "n_recall": 1,
+          "tokens": 557,
+          "answer": " 14 years.",
+          "correct": true
+        },
+        "MID": {
+          "pred": "29",
+          "n_recall": 9,
+          "tokens": 557,
+          "answer": " 29 years.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "6",
+          "n_recall": 9,
+          "tokens": 556,
+          "answer": " 6 years.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 22,
+      "gold": "7",
+      "arms": {
+        "TURN": {
+          "pred": "7",
+          "n_recall": 1,
+          "tokens": 556,
+          "answer": " 7 DVDs.",
+          "correct": true
+        },
+        "MID": {
+          "pred": "34",
+          "n_recall": 9,
+          "tokens": 557,
+          "answer": " 34 times.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "60",
+          "n_recall": 9,
+          "tokens": 559,
+          "answer": " 60 miles per hour.",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 23,
+      "gold": "8",
+      "arms": {
+        "TURN": {
+          "pred": "12",
+          "n_recall": 1,
+          "tokens": 562,
+          "answer": " 18 boys and 12 girls.",
+          "correct": false
+        },
+        "MID": {
+          "pred": "5",
+          "n_recall": 9,
+          "tokens": 556,
+          "answer": " 5 hours.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "100",
+          "n_recall": 9,
+          "tokens": 556,
+          "answer": " 100",
+          "correct": false
+        }
+      }
+    },
+    {
+      "i": 24,
+      "gold": "26",
+      "arms": {
+        "TURN": {
+          "pred": "26",
+          "n_recall": 1,
+          "tokens": 558,
+          "answer": " 26.00",
+          "correct": true
+        },
+        "MID": {
+          "pred": "120",
+          "n_recall": 9,
+          "tokens": 558,
+          "answer": " 120 visitors.",
+          "correct": false
+        },
+        "MID_ACC": {
+          "pred": "19.5",
+          "n_recall": 9,
+          "tokens": 558,
+          "answer": " 19.50",
+          "correct": false
+        }
+      }
+    }
+  ],
+  "summary": {
+    "TURN": "9/25 = 36.0%",
+    "MID": "4/25 = 16.0%",
+    "MID_ACC": "4/25 = 16.0%"
+  },
+  "final": true
+}
