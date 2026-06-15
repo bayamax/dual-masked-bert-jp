@@ -2,3 +2,10 @@ __pycache__/
 *.pyc
 .DS_Store
 wandb/
+
+# faithful runtime: large weights + upstream code (reconstructable from HF baya1116/hypernet-sp-distill)
+cotscan_live/faithful_run/
+cotscan_live/fft_out/
+cotscan_live/faithful/
+*.safetensors
+*.pt
