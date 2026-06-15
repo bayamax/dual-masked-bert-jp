@@ -15,6 +15,19 @@ echo "PIP_DONE $(date -u)"
 
 mkdir -p /work/hypernet_sp && cd /work/hypernet_sp
 
+# early heartbeat uploader: stream boot.log throughout so failures are visible even pre-results
+python - <<'PY' &
+import time, os
+from huggingface_hub import HfApi
+api = HfApi(token=os.environ["HF_TOKEN"]); R = "baya1116/hypernet-sp-distill"
+while not os.path.exists("ALL_DONE"):
+    if os.path.exists("/workspace/boot.log"):
+        try: api.upload_file(path_or_fileobj="/workspace/boot.log",
+                             path_in_repo="trigger_experiment/results_gate_v3_q4/boot.log", repo_id=R)
+        except Exception as e: print("boot_up_err", e, flush=True)
+    time.sleep(20)
+PY
+
 python - <<'PY'
 import os, shutil
 from huggingface_hub import hf_hub_download
