@@ -90,10 +90,10 @@ failure mode (answering from the visible window instead of the evicted fact) and
 - **retriever (on-device target)**: **BGE-on-demand** via `bge_head.npz` (`recall_mix_v1`).
   Keeps **token IDs only** — block KEYS are not persisted; at a recall fire, BGE-encode the few
   candidate blocks' decoded text (~110M, ~tens of ms) and score against the gate's hidden q
-  (free, already computed) through the learned bridge head. Partial generation check (N=2 of 8,
-  budget-stopped): **RC_bge = raw-QK (6/6 recall, 6/6 retrieval)** → BGE-on-demand holds up in
-  generation, not just held-out (held-out top-2 0.9997; raw BGE cosine 0.29 is unusable — the
-  bridge head is required).
+  (free, already computed) through the learned bridge head. **Confirmed N=8 (24 questions): RC_bge
+  is BIT-IDENTICAL to raw-QK — recall 21/24 = 88%, retrieved 88%, casual-fire 10/16 = 62%.** BGE
+  -on-demand fully matches raw-QK in generation (held-out top-2 0.9997; raw BGE cosine 0.29 is
+  unusable — the learned bridge head is required). Recommended on-device retriever.
 - **retriever (server / max accuracy)**: raw-QK `BlockArchive(mode="qk")` — 88% generation recall,
   but stores block keys (~15 MB/10k tok fp16, ~4–8 MB quantized). Zero recall-time recompute.
 - **NOT recommended**: raw-QK *on-demand* (IDs-only by recomputing keys) — keys come from the 1.5B
