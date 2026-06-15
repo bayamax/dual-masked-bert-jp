@@ -21,11 +21,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_dataset
 
 MODEL = os.environ.get("MODEL", "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B")
-RW = int(os.environ.get("RW", "320"))       # raw window (production uses 512; smaller forces eviction on CPU)
-CAP = int(os.environ.get("CAP", "448"))     # max new tokens
-CHUNK = int(os.environ.get("CHUNK", "32"))  # rebuild window every CHUNK tokens
+RW = int(os.environ.get("RW", "200"))         # raw window (production 512; smaller forces eviction on CPU)
+PHASE_A = int(os.environ.get("PHASE_A", "200"))  # CoT tokens generated WITH the problem in context
+REMAIN = int(os.environ.get("REMAIN", "240"))    # CoT tokens generated AFTER eviction
 GSM_N = int(os.environ.get("GSM_N", "5"))
-ARMS = os.environ.get("ARMS", "OFF,SWAP,PIN").split(",")
+ARMS = os.environ.get("ARMS", "OFF,PIN").split(",")
 OUT = os.environ.get("OUT_DIR", "results_sp")
 DEV = "cpu"
 os.makedirs(OUT, exist_ok=True)
@@ -50,64 +50,60 @@ def last_int(t):
 
 
 @torch.no_grad()
-def gen_evict(tok, llm, problem_ids, arm):
-    """Chunked generation with a raw window of RW. problem_ids sits at the START so it evicts first.
-    Returns (text, n_recall_injects, ever_evicted)."""
+def _gen(llm, ids, n, eos):
+    out = llm.generate(input_ids=torch.tensor([ids], device=DEV), max_new_tokens=n,
+                       do_sample=False, pad_token_id=eos)
+    return out[0, len(ids):].tolist()
+
+
+@torch.no_grad()
+def phase_a(tok, llm, problem_ids):
+    """Generate the first PHASE_A CoT tokens WITH the problem in context (one call)."""
+    return _gen(llm, problem_ids, PHASE_A, tok.eos_token_id)
+
+
+@torch.no_grad()
+def phase_b(tok, llm, problem_ids, a_gen, arm):
+    """Evict: keep only the last RW tokens of (problem + phaseA CoT). The problem (at the start)
+    drops out when total > RW. Then continue REMAIN tokens. OFF = no recall; PIN = re-inject the
+    evicted problem block once and keep it pinned. Returns (full_text, evicted?)."""
     eos = tok.eos_token_id
-    gen, pinned, n_inj, ever_eviu = [], None, 0, False
-    while len(gen) < CAP:
-        full = problem_ids + gen
-        evicted = len(full) > RW
-        ever_eviu = ever_eviu or evicted
-        window = full[-RW:]
-        inject = []
-        if evicted and arm in ("SWAP", "PIN"):
-            if arm == "SWAP":
-                inject = problem_ids; n_inj += 1
-            else:  # PIN: capture once, reuse
-                if pinned is None:
-                    pinned = list(problem_ids)
-                inject = pinned; n_inj += 1
-        visible = inject + window
-        ids = torch.tensor([visible], device=DEV)
-        out = llm.generate(input_ids=ids, max_new_tokens=CHUNK, do_sample=False, pad_token_id=eos)
-        new = out[0, len(visible):].tolist()
-        # stop at eos
-        if eos in new:
-            new = new[:new.index(eos)]; gen += new; break
-        gen += new
-        if not new:
-            break
-    return tok.decode(gen, skip_special_tokens=True), n_inj, ever_eviu
+    full = problem_ids + a_gen
+    evicted = len(full) > RW
+    window = full[-RW:]
+    visible = (problem_ids + window) if (arm == "PIN" and evicted) else window
+    b_gen = _gen(llm, visible, REMAIN, eos)
+    return tok.decode(a_gen + b_gen, skip_special_tokens=True), evicted
 
 
 def main():
     t0 = time.time()
     tok, llm = build()
-    log(f"[sp] loaded {time.time()-t0:.0f}s | RW={RW} CAP={CAP} CHUNK={CHUNK} arms={ARMS}")
+    log(f"[sp] loaded {time.time()-t0:.0f}s | RW={RW} PHASE_A={PHASE_A} REMAIN={REMAIN} arms={ARMS}")
     gsm = load_dataset("gsm8k", "main", split=f"test[:{GSM_N}]")
     items = [(ex["question"], ex["answer"].split("####")[-1].strip().replace(",", "")) for ex in gsm]
 
     res = {a: {"correct": 0, "evicted": 0, "rows": []} for a in ARMS}
     for qi, (q, gold) in enumerate(items):
         pid = tok.encode(f"<｜begin▁of▁sentence｜><｜User｜>{q}<｜Assistant｜>", add_special_tokens=False)
+        a_gen = phase_a(tok, llm, pid)                      # shared CoT prefix across arms
         for a in ARMS:
-            txt, ninj, evic = gen_evict(tok, llm, pid, a)
+            txt, evic = phase_b(tok, llm, pid, a_gen, a)
             pred = last_int(txt); ok = (pred == gold)
             res[a]["correct"] += int(ok); res[a]["evicted"] += int(evic)
-            res[a]["rows"].append({"gold": gold, "pred": pred, "ok": ok, "injects": ninj, "evicted": evic})
-            log(f"  q{qi} [{a:4}] evicted={int(evic)} injects={ninj:>2} pred={pred} gold={gold} {'OK' if ok else ''}")
+            res[a]["rows"].append({"gold": gold, "pred": pred, "ok": ok, "evicted": evic})
+            log(f"  q{qi} [{a:4}] evicted={int(evic)} pred={pred} gold={gold} {'OK' if ok else ''}")
 
     summary = {a: {"acc": round(res[a]["correct"] / len(items), 3),
                    "n": len(items), "evicted": res[a]["evicted"]} for a in ARMS}
-    rep = {"model": MODEL, "RW": RW, "CAP": CAP, "CHUNK": CHUNK, "gsm_n": len(items),
-           "note": "CPU window-eviction proxy for SP; recall timing = oracle (fire when problem evicted)",
+    rep = {"model": MODEL, "RW": RW, "PHASE_A": PHASE_A, "REMAIN": REMAIN, "gsm_n": len(items),
+           "note": "CPU 2-phase window-eviction proxy for SP; oracle recall (re-inject problem post-eviction)",
            "summary": summary, "detail": res, "elapsed_s": round(time.time() - t0, 1)}
     json.dump(rep, open(os.path.join(OUT, "results.json"), "w"), indent=1)
-    log("\n=== SP-REGIME GSM8K (recall necessity + injection strategy) ===")
+    log("\n=== SP-REGIME GSM8K (recall necessity under eviction) ===")
     for a in ARMS:
         log(f"  {a:4}: acc={summary[a]['acc']}  (evicted {summary[a]['evicted']}/{summary[a]['n']})")
-    log("  expect: OFF low (problem evicted) | SWAP unstable | PIN best")
+    log("  expect: OFF low (problem evicted) | PIN restores (recall mandatory under SP)")
     log(f"DONE t={rep['elapsed_s']}s")
 
 
