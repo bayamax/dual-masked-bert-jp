@@ -1,1 +1,17 @@
 [sp] loaded 2s | RW=200 PHASE_A=200 REMAIN=240 arms=['OFF', 'PIN']
+  q0 [OFF ] evicted=1 pred=2 gold=18 
+  q0 [PIN ] evicted=1 pred=18 gold=18 OK
+  q1 [OFF ] evicted=1 pred=3 gold=3 OK
+  q1 [PIN ] evicted=1 pred=3 gold=3 OK
+  q2 [OFF ] evicted=1 pred=3 gold=70000 
+  q2 [PIN ] evicted=1 pred=325 gold=70000 
+  q3 [OFF ] evicted=1 pred=180 gold=540 
+  q3 [PIN ] evicted=1 pred=180 gold=540 
+  q4 [OFF ] evicted=1 pred=20 gold=20 OK
+  q4 [PIN ] evicted=1 pred=20 gold=20 OK
+
+=== SP-REGIME GSM8K (recall necessity under eviction) ===
+  OFF : acc=0.4  (evicted 5/5)
+  PIN : acc=0.6  (evicted 5/5)
+  expect: OFF low (problem evicted) | PIN restores (recall mandatory under SP)
+DONE t=449.9s

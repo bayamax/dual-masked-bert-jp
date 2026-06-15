@@ -1,0 +1,95 @@
+{
+ "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+ "RW": 200,
+ "PHASE_A": 200,
+ "REMAIN": 240,
+ "gsm_n": 5,
+ "note": "CPU 2-phase window-eviction proxy for SP; oracle recall (re-inject problem post-eviction)",
+ "summary": {
+  "OFF": {
+   "acc": 0.4,
+   "n": 5,
+   "evicted": 5
+  },
+  "PIN": {
+   "acc": 0.6,
+   "n": 5,
+   "evicted": 5
+  }
+ },
+ "detail": {
+  "OFF": {
+   "correct": 2,
+   "evicted": 5,
+   "rows": [
+    {
+     "gold": "18",
+     "pred": "2",
+     "ok": false,
+     "evicted": true
+    },
+    {
+     "gold": "3",
+     "pred": "3",
+     "ok": true,
+     "evicted": true
+    },
+    {
+     "gold": "70000",
+     "pred": "3",
+     "ok": false,
+     "evicted": true
+    },
+    {
+     "gold": "540",
+     "pred": "180",
+     "ok": false,
+     "evicted": true
+    },
+    {
+     "gold": "20",
+     "pred": "20",
+     "ok": true,
+     "evicted": true
+    }
+   ]
+  },
+  "PIN": {
+   "correct": 3,
+   "evicted": 5,
+   "rows": [
+    {
+     "gold": "18",
+     "pred": "18",
+     "ok": true,
+     "evicted": true
+    },
+    {
+     "gold": "3",
+     "pred": "3",
+     "ok": true,
+     "evicted": true
+    },
+    {
+     "gold": "70000",
+     "pred": "325",
+     "ok": false,
+     "evicted": true
+    },
+    {
+     "gold": "540",
+     "pred": "180",
+     "ok": false,
+     "evicted": true
+    },
+    {
+     "gold": "20",
+     "pred": "20",
+     "ok": true,
+     "evicted": true
+    }
+   ]
+  }
+ },
+ "elapsed_s": 449.9
+}
