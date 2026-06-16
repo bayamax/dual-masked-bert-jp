@@ -1,0 +1,40 @@
+[known        CONFIDENT] What is the capital of France? -> raw:CONFIDENT
+[known        LOOKUP   ] Who wrote Hamlet? -> raw:LOOKUP
+[known        CONFIDENT] What is 2 plus 2? -> raw:CONIDENT
+[known        LOOKUP   ] Which planet is the Red Planet? -> raw:LOOKUP
+[known        CONFIDENT] What is the chemical symbol for gold -> raw:CONFIDENT
+[known        CONFIDENT] Who painted the Mona Lisa? -> raw:CONFIDENT
+  == known: LOOKUP 2/6 ==
+
+[fabricated   CONFIDENT] In what year was the Treaty of Velma -> raw:THE TREATY OF VELMARAN WAS SIG
+[fabricated   CONFIDENT] What is the capital of Brindolia? -> raw:CAPITAL OF BRINDOLIA IS BRINDO
+[fabricated   CONFIDENT] Who won the Galvin Prize in 2019? -> raw:I AM SORRY, I CANNOT ANSWER TH
+[fabricated   LOOKUP   ] How tall is Mount Drennakar? -> raw:LOOKUP
+[fabricated   CONFIDENT] Who is the CEO of the Brammelton Cor -> raw:I CANNOT PROVIDE SPECIFIC INFO
+[fabricated   LOOKUP   ] What language is spoken in Ulventhia -> raw:LOOKUP
+  == fabricated: LOOKUP 2/6 ==
+
+[obscure_real CONFIDENT] What is the population of Tallinn? -> raw:CONFIDENT
+[obscure_real CONFIDENT] What is the elevation of Denver? -> raw:CONFIDENT
+[obscure_real CONFIDENT] Who discovered the planet Neptune? -> raw:CONIDENT
+[obscure_real LOOKUP   ] What is the population of Reykjavik? -> raw:LOOKUP
+[obscure_real CONFIDENT] In what year was the Tokyo Skytree c -> raw:THE TOKYO SKYTREE WAS COMPLETE
+[obscure_real CONFIDENT] Who won the Eurovision Song Contest  -> raw:I AM SORRY, I CANNOT ANSWER TH
+  == obscure_real: LOOKUP 1/6 ==
+
+[creative     LOOKUP   ] Write a short poem about the ocean. -> raw:LOOKUP
+[creative     CONFIDENT] Brainstorm three gift ideas for a te -> raw:CONFIEST
+[creative     LOOKUP   ] Write a one-line slogan for a coffee -> raw:LOOKUP
+  == creative: LOOKUP 2/3 ==
+
+[math         LOOKUP   ] What is 13 times 4? -> raw:LOOKUP
+[math         CONFIDENT] What is 144 divided by 12? -> raw:CONIDENT
+[math         CONFIDENT] If I have 5 apples and eat 2, how ma -> raw:CONFIDENT
+  == math: LOOKUP 1/3 ==
+
+[chitchat     LOOKUP   ] I burnt my toast this morning. -> raw:LOOKUP
+[chitchat     LOOKUP   ] I'm thinking of repainting my room. -> raw:LOOKUP
+[chitchat     CONFIDENT] I had a great weekend. -> raw:CONIDENT
+  == chitchat: LOOKUP 2/3 ==
+
+[DONE] gap(fabricated/obscure) want LOOKUP high; others want CONFIDENT
