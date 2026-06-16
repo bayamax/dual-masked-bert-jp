@@ -3,7 +3,7 @@ an API teacher GRADES it. Wrong factual (search would fix) -> LOOKUP; correct / 
 Labels reflect what the DEPLOYED (4-bit) model actually knows. Outputs labels_4bit.jsonl + stats."""
 import os, json, time, random, re, urllib.request, concurrent.futures as cf
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_dataset
 R=random.Random(0); HERE=os.path.dirname(os.path.abspath(__file__)); DEV="cuda"
 KEY=os.environ["OPENAI_API_KEY"]; TMODEL=os.environ.get("TEACHER","gpt-4.1-nano")
@@ -26,9 +26,10 @@ def grade(q,ans,ref):
     return "DIRECT"
 def main():
     t0=time.time(); tok=AutoTokenizer.from_pretrained("fft_hf")
-    bnb=BitsAndBytesConfig(load_in_4bit=True,bnb_4bit_quant_type="nf4",bnb_4bit_compute_dtype=torch.bfloat16)
-    m=AutoModelForCausalLM.from_pretrained("fft_hf",quantization_config=bnb,device_map="auto").eval()
-    log(f"[built 4bit {time.time()-t0:.0f}s]"); bos=tok.bos_token_id; eos=tok.eos_token_id
+    dt=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    try: m=AutoModelForCausalLM.from_pretrained("fft_hf",torch_dtype=dt).to(DEV).eval()
+    except TypeError: m=AutoModelForCausalLM.from_pretrained("fft_hf",dtype=dt).to(DEV).eval()
+    log(f"[built bf16(4bit-knowledge-proxy) {time.time()-t0:.0f}s]"); bos=tok.bos_token_id; eos=tok.eos_token_id
     @torch.no_grad()
     def ans(q,n=64):
         ids=[bos]+tok.encode(f"<｜User｜>{q}<｜Assistant｜>",add_special_tokens=False)+tok.encode("<think>\n\n</think>\n\n",add_special_tokens=False)

@@ -2,7 +2,7 @@
 exec > /workspace/boot.log 2>&1
 set -x
 export HF_HUB_ENABLE_HF_TRANSFER=0 PYTHONUNBUFFERED=1
-pip install -q "transformers>=4.46,<4.54" "datasets>=2.18" "bitsandbytes>=0.43" accelerate "huggingface_hub>=0.25" 2>&1 | tail -2
+pip install -q "transformers>=4.46,<4.54" "datasets>=2.18" "huggingface_hub>=0.25" 2>&1 | tail -2
 cd /workspace
 python - <<'PY'
 from huggingface_hub import hf_hub_download
