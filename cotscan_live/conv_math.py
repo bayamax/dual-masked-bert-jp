@@ -26,4 +26,6 @@ script = [
 for msg in script:
     t=time.time(); ans,src,ch=s.turn(msg, store="session")
     log(f"\nUSER> {msg}\nBOT> {ans}\n  [{time.time()-t:.0f}s src={src} chunks={len(ch)}]")
+    for j,c in enumerate(ch):
+        log(f"    CHUNK[{j}]: {c[:160]}")
 log("\n[DONE]")
