@@ -46,20 +46,15 @@ def main():
     for u in ["I just adopted two kittens.","The weather's been lovely.","I'm stressed.","I tried great ramen.","Hey, how's it going?","I love hiking.","Good morning!","Thanks!","I got back from a walk.","I had a great weekend."]:
         pool.append((u,"chitchat","chitchat",""))
     log(f"[pool] {len(pool)}")
-    # 1) student answers (only where search could matter: factual-ish; non-fact -> DIRECT by category)
-    rows=[]
-    fact=[p for p in pool if p[2] not in NONFACT]; nonf=[p for p in pool if p[2] in NONFACT]
-    log(f"[factual={len(fact)} nonfact(DIRECT)={len(nonf)}]")
+    # student answers ALL queries; teacher grades ALL (no category fiat).
     sa={}
-    for j,(q,s,c,g) in enumerate(fact):
+    for j,(q,s,c,g) in enumerate(pool):
         sa[q]=ans(q)
-        if (j+1)%50==0: log(f"  student answered {j+1}/{len(fact)} t={time.time()-t0:.0f}s")
-    # 2) teacher grades (threaded)
+        if (j+1)%50==0: log(f"  student answered {j+1}/{len(pool)} t={time.time()-t0:.0f}s")
     def work(p):
         q,s,c,g=p; return {"query":q,"source":s,"category":c,"gold":g,"student_answer":sa[q][:200],"label":grade(q,sa[q],g)}
     with cf.ThreadPoolExecutor(max_workers=8) as ex:
-        rows=list(ex.map(work,fact))
-    for q,s,c,g in nonf: rows.append({"query":q,"source":s,"category":c,"gold":g,"student_answer":"","label":"DIRECT"})
+        rows=list(ex.map(work,pool))
     open(os.path.join(HERE,"labels_4bit.jsonl"),"w").write("\n".join(json.dumps(r) for r in rows))
     from collections import defaultdict
     bs=defaultdict(lambda:[0,0])
