@@ -36,7 +36,7 @@ def run(tok,m,pooler,kw,val,seed,use_adapter):
     try: from transformers import DynamicCache
     except Exception: from transformers.cache_utils import DynamicCache
     embT=m.get_input_embeddings(); feed,qids=scen(tok,kw,val,seed)
-    arch=BlockArchive(m.base_model.model if use_adapter else m, tok, mode="qk")  # raw-QK on the LLM
+    arch=BlockArchive(m.base_model.model, tok, mode="qk")  # the wrapped Qwen2ForCausalLM (retrieval is base-QK, adapter-agnostic)
     gen=list(feed); kept=[]; absorbed=0; new=0; done=False; rec=None
     def emb(ids): return embT(torch.tensor([ids],device=DEV)) if ids else torch.zeros(1,0,embT.weight.shape[1],dtype=embT.weight.dtype,device=DEV)
     cache=DynamicCache(); 
