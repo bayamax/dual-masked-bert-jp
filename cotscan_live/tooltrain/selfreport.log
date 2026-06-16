@@ -1,0 +1,74 @@
+[known        unc=0] What is the capital of France? -> <think>
+Okay, so I need to figure out the capital of France. Let me start by recalling wha
+[known        unc=0] Who wrote Hamlet? -> <think>
+Okay, so I need to figure out who wrote Hamlet. Let me start by recalling what I k
+[known        unc=0] What is 2 plus 2? -> First, I recognize that the problem is asking for the sum of 2 and 2.
+
+Next, I recall tha
+[known        unc=0] Which planet is the Red Planet? -> <think>
+Okay, so I need to figure out which planet is the Red Planet. Hmm, I remember hear
+[known        unc=1] What is the chemical symbol for gold? -> <think>
+Okay, so I need to figure out the chemical symbol for gold. Hmm, I remember that c
+[known        unc=0] Who painted the Mona Lisa? -> <think>
+Okay, so I need to figure out who painted the Mona Lisa. Let me start by recalling
+  == known: uncertain 1/6 ==
+
+[fabricated   unc=0] In what year was the Treaty of Velmara -> <think>
+Okay, so I need to figure out the year the Treaty of Velmaran was signed. Hmm, I r
+[fabricated   unc=1] What is the capital of Brindolia? -> <think>
+Okay, so I need to find out the capital of Brindolia. Hmm, I'm not sure what Brind
+[fabricated   unc=0] Who won the Galvin Prize in 2019? -> <think>
+Okay, so I need to figure out who won the Galvin Prize in 2019. I'm not exactly su
+[fabricated   unc=1] How tall is Mount Drennakar? -> <think>
+Okay, so I need to figure out how tall Mount Drennakar is. I don't know much about
+[fabricated   unc=1] Who is the CEO of the Brammelton Corpo -> <think>
+Okay, so I need to find out who the CEO of Brammelton Corporation is. Hmm, I don't
+[fabricated   unc=1] What language is spoken in Ulventhia? -> <think>
+Okay, so I need to figure out what language is spoken in Ulventhia. Hmm, I'm not e
+  == fabricated: uncertain 4/6 ==
+
+[obscure_real unc=1] What is the population of Tallinn? -> <think>
+Okay, so I need to find out the population of Tallinn. Hmm, I'm not exactly sure w
+[obscure_real unc=1] What is the elevation of Denver? -> <think>
+Okay, so I need to figure out the elevation of Denver. Hmm, where do I start? I kn
+[obscure_real unc=1] Who discovered the planet Neptune? -> <think>
+Okay, so I need to figure out who discovered Neptune. Let me start by recalling wh
+[obscure_real unc=0] What is the population of Reykjavik? -> <think>
+Okay, so I need to figure out the population of Reykjavik. Hmm, I'm not exactly su
+[obscure_real unc=0] In what year was the Tokyo Skytree com -> <think>
+Okay, so I need to figure out the year the Tokyo Skytree was completed. Hmm, I rem
+[obscure_real unc=0] Who won the Eurovision Song Contest in -> <think>
+Okay, so I need to figure out who won the Eurovision Song Contest in 2014. I remem
+  == obscure_real: uncertain 3/6 ==
+
+[creative     unc=0] Write a short poem about the ocean. -> <think>
+Okay, so I need to write a short poem about the ocean. Hmm, where do I start? Let
+[creative     unc=0] Brainstorm three gift ideas for a teac -> <think>
+Okay, so I need to brainstorm three gift ideas for a teacher. Hmm, where do I star
+[creative     unc=0] Write a one-line slogan for a coffee s -> <think>
+Okay, so I need to come up with a one-line slogan for a coffee shop. Hmm, where do
+  == creative: uncertain 0/3 ==
+
+[math         unc=0] What is 13 times 4? -> <think>
+First, I need to multiply 13 by 4.
+
+I can break down the multiplication into simpl
+[math         unc=0] What is 144 divided by 12? -> <think>
+First, I need to divide 144 by 12.
+
+I can start by dividing 144 by 12. Since 12 ti
+[math         unc=0] If I have 5 apples and eat 2, how many -> <think>
+First, I start with 5 apples.
+
+Next, I eat 2 apples, which means I subtract 2 from
+  == math: uncertain 0/3 ==
+
+[chitchat     unc=0] I burnt my toast this morning. -> <think>
+Okay, so I just burnt my toast. That's pretty serious. Let me try to figure out wh
+[chitchat     unc=1] I'm thinking of repainting my room. -> <think>
+Okay, so I want to repaint my room, but I'm not exactly sure where to start. Let m
+[chitchat     unc=0] I had a great weekend. -> <think>
+Okay, so I just had a great weekend. Let me try to unpack what that means and how
+  == chitchat: uncertain 1/3 ==
+
+[DONE] (gap classes=fabricated/obscure_real want HIGH uncertain; others want LOW)
