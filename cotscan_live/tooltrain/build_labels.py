@@ -9,21 +9,29 @@ R=random.Random(0); HERE=os.path.dirname(os.path.abspath(__file__)); DEV="cuda"
 KEY=os.environ["OPENAI_API_KEY"]; TMODEL=os.environ.get("TEACHER","gpt-4.1-nano")
 def log(*a): print(*a,flush=True)
 NONFACT={"creative_writing","brainstorming","classification","summarization","math","chitchat"}
-GSYS=("You GRADE a small assistant's answer. Given QUESTION, the assistant's ANSWER, and (if available) the REFERENCE. "
- "Reply ONLY one word:\n"
- "LOOKUP = the answer is factually wrong, evasive, or uncertain AND a web/Wikipedia search would supply the correct fact.\n"
- "DIRECT = the answer is correct, OR the task is creative/opinion/reasoning/chat where search would not help.")
-def grade(q,ans,ref):
-    u=f"QUESTION: {q}\nASSISTANT ANSWER: {ans}\n"+(f"REFERENCE: {ref}\n" if ref else "")+"Verdict:"
-    body={"model":TMODEL,"messages":[{"role":"system","content":GSYS},{"role":"user","content":u}],"max_tokens":4,"temperature":0}
+import re as _re
+MATHRE=_re.compile(r"\b(calculate|how many|how much|how long|total|sum|average|percent|times|divided|multiply|plus|minus|add|subtract|remain|left|each|per)\b",_re.I)
+def is_math(q): return bool(_re.search(r"\d",q) and MATHRE.search(q)) or "=" in q
+TYPE_SYS=("Reply ONLY FACT or NOFACT. FACT = asks for a specific real-world fact you'd verify in an "
+ "encyclopedia (name, date, year, place, population, event, statistic, who/when/where). NOFACT = a MATH/arithmetic "
+ "word problem (answer is COMPUTED, never looked up), logic/reasoning, creative writing, brainstorming, opinion/advice, "
+ "classifying given items, summarizing given text, or chit-chat.")
+CORR_SYS="Given a factual QUESTION, the ANSWER, and a REFERENCE, reply ONLY CORRECT or WRONG (refused/evasive/incorrect=WRONG)."
+def _call(sysmsg,usr):
+    body={"model":TMODEL,"messages":[{"role":"system","content":sysmsg},{"role":"user","content":usr}],"max_tokens":4,"temperature":0}
     for a in range(4):
         try:
             req=urllib.request.Request("https://api.openai.com/v1/chat/completions",data=json.dumps(body).encode(),
                 headers={"Content-Type":"application/json","Authorization":"Bearer "+KEY})
-            t=json.load(urllib.request.urlopen(req,timeout=40))["choices"][0]["message"]["content"].upper()
-            return "LOOKUP" if "LOOKUP" in t else "DIRECT"
-        except Exception: time.sleep(1.5*(a+1))
-    return "DIRECT"
+            return json.load(urllib.request.urlopen(req,timeout=40))["choices"][0]["message"]["content"].upper()
+        except Exception: time.sleep(1.2*(a+1))
+    return ""
+def grade(q,ans,ref):
+    if is_math(q): return "DIRECT"            # math is never a lookup (computed, not searched)
+    ty=_call(TYPE_SYS,q)
+    if "FACT" not in ty or "NOFACT" in ty: return "DIRECT"
+    co=_call(CORR_SYS,f"QUESTION: {q}\nANSWER: {ans}\nREFERENCE: {ref or ''}")
+    return "LOOKUP" if "WRONG" in co else "DIRECT"
 def main():
     t0=time.time(); tok=AutoTokenizer.from_pretrained("fft_hf")
     dt=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
@@ -57,7 +65,7 @@ def main():
         sa[q]=ans(q)
         if (j+1)%50==0: log(f"  student answered {j+1}/{len(pool)} t={time.time()-t0:.0f}s")
     def work(p):
-        q,s,c,g=p; return {"query":q,"source":s,"category":c,"gold":g,"student_answer":sa[q][:200],"label":grade(q,sa[q],g)}
+        q,s,c,g=p; lab=("DIRECT" if (s=="gsm8k" or c=="math") else grade(q,sa[q],g)); return {"query":q,"source":s,"category":c,"gold":g,"student_answer":sa[q][:280],"label":lab}
     with cf.ThreadPoolExecutor(max_workers=8) as ex:
         rows=list(ex.map(work,pool))
     open(os.path.join(HERE,"labels_4bit.jsonl"),"w").write("\n".join(json.dumps(r) for r in rows))
