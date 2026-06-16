@@ -1,0 +1,76 @@
+
+[chitchat] I burnt my toast this morning.
+  BASE: It sounds like you burned your toast! That's a fun and unexpected turn of events. If you're happy with the outcome, you can enjoy the deliciousness of your toast. If you'
+  V3  : Casual; no search.I'm sorry to hear that you burnt your toast. It's important to take care of our health, and I understand that it's a bit of a inconvenience. If you're l
+
+[chitchat] I'm thinking of repainting my room.
+  BASE: Ah, I see what you're up to! Repainting your room is a fantastic project. Let me help you plan it out. Here’s a step-by-step guide to make sure you have everything covere
+  V3  : Casual; no search.Repainting your room is a fantastic project! Here’s a step-by-step guide to help you get started:
+
+### 1. **Assess Your Room**
+   - **Measure your room*
+
+[known] What is the capital of Argentina?
+  BASE: The capital of Argentina is **Buenos Aires**.
+  V3  : I know this; no search.The capital of Argentina is Buenos Aires.
+
+[known] Who wrote The Great Gatsby?
+  BASE: The Great Gatsby, a novel by F. Scott Fitzgerald, was written by F. Scott Fitzgerald. He was a renowned American author, journalist, and journalist writer. Fitzgerald is 
+  V3  : I know this; no search.The Great Gatsby, a novel by F. Scott Fitzgerald, was written by F. Scott Fitzgerald. He is best known for his work on the novel "The Great Gatsby,
+
+[math] What is 13 times 4?
+  BASE: To calculate 13 multiplied by 4, you can break it down into simpler parts:
+
+1. Multiply 10 by 4: 10 × 4 = 40
+2. Multiply 3 by 4: 3 × 4 = 12
+3. Add the results together: 4
+  V3  : I know this; no search.To calculate 13 multiplied by 4, you can break it down as follows:
+
+1. Multiply 10 by 4, which equals 40.
+2. Multiply 3 by 4, which equals 12.
+3. A
+
+[math] What is 144 divided by 12?
+  BASE: To solve 144 divided by 12, you can use division or multiplication. 
+
+1. **Division Method**: 
+   - Divide 144 by 12. 
+   - 12 goes into 144 exactly 12 times because 12 m
+  V3  : I know this; no search.To solve 144 divided by 12, you can simplify the division by recognizing that 12 multiplied by 12 equals 144. Therefore, 144 divided by 12 equals 1
+
+[instruct] List three benefits of regular exercise.
+  BASE: Regular exercise offers numerous benefits, and here are three key ones:
+
+1. **Improved Physical Health**: Regular exercise strengthens the body and mind, reducing the ris
+  V3  : I know this; no search.Regular exercise offers numerous benefits that can enhance both physical and mental well-being. Here are three key advantages:
+
+1. **Improved Healt
+
+[instruct] Give me one tip for better sleep.
+  BASE: Here’s a concise and effective tip for improving sleep quality:
+
+**"Prioritize your sleep routine and ensure you are fully rested and refreshed before bed.****
+
+1. **Esta
+  V3  : I know this; no search.Of course! Here's a tip for better sleep:
+
+**"Prioritize quality over quantity.****
+
+[explain] Explain how rainbows form in one sentence.
+  BASE: Rainbows form when sunlight passes through water droplets in the air, creating a circular arc of light due to the reflection and refraction of light. This phenomenon is k
+  V3  : I know this; no search.Rainbows form when sunlight enters a raindrop, which refracts, reflects, and refracts the light, creating a spectrum of colors.
+
+[explain] What is inflation?
+  BASE: Inflation is the rate at which the general level of prices for goods and services rises over time, leading to a decrease in the purchasing power of money. It is measured 
+  V3  : I know this; no search.Inflation is the rate at which the general level of prices for goods and services rises over time, causing the value of money to decrease. It occur
+
+[creative] Write a short two-line poem about the ocean.
+  BASE: Ocean, vast and deep,  
+A land of endless waves and currents.  
+In the sky, the stars twinkle,  
+A symphony of light and sound.  
+The ocean's waves crash,  
+A dance of co
+  V3  : This needs a specific external fact I shouldn't guess; I'll look it up.write a short two-line poem about the ocean
+
+[DONE]
