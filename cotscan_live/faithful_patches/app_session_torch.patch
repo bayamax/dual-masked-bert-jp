@@ -27,7 +27,7 @@
  
      def save_state(self, path):
          """Persist the conversation stream so the NEXT session starts with the previous
-@@ -311,82 +320,73 @@
+@@ -311,82 +320,80 @@
              (self.mem.persist if store == "persist" else self.mem.remember_session)(user_msg)
              self._stitch(user_msg, "Got it — saved.")
              return "Got it — saved.", None, []
@@ -155,8 +155,15 @@
 +        # trailing "？" and common JP interrogative/request markers so a query that slips
 +        # through the translation shim still hits the web instead of free-generating.
 +        wants_web = (mc._is_question(user_msg) or user_msg.strip().endswith("？")
++                     # English request/info-seeking forms that aren't '?'-questions
++                     # ("I'd like you to tell me...", "could you look up...", "show me...")
++                     or re.search(r"\b(tell me|i'?d like|i want to know|i wanna know|could you|"
++                                  r"can you (tell|give|show|find|look up)|please (tell|give|show|"
++                                  r"look up)|show me|give me|look up|search for|find out|list )\b",
++                                  user_msg, re.I)
++                     # Japanese interrogative / request markers (untranslated fallback)
 +                     or re.search(r"(教えて|おしえて|何|なに|いくら|どこ|誰|だれ|いつ|どの|どう|"
-+                                  r"ですか|ますか|でしょうか|かな|\?)", user_msg))
++                                  r"ですか|ますか|でしょうか|かな|知りたい|\?)", user_msg))
 +        if not chunks and self.web is not None and not is_math and wants_web:
 +            q = expand_web_query(user_msg, self.mem.pins, self.mem.session)
 +            src, chunks = self._web_retrieve(q)
@@ -170,7 +177,7 @@
          if chunks and compute_like:
              # keep compute injections SHORT and question-first. The verbatim MLX template
              # (context first + a meta-instruction about she/it/corrections) made the 1.5B
-@@ -439,6 +439,10 @@
+@@ -439,6 +446,10 @@
                     f"value, verbatim (keep letter prefixes/punctuation, e.g. 'EMP-1234' not '1234'; use the "
                     f"most recent value if it was corrected).")
          else:
@@ -181,7 +188,7 @@
              aug = user_msg
          quote_recall = bool(chunks) and not compute_like
          check_chunks = [] if compute_like else chunks
-@@ -465,6 +469,13 @@
+@@ -465,6 +476,13 @@
                  # on compute turns.
                  if not compute_like and not re.search(r"[A-Za-z]{2,}", a or ""):
                      return False
@@ -195,7 +202,7 @@
                  return mc._answer_ok(a, check_chunks, user_msg)
              answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1],
                                      force_think=compute_like)
-@@ -487,17 +498,14 @@
+@@ -487,17 +505,14 @@
                  answer = fixed
          if quote_recall:
              self._stitch(user_msg, answer)             # isolated quote leaves a trace too
@@ -215,7 +222,7 @@
          if compute_like and mc._answer_ok(answer, [], user_msg):
              # self-log the RESULT of a compute turn. The follow-up battery showed why: the
              # log carries the previous QUESTION but not its answer, so "I pay with $50,
-@@ -508,14 +516,27 @@
+@@ -508,14 +523,27 @@
              nums = re.findall(r"\$?\d[\d,]*(?:\.\d+)?", answer)
              val = box[-1].strip() if box else (nums[-1] if nums else None)
              if val:
