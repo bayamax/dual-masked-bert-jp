@@ -160,25 +160,32 @@
          if chunks and compute_like:
              # keep compute injections SHORT and question-first. The verbatim MLX template
              # (context first + a meta-instruction about she/it/corrections) made the 1.5B
-@@ -439,7 +429,16 @@
+@@ -439,6 +429,10 @@
                     f"value, verbatim (keep letter prefixes/punctuation, e.g. 'EMP-1234' not '1234'; use the "
                     f"most recent value if it was corrected).")
          else:
--            aug = user_msg
-+            # no retrieval + not compute = chitchat / open question answered from the model
-+            # itself. A bare declarative made the 1.5B reflexively refuse ("I love hiking on
-+            # weekends" -> "I can't respond to that"); the MQ-prefix persona alone was not
-+            # reliable after a few turns. A light conversational frame in the strongly-
-+            # attended user turn fixes it without constraining genuine questions.
-+            if compute_like:
-+                aug = user_msg
-+            else:
-+                aug = (f"{user_msg}\n\n(This is casual conversation — reply naturally, warmly, "
-+                       f"and helpfully. Do not refuse.)")
++            # chitchat / open question answered from the model itself. Steering lives in the
++            # MQ-prefix persona; we do NOT append an instruction to the user turn — the 1.5B
++            # narrated it verbatim ("Here's a warm and friendly response: ...") and role-played
++            # the user. Residual refusals are caught below by _ok + the higher-temp retry.
+             aug = user_msg
          quote_recall = bool(chunks) and not compute_like
          check_chunks = [] if compute_like else chunks
-         if quote_recall:
-@@ -487,17 +486,14 @@
+@@ -465,6 +459,13 @@
+                 # on compute turns.
+                 if not compute_like and not re.search(r"[A-Za-z]{2,}", a or ""):
+                     return False
++                # a chitchat REFUSAL ("I can't assist with that", "I'm sorry, but I can't")
++                # is the 1.5B's reflex on bare declaratives; reject it so the retry loop
++                # re-samples at higher temperature and escapes the refusal attractor.
++                if not compute_like and not chunks and re.search(
++                        r"\b(can(?:'|no)?t (assist|help|respond|do that)|"
++                        r"i'?m sorry,? but i|i cannot (assist|help))\b", a or "", re.I):
++                    return False
+                 return mc._answer_ok(a, check_chunks, user_msg)
+             answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1],
+                                     force_think=compute_like)
+@@ -487,17 +488,14 @@
                  answer = fixed
          if quote_recall:
              self._stitch(user_msg, answer)             # isolated quote leaves a trace too
@@ -198,7 +205,7 @@
          if compute_like and mc._answer_ok(answer, [], user_msg):
              # self-log the RESULT of a compute turn. The follow-up battery showed why: the
              # log carries the previous QUESTION but not its answer, so "I pay with $50,
-@@ -518,4 +514,9 @@
+@@ -518,4 +516,12 @@
                  self.mem.session = [l for l in self.mem.session
                                      if not l.startswith("Earlier computed result:")]
                  self.mem.remember_session(f"Earlier computed result: {val}.")
@@ -206,5 +213,8 @@
 +        # surface the bare value/text to the user instead of leaking markup.
 +        if answer:
 +            answer = re.sub(r"\\boxed\s*\{([^}]*)\}", r"\1", answer)
-+            answer = re.sub(r"\\[\[\]()]|\${1,2}", "", answer).strip()
++            answer = re.sub(r"\\[\[\]()]|\${1,2}", "", answer)
++            # strip leaked special tokens (<|end_of_thought|>, <｜...｜>, <think> remnants)
++            answer = re.sub(r"<\|[^|>]*\|>|<｜[^｜>]*｜>|</?think>", "", answer)
++            answer = answer.strip()
          return answer, src, chunks
