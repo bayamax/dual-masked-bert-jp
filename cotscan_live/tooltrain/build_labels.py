@@ -31,10 +31,14 @@ def main():
     except TypeError: m=AutoModelForCausalLM.from_pretrained("fft_hf",dtype=dt).to(DEV).eval()
     log(f"[built bf16(4bit-knowledge-proxy) {time.time()-t0:.0f}s]"); bos=tok.bos_token_id; eos=tok.eos_token_id
     @torch.no_grad()
-    def ans(q,n=64):
-        ids=[bos]+tok.encode(f"<｜User｜>{q}<｜Assistant｜>",add_special_tokens=False)+tok.encode("<think>\n\n</think>\n\n",add_special_tokens=False)
+    def ans(q,n=400):
+        # let the R1-distill model THINK (its trained mode) with enough tokens; reasoning/math
+        # need CoT. Extract the FINAL answer after </think> for grading.
+        ids=[bos]+tok.encode(f"<｜User｜>{q}<｜Assistant｜>",add_special_tokens=False)
         out=m.generate(input_ids=torch.tensor([ids],device=DEV),max_new_tokens=n,do_sample=False,pad_token_id=eos)
-        return tok.decode(out[0,len(ids):],skip_special_tokens=True).strip()
+        full=tok.decode(out[0,len(ids):],skip_special_tokens=True)
+        fin=full.split("</think>")[-1].strip() if "</think>" in full else full.strip()
+        return (fin[-300:] if fin else full[-300:])
     # pool
     pool=[]
     for ex in load_dataset("trivia_qa","rc.nocontext",split="train[:300]"): pool.append((ex["question"],"trivia","factual",ex["answer"]["value"]))
