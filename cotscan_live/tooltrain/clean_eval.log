@@ -1,0 +1,26 @@
+[GAP(held) fire=0] When was the Golden Gate Bridge completed? -> I know this; no search.The Golden Gate Bridge was completed 
+[GAP(held) fire=0] What is the population of Tallinn? -> I know this; no search.As of my last update in July 2024, th
+[GAP(held) fire=1] Who won the Eurovision Song Contest in 201 -> This needs a specific external fact I shouldn't guess; I'll 
+[GAP(held) fire=1] Who is the current president of Iceland? -> This needs a specific external fact I shouldn't guess; I'll 
+[GAP(held) fire=0] When did the Great Fire of Rome occur? -> I know this; no search.The Great Fire of Rome, also known as
+[GAP(held) fire=0] What is the elevation of Denver, Colorado? -> I know this; no search.The elevation of Denver, Colorado is 
+[GAP(held) fire=0] Who discovered the planet Neptune? -> I know this; no search.Neptune was discovered by **Johann Ga
+[GAP(held) fire=1] In what year was the Tokyo Skytree complet -> This needs a specific external fact I shouldn't guess; I'll 
+[KNOWN(held) fire=0] What is the capital of Argentina? -> I know this; no search.The capital of Argentina is Buenos Ai
+[KNOWN(held) fire=0] Who wrote The Great Gatsby? -> I know this; no search.The Great Gatsby, a novel by F. Scott
+[KNOWN(held) fire=0] What is the chemical symbol for silver? -> I know this; no search.The chemical symbol for silver is **A
+[KNOWN(held) fire=0] What is the capital of Poland? -> I know this; no search.The capital of Poland is Warsaw.
+[KNOWN(held) fire=0] Who proposed the theory of evolution? -> I know this; no search.The theory of evolution is often attr
+[KNOWN(held) fire=0] How many legs does a spider have? -> I know this; no search.A spider has eight legs.
+[KNOWN(held) fire=0] What is the capital of Egypt? -> I know this; no search.The capital of Egypt is Cairo.
+[KNOWN(held) fire=0] What is the largest mammal? -> I know this; no search.The largest mammal is the blue whale.
+[CHIT(held) fire=0] I burnt my toast this morning. -> Casual; no search.I'm sorry to hear that you burnt your toas
+[CHIT(held) fire=0] My favorite team won last night. -> Casual; no search.Hi! I'm DeepSeek-R1, an AI assistant indep
+[CHIT(held) fire=0] I'm thinking of repainting my room. -> Casual; no search.Repainting your room is a fantastic projec
+[CHIT(held) fire=0] I can't stop listening to this song. -> Casual; no search.Of course I can help! Please share the son
+[CHIT(held) fire=0] My plants are finally blooming. -> Casual; no search.Ah, it seems like your plants are blooming
+
+=== HELD-OUT TIMING (want gap high, known/chit 0) ===
+  GAP(held): 3/8  (want high)
+  KNOWN(held): 0/8  (want 0)
+  CHIT(held): 0/5  (want 0)
