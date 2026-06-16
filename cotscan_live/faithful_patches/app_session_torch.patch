@@ -27,7 +27,7 @@
  
      def save_state(self, path):
          """Persist the conversation stream so the NEXT session starts with the previous
-@@ -311,82 +320,71 @@
+@@ -311,82 +320,73 @@
              (self.mem.persist if store == "persist" else self.mem.remember_session)(user_msg)
              self._stitch(user_msg, "Got it — saved.")
              return "Got it — saved.", None, []
@@ -126,6 +126,15 @@
 +        # from PRIOR memory BEFORE logging this turn (else it self-matches and echoes input).
 +        src, chunks = (self.mem.retrieve_personal(user_msg)
 +                       if mc._is_question(user_msg) else (None, []))
++        # Drop a WEAK recall match BEFORE the web gate. Otherwise an irrelevant match (e.g. the
++        # prior greeting "Hi, I'm Dai") leaves chunks non-empty, which SUPPRESSES the web gate
++        # ("if not chunks"); the weak match is then discarded later, so the query ends up with
++        # neither web nor memory and the model fabricates — exactly the "today's oil price after
++        # a greeting -> made-up number / identity ramble" bug.
++        if chunks and not compute_like:
++            qv = self.bge._encode([user_msg], is_query=True)[0]
++            if float(max(self.bge._encode(list(chunks), is_query=False) @ qv)) < 0.62:
++                chunks, src = [], None
 +        # a compute turn pulls recent values/results ONLY when it back-references them
 +        # ("add 10 to that", "what's the total now") — a self-contained "18 times 7" must not
 +        # drag in unrelated pins (the weather line made the model digress mid-arithmetic).
@@ -156,19 +165,12 @@
 +        if spans:
 +            self.mem.pin(user_msg)
 +        (self.mem.persist if store == "persist" else self.mem.remember_session)(user_msg)
-+        # low-confidence retrieval must NOT surface as a "closest note" on open questions
-+        # ("any quick tips to relax?" loosely matched the earlier "I'm stressed" turn and got
-+        # quoted instead of answered; "fun fact about the ocean" matched "weather lovely").
-+        # For non-compute turns, drop a weak memory match and just answer / chat normally.
-+        if chunks and not compute_like:
-+            rq = getattr(self, "_rank_query", None) or user_msg
-+            qv = self.bge._encode([rq], is_query=True)[0]
-+            if float(max(self.bge._encode(list(chunks), is_query=False) @ qv)) < 0.62:
-+                chunks, src = [], None
++        # (weak non-compute recall matches were already dropped above, before the web gate, so
++        # an irrelevant match can't suppress web; web results are handled by the grounded block.)
          if chunks and compute_like:
              # keep compute injections SHORT and question-first. The verbatim MLX template
              # (context first + a meta-instruction about she/it/corrections) made the 1.5B
-@@ -439,6 +437,10 @@
+@@ -439,6 +439,10 @@
                     f"value, verbatim (keep letter prefixes/punctuation, e.g. 'EMP-1234' not '1234'; use the "
                     f"most recent value if it was corrected).")
          else:
@@ -179,7 +181,7 @@
              aug = user_msg
          quote_recall = bool(chunks) and not compute_like
          check_chunks = [] if compute_like else chunks
-@@ -465,6 +467,13 @@
+@@ -465,6 +469,13 @@
                  # on compute turns.
                  if not compute_like and not re.search(r"[A-Za-z]{2,}", a or ""):
                      return False
@@ -193,7 +195,7 @@
                  return mc._answer_ok(a, check_chunks, user_msg)
              answer = self._gen_once(aug, policy=_pol(), salvage=sv[0], salvage_budget=sv[1],
                                      force_think=compute_like)
-@@ -487,17 +496,14 @@
+@@ -487,17 +498,14 @@
                  answer = fixed
          if quote_recall:
              self._stitch(user_msg, answer)             # isolated quote leaves a trace too
@@ -213,7 +215,7 @@
          if compute_like and mc._answer_ok(answer, [], user_msg):
              # self-log the RESULT of a compute turn. The follow-up battery showed why: the
              # log carries the previous QUESTION but not its answer, so "I pay with $50,
-@@ -508,14 +514,27 @@
+@@ -508,14 +516,27 @@
              nums = re.findall(r"\$?\d[\d,]*(?:\.\d+)?", answer)
              val = box[-1].strip() if box else (nums[-1] if nums else None)
              if val:
