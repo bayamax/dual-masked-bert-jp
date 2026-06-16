@@ -54,7 +54,9 @@ def run(tok,m,pooler,kw,val,seed,use_adapter):
         if nd>absorbed: arch.extend(gen[absorbed:nd]); kept.extend(gen[absorbed:nd]); absorbed=nd
         if rec is None and (arch.blocks or len(arch.buf)>=16):
             rid=arch.retrieve(qids,k=1)
-            if rid: rec=emb(rid)
+            if rid:
+                rid=tok.encode('(Recalled from earlier: "',add_special_tokens=False)+rid+tok.encode('")',add_special_tokens=False)
+                rec=emb(rid)
         parts=[]
         if kept: parts.append(pooler(emb(kept).float()).to(embT.weight.dtype))
         if rec is not None: parts.append(rec.to(embT.weight.dtype))
