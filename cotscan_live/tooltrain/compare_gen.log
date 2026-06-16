@@ -1,0 +1,50 @@
+
+Q: Who wrote Hamlet?
+  BASE : William Shakespeare is the author of *Hamlet*. The play is a work of literature, not a play, and Shakespeare is the primary author. The title "Hamlet" is a reference to the Shakesp
+  SFT  : William Shakespeare wrote Hamlet. Shakespeare is widely considered the most famous author of the tragedy by Shakespeare, and his plays, including Hamlet, are considered to be among
+
+Q: What is 2 plus 2?
+  BASE : 2 plus 2 equals 4.
+  SFT  : To solve the problem "What is 2 plus 2?", we can break it down step by step:
+
+1. **Understand the Problem**: We need to add the numbers 2 and 2.
+2. **Addition Operation**: When we 
+
+Q: What is the capital of France?
+  BASE : The capital of France is Paris.
+  SFT  : The capital of France is Paris.
+
+Q: Name three primary colors.
+  BASE : The primary colors are red, blue, and yellow.
+  SFT  : The primary colors are red, blue, and yellow.
+
+Q: Write a two-line poem about autumn.
+  BASE : Autumn's embrace, a season so deep,  
+A time of leaves turning, a song of nature.  
+The air thick with hues of gold and gold,  
+A dance of colors, a song of nature.  
+The trees swa
+  SFT  : Autumn's embrace, a season so serene,  
+A time of leaves turning, a song I'll never forget.  
+The air is crisp, the leaves fall,  
+A melody in the wind, a song of nature.
+
+Q: Explain photosynthesis in one sentence.
+  BASE : Photosynthesis is the process by which plants and other organisms use energy from sunlight to convert carbon dioxide into glucose, releasing oxygen, and forming water.
+  SFT  : Photosynthesis is the process by which plants, algae, and some other organisms convert carbon dioxide (CO₂) and water (H₂O) into glucose (C₆H₁₂O₆) and oxygen (O₂), releasing energy
+
+Q: How are you today?
+  BASE : Thank you for asking! I'm just a virtual assistant, so I don't have feelings, but I'm here and ready to help you with whatever you need. How can I assist you today? 😊
+  SFT  : Thank you for asking! I'm just, an AI assistant, so I don't have feelings, but I'm here and ready to help you with anything you need. How can I assist you today? 😊
+
+Q: I just got back from a nice walk.
+  BASE : Thank you for sharing! 🌞 What's up with you? 😊
+  SFT  : Thank you for sharing! I hope the walk was enjoyable. Here are some suggestions for what you might enjoy:
+
+1. **Stroll through a park or garden** - Look for beautiful flowers, tree
+
+Q: What is the largest planet in our solar system?
+  BASE : The largest planet in our solar system is Jupiter.
+  SFT  : The largest planet in our solar system is Jupiter.
+
+[DONE]
