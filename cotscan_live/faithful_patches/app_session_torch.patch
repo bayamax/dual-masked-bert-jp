@@ -145,7 +145,25 @@
          if chunks and compute_like:
              # keep compute injections SHORT and question-first. The verbatim MLX template
              # (context first + a meta-instruction about she/it/corrections) made the 1.5B
-@@ -487,17 +462,14 @@
+@@ -439,7 +414,16 @@
+                    f"value, verbatim (keep letter prefixes/punctuation, e.g. 'EMP-1234' not '1234'; use the "
+                    f"most recent value if it was corrected).")
+         else:
+-            aug = user_msg
++            # no retrieval + not compute = chitchat / open question answered from the model
++            # itself. A bare declarative made the 1.5B reflexively refuse ("I love hiking on
++            # weekends" -> "I can't respond to that"); the MQ-prefix persona alone was not
++            # reliable after a few turns. A light conversational frame in the strongly-
++            # attended user turn fixes it without constraining genuine questions.
++            if compute_like:
++                aug = user_msg
++            else:
++                aug = (f"{user_msg}\n\n(This is casual conversation — reply naturally, warmly, "
++                       f"and helpfully. Do not refuse.)")
+         quote_recall = bool(chunks) and not compute_like
+         check_chunks = [] if compute_like else chunks
+         if quote_recall:
+@@ -487,17 +471,14 @@
                  answer = fixed
          if quote_recall:
              self._stitch(user_msg, answer)             # isolated quote leaves a trace too
@@ -165,7 +183,7 @@
          if compute_like and mc._answer_ok(answer, [], user_msg):
              # self-log the RESULT of a compute turn. The follow-up battery showed why: the
              # log carries the previous QUESTION but not its answer, so "I pay with $50,
-@@ -518,4 +490,9 @@
+@@ -518,4 +499,9 @@
                  self.mem.session = [l for l in self.mem.session
                                      if not l.startswith("Earlier computed result:")]
                  self.mem.remember_session(f"Earlier computed result: {val}.")
