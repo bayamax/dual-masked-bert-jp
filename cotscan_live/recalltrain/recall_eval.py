@@ -1,6 +1,6 @@
 """recall_eval.py — needle operand_recovered: BASE vs recall-trained adapter (RAW recall injection).
 If recall-aware SFT worked, the trained model should USE the raw recalled block better than base."""
-import os, json, time, random, torch
+import os, json, time, random, re, torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 from attn_export3_torch import load_pooler
@@ -69,16 +69,22 @@ def run(tok,m,pooler,kw,val,seed,use_adapter):
             new+=1; gen.append(t); last=fwd_logits_lasttok(emb([t]))
         if done: break
     ans=tok.decode(gen[len(feed):],skip_special_tokens=True)
-    return val.lower() in ans.lower(), ans[:70]
+    # operand_recovered: normalized core (leading token) match -> "47000 dollars" hits "47,000" too
+    core=re.sub(r'[^a-z0-9]','',val.lower().split()[0])
+    return core in re.sub(r'[^a-z0-9]','',ans.lower()), ans[:70]
 def main():
     t0=time.time(); tok,m,pooler=build(); log(f"[built {time.time()-t0:.0f}s]")
+    SEEDS=int(os.environ.get("SEEDS","3"))   # multi-seed -> reduce 10-sample noise so data-scaling is judgeable
     res={"BASE":[], "RECALL":[]}; LOG=[]
     def out(x): print(x,flush=True); LOG.append(x); open(os.path.join(HERE,"recall_eval.log"),"w").write("\n".join(LOG))
-    for si,(kw,val) in enumerate(FACTS):
-        b,ba=run(tok,m,pooler,kw,val,si,False); res["BASE"].append(b)
-        r,ra=run(tok,m,pooler,kw,val,si,True); res["RECALL"].append(r)
-        out(f"[{kw:18}={val:14}] base={int(b)} recall={int(r)} | base:{ba[:34]} || recall:{ra[:34]}")
-    out(f"\n=== operand_recovered === BASE {sum(res['BASE'])}/{len(res['BASE'])} | RECALL-TRAINED {sum(res['RECALL'])}/{len(res['RECALL'])}")
-    json.dump({"base":f"{sum(res['BASE'])}/{len(res['BASE'])}","recall":f"{sum(res['RECALL'])}/{len(res['RECALL'])}"},open(os.path.join(HERE,"recall_eval.json"),"w"))
+    for sd in range(SEEDS):
+        for si,(kw,val) in enumerate(FACTS):
+            seed=si+100*sd                    # varies filler/burial layout per seed
+            b,ba=run(tok,m,pooler,kw,val,seed,False); res["BASE"].append(b)
+            r,ra=run(tok,m,pooler,kw,val,seed,True); res["RECALL"].append(r)
+            out(f"[s{sd} {kw:16}={val:13}] base={int(b)} recall={int(r)} | b:{ba[:26]} || r:{ra[:26]}")
+    nb=len(res['BASE'])
+    out(f"\n=== operand_recovered ({SEEDS}seed x{len(FACTS)} = {nb}) === BASE {sum(res['BASE'])}/{nb} | RECALL-TRAINED {sum(res['RECALL'])}/{nb}")
+    json.dump({"base":f"{sum(res['BASE'])}/{nb}","recall":f"{sum(res['RECALL'])}/{nb}","seeds":SEEDS},open(os.path.join(HERE,"recall_eval.json"),"w"))
     open(os.path.join(HERE,".evaldone"),"w").write("ok"); out(f"EVAL_DONE t={time.time()-t0:.0f}s")
 if __name__=="__main__": main()
