@@ -205,10 +205,35 @@
          if compute_like and mc._answer_ok(answer, [], user_msg):
              # self-log the RESULT of a compute turn. The follow-up battery showed why: the
              # log carries the previous QUESTION but not its answer, so "I pay with $50,
-@@ -518,4 +516,12 @@
-                 self.mem.session = [l for l in self.mem.session
-                                     if not l.startswith("Earlier computed result:")]
-                 self.mem.remember_session(f"Earlier computed result: {val}.")
+@@ -508,14 +506,27 @@
+             nums = re.findall(r"\$?\d[\d,]*(?:\.\d+)?", answer)
+             val = box[-1].strip() if box else (nums[-1] if nums else None)
+             if val:
+-                # DECLARATIVE form only. Logging "<question> — result: 24" baited the model
+-                # into re-answering the embedded QUESTION instead of the new one (composite
+-                # transcript: it ignored the $50-change question entirely and re-derived the
+-                # muffin total). Interrogative text must never be re-injected as context.
+-                # And the result line is WORKING STATE, not history: keeping old results
+-                # alongside made the model hedge between them ('if 24 then 26; if 32 then
+-                # 18' — composite v2 C3). A recompute supersedes the previous result.
+-                self.mem.session = [l for l in self.mem.session
+-                                    if not l.startswith("Earlier computed result:")]
+-                self.mem.remember_session(f"Earlier computed result: {val}.")
++                # Fix A: store each result as a KEYED, declarative, RETRIEVABLE fact instead of
++                # one superseding "Earlier computed result". Before, every compute turn OVERWROTE
++                # the last result, so "what was the ORIGINAL total snacks?" had nothing to retrieve
++                # (recall pulled past QUESTIONS, which carry operands but not answers) and the 1.5B
++                # guessed/conflated. Key = the question with its interrogative lead + trailing '?'
++                # stripped so it stays DECLARATIVE (re-injecting interrogative text baited the model
++                # into re-answering it — composite C3) yet BGE-retrievable by its content words.
++                # Same-key recompute still supersedes (anti-hedge); different keys coexist.
++                key = re.sub(r"^.*?\b(how many|how much|what(?:'s| is| was| are)?|which|"
++                             r"calculate|compute|find)\b[ ,:]*", "", user_msg.strip(), flags=re.I)
++                key = re.sub(r"[?!.]+\s*$", "", key).strip().rstrip(",")
++                key = (key[:80] or "the result")
++                tag = f"Earlier in this conversation, {key} = "
++                self.mem.session = [l for l in self.mem.session if not l.startswith(tag)]
++                self.mem.remember_session(tag + f"{val}.")
 +        # display normalization: the model emits math results as raw LaTeX (\boxed{1566.67});
 +        # surface the bare value/text to the user instead of leaking markup.
 +        if answer:
