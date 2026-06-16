@@ -1,0 +1,17 @@
+
+[gap] USER> Who won the FIFA World Cup in 1998?
+  -> SEARCH query='won the FIFA World Cup in 1998' wiki='1998 FIFA World Cup'
+     results: The 1998 FIFA World Cup was the 16th FIFA World Cup, the football world championship for men's national teams. The final
+  BOT(SEARCH, 13s)> The 1998 FIFA World Cup was held in France, with the host nation being **Belgium**.
+
+[gap] USER> When was the Brooklyn Bridge opened?
+  -> SEARCH query='was the Brooklyn Bridge opened' wiki='Brooklyn Bridge'
+     results: The Brooklyn Bridge is a cable-stayed suspension bridge in New York City, spanning the East River between the boroughs o
+  BOT(SEARCH, 11s)> The Brooklyn Bridge was opened on **May 24, 1883**.
+
+[gap] USER> Who painted Guernica?
+  -> SEARCH query='painted Guernica' wiki='Guernica (Picasso)'
+     results: Guernica is a large 1937 oil painting by Spanish artist Pablo Picasso. It is one of his best-known works, regarded by ma
+  BOT(SEARCH, 20s)> Guernica, a large 1937 oil painting by Spanish artist Pablo Picasso, is a masterpiece of Picasso's artistic genius. It is a profound expression of the human condition, capturing the suffering and resilience of the human 
+
+[DONE]
