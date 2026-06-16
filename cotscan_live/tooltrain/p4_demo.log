@@ -1,0 +1,26 @@
+
+[gap] USER> Who won the FIFA World Cup in 1998?
+  -> SEARCH query='won the FIFA World Cup in 1998' wiki='1998 FIFA World Cup'
+     results: The 1998 FIFA World Cup was the 16th FIFA World Cup, the football world championship for men's national teams. The final
+  BOT(SEARCH, 11s)> 
+
+[gap] USER> When was the Brooklyn Bridge opened?
+  -> SEARCH query='was the Brooklyn Bridge opened' wiki='Brooklyn Bridge'
+     results: The Brooklyn Bridge is a cable-stayed suspension bridge in New York City, spanning the East River between the boroughs o
+  BOT(SEARCH, 7s)> 
+
+[gap] USER> Who painted Guernica?
+  -> SEARCH query='painted Guernica' wiki='Guernica (Picasso)'
+     results: Guernica is a large 1937 oil painting by Spanish artist Pablo Picasso. It is one of his best-known works, regarded by ma
+  BOT(SEARCH, 6s)> 
+
+[known] USER> What is the capital of France?
+  BOT(DIRECT, 3s)> <think>I know this directly.</think>The capital of France is Paris.
+
+[known] USER> Who wrote Hamlet?
+  BOT(DIRECT, 13s)> <think>I know this directly.</think>Hamlet, the classic play by William Shakespeare, was originally written in 1604 by the English playwright, but it was published in 1604 by the English publisher, John Hamilton. Shakesp
+
+[chitchat] USER> I had a really great weekend.
+  BOT(DIRECT, 9s)> <think>Casual; no search.</think>It seems like you're sharing a wonderful weekend with someone. If you'd like to share more about what you enjoyed, or if you'd like to talk about something else, feel free to let me know!
+
+[DONE]
