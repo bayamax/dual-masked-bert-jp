@@ -8,13 +8,13 @@ cd /workspace
 pip install -q "transformers>=4.46,<4.54" "datasets>=2.18" sentence-transformers joblib "huggingface_hub>=0.25" requests 2>&1 | tail -2
 B="https://raw.githubusercontent.com/bayamax/dual-masked-bert-jp/claude/hypernet-sp-distill-d3pyik/cotscan_live"
 mkdir -p run && cd run
-for f in faithful_setup.py faithful_fixes.py conv_battery.py; do curl -fsSL "$B/$f" -o "$f"; done
+for f in faithful_setup.py faithful_fixes.py conv_math.py; do curl -fsSL "$B/$f" -o "$f"; done
 mkdir -p faithful_patches && curl -fsSL "$B/faithful_patches/app_session_torch.patch" -o faithful_patches/app_session_torch.patch
 echo "STEP setup"; python faithful_setup.py
 echo "STEP build"; ( cd faithful_run && python build_fft_hf.py )
 echo "STEP patch"; python faithful_fixes.py
-echo "STEP conv6"; python conv_battery.py 2>&1 | tee conv_battery.console
-cp faithful_run/conv_battery.log conv_battery.log 2>/dev/null || true
+echo "STEP conv6"; python conv_math.py 2>&1 | tee conv_math.console
+cp faithful_run/conv_math.log conv_math.log 2>/dev/null || true
 cp /workspace/boot.log boot.log
 echo "STEP serve"; echo DONE > .done
 python -m http.server 8000
