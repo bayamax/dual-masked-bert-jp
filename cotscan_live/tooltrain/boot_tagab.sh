@@ -8,7 +8,7 @@ python - <<'PY'
 from huggingface_hub import hf_hub_download
 import shutil, os
 R="baya1116/hypernet-sp-distill"; os.makedirs("fft_out",exist_ok=True)
-for p in ["build_fft_hf.py","fft_out/student.pt","fft_out/pooler.pt","hypernet_sp/block_recall.py","hypernet_sp/attn_export3_torch.py"]:
+for p in ["build_fft_hf.py","fft_out/student.pt","fft_out/pooler.pt","hypernet_sp/block_recall.py","hypernet_sp/attn_export3_torch.py","hypernet_sp/attn_scenarios.py"]:
     shutil.copy(hf_hub_download(R,p), os.path.basename(p))
 print("ok")
 PY
