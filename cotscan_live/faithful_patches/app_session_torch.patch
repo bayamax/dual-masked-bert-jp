@@ -27,7 +27,7 @@
  
      def save_state(self, path):
          """Persist the conversation stream so the NEXT session starts with the previous
-@@ -311,82 +320,48 @@
+@@ -311,82 +320,63 @@
              (self.mem.persist if store == "persist" else self.mem.remember_session)(user_msg)
              self._stitch(user_msg, "Got it — saved.")
              return "Got it — saved.", None, []
@@ -46,6 +46,12 @@
 +        # lookup->web-refuse / math-exclusive branching.
          head = " ".join(user_msg.split()[:8])
 +        is_math = looks_mathy(user_msg)
++        # arithmetic follow-ups ("add 10 to that", "what's the total now") carry no operator
++        # so looks_mathy misses them, but they must compute against the prior result.
++        if not is_math and re.search(r"\b(add|subtract|multiply|divide|times|plus|minus|"
++                                     r"increase|decrease)\b", user_msg, re.I) \
++                and re.search(r"\b(that|it|this|previous|result|total|sum|answer|now)\b", user_msg, re.I):
++            is_math = True
 +        compute_like = is_math
 +        spans = self.specific_spans(user_msg)
 +        # explicit save COMMAND (not a routed class): persist + instant ack, no generation.
@@ -142,10 +148,19 @@
 +        if spans:
 +            self.mem.pin(user_msg)
 +        (self.mem.persist if store == "persist" else self.mem.remember_session)(user_msg)
++        # low-confidence retrieval must NOT surface as a "closest note" on open questions
++        # ("any quick tips to relax?" loosely matched the earlier "I'm stressed" turn and got
++        # quoted instead of answered; "fun fact about the ocean" matched "weather lovely").
++        # For non-compute turns, drop a weak memory match and just answer / chat normally.
++        if chunks and not compute_like:
++            rq = getattr(self, "_rank_query", None) or user_msg
++            qv = self.bge._encode([rq], is_query=True)[0]
++            if float(max(self.bge._encode(list(chunks), is_query=False) @ qv)) < 0.62:
++                chunks, src = [], None
          if chunks and compute_like:
              # keep compute injections SHORT and question-first. The verbatim MLX template
              # (context first + a meta-instruction about she/it/corrections) made the 1.5B
-@@ -439,7 +414,16 @@
+@@ -439,7 +429,16 @@
                     f"value, verbatim (keep letter prefixes/punctuation, e.g. 'EMP-1234' not '1234'; use the "
                     f"most recent value if it was corrected).")
          else:
@@ -163,7 +178,7 @@
          quote_recall = bool(chunks) and not compute_like
          check_chunks = [] if compute_like else chunks
          if quote_recall:
-@@ -487,17 +471,14 @@
+@@ -487,17 +486,14 @@
                  answer = fixed
          if quote_recall:
              self._stitch(user_msg, answer)             # isolated quote leaves a trace too
@@ -183,7 +198,7 @@
          if compute_like and mc._answer_ok(answer, [], user_msg):
              # self-log the RESULT of a compute turn. The follow-up battery showed why: the
              # log carries the previous QUESTION but not its answer, so "I pay with $50,
-@@ -518,4 +499,9 @@
+@@ -518,4 +514,9 @@
                  self.mem.session = [l for l in self.mem.session
                                      if not l.startswith("Earlier computed result:")]
                  self.mem.remember_session(f"Earlier computed result: {val}.")
