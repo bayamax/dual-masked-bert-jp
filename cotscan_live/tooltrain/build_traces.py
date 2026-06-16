@@ -34,8 +34,9 @@ CHITCHAT=["I just adopted two kittens.","The weather has been lovely lately.","I
 
 def build():
     tok=AutoTokenizer.from_pretrained("fft_hf")
-    try: llm=AutoModelForCausalLM.from_pretrained("fft_hf",torch_dtype=torch.float16,attn_implementation="eager")
-    except TypeError: llm=AutoModelForCausalLM.from_pretrained("fft_hf",dtype=torch.float16,attn_implementation="eager")
+    dt=torch.bfloat16 if (DEV=="cuda" and torch.cuda.is_bf16_supported()) else torch.float32
+    try: llm=AutoModelForCausalLM.from_pretrained("fft_hf",torch_dtype=dt,attn_implementation="eager")
+    except TypeError: llm=AutoModelForCausalLM.from_pretrained("fft_hf",dtype=dt,attn_implementation="eager")
     return tok, llm.eval().to(DEV)
 
 def prompt_ids(tok,q): return tok.encode(f"<｜begin▁of▁sentence｜><｜User｜>{q}<｜Assistant｜>",add_special_tokens=False)
@@ -50,7 +51,7 @@ def onset_feat(tok,llm,q):
         hk.append(llm.model.layers[li].self_attn.q_proj.register_forward_hook(mk(li)))
     llm(input_ids=torch.tensor([prompt_ids(tok,q)],device=DEV),use_cache=False)
     for h in hk: h.remove()
-    return np.concatenate([gq[li] for li in LAYERS]).astype(np.float32)
+    return np.nan_to_num(np.concatenate([gq[li] for li in LAYERS]).astype(np.float32), nan=0.0, posinf=0.0, neginf=0.0)
 
 @torch.no_grad()
 def gen_answer(tok,llm,q,maxnew=64):
