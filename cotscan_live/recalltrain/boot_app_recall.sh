@@ -56,6 +56,17 @@ p="app_session_torch.py"; s=open(p).read()
 new='if rid:\n                    rid = tok.encode(\'(Recalled from earlier: "\', add_special_tokens=False) + rid + tok.encode(\'")\', add_special_tokens=False)\n                    rec_emb = self._emb(rid)'
 s2,n=re.subn(r"if rid:\s*\n\s*rec_emb = self\._emb\(rid\)", new, s)
 open(p,"w").write(s2); print("tagwrap replacements:",n)
+# pinned transformers wants torch_dtype= (needle_recall_test uses dtype=) -> same fix faithful_setup applies to demo_chat
+for f in ("needle_recall_test.py","demo_chat.py"):
+    try:
+        t=open(f).read(); open(f,"w").write(t.replace(", dtype=torch.float32", ", torch_dtype=torch.float32")); print("dtypefix",f)
+    except FileNotFoundError: pass
+# needle builds the BlockArchive on the CPU model then AppSession moves it to cuda -> mismatch on GPU.
+# Move the LLM to device right at load (before the archive is built).
+nf="needle_recall_test.py"; t=open(nf).read()
+t2=t.replace('from_pretrained("fft_hf", torch_dtype=torch.float32).eval()',
+             'from_pretrained("fft_hf", torch_dtype=torch.float32).eval().to("cuda" if torch.cuda.is_available() else "cpu")')
+open(nf,"w").write(t2); print("needle device move:", t2!=t)
 PY
 # best-effort apply the full faithful patch (router removal etc.) for the conversation turn()
 curl -fsSL "https://raw.githubusercontent.com/bayamax/dual-masked-bert-jp/claude/hypernet-sp-distill-d3pyik/cotscan_live/faithful_patches/app_session_torch.patch" -o app.patch || true

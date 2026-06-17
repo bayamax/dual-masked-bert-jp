@@ -35,12 +35,15 @@ def main():
     tok = AutoTokenizer.from_pretrained("fft_hf")
     try: llm = AutoModelForCausalLM.from_pretrained("fft_hf", torch_dtype=torch.float32).eval()
     except TypeError: llm = AutoModelForCausalLM.from_pretrained("fft_hf", dtype=torch.float32).eval()
-    pooler, bge = load_pooler(), BGERetriever()
+    # move EVERYTHING to the device BEFORE building archive/session (archive caches the llm ref;
+    # building it on a CPU model then moving caused a cuda/cpu index_select mismatch)
+    llm = llm.to(dev)
+    pooler = load_pooler().to(dev); bge = BGERetriever()
     iclf = joblib.load("evals/intent_clf.joblib"); sclf = joblib.load("evals/specificity_clf.joblib")
     mem = mc.TieredMemory("/tmp/conv_app_mem.jsonl", bge=bge)
     mem.session, mem.persistent, mem.pins = [], [], []
+    os.environ.pop("SPCHAT_DEVICE", None)   # already on dev; avoid AppSession re-moving mid-build
     arch = BlockArchive(llm, tok, mode="qk", bge=bge)
-    os.environ["SPCHAT_DEVICE"] = dev
     s = AppSession(llm, tok, pooler, bge, iclf, sclf, mem, web=None,
                    rw=384, cap=96, seed=0, profile=True, archive=arch, recall_k=2)
     out = []
